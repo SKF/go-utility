@@ -49,7 +49,7 @@ func Test_GetFloat_Env(t *testing.T) {
 }
 
 func Test_GetFloat_Default(t *testing.T) {
-	os.Unsetenv("PI")
+	err := os.Unsetenv("PI")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 3.0, GetAsFloat("PI", 3.0))
