@@ -31,3 +31,8 @@ func (uuid UUID) Validate() (err error) {
 func (uuid UUID) String() string {
 	return string(uuid)
 }
+
+func (uuid UUID) StringPtr() *string {
+	val := uuid.String()
+	return &val
+}
