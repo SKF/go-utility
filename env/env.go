@@ -1,3 +1,5 @@
+// Package env is a wrapper to os.Getenv
+
 package env
 
 import (
