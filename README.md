@@ -2,3 +2,4 @@
 
 #### Supported packages
 - env
+- uuid
