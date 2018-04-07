@@ -42,17 +42,15 @@ func Test_GetAsString_Env(t *testing.T) {
 }
 
 func Test_GetFloat_Env(t *testing.T) {
-	if err := os.Setenv("PI", "3.14159"); err != nil {
-		assert.Nil(t, err)
-	}
+	err := os.Setenv("PI", "3.14159")
+	assert.Nil(t, err)
 
 	assert.Equal(t, 3.14159, GetAsFloat("PI", 3.0))
 }
 
 func Test_GetFloat_Default(t *testing.T) {
-	if err := os.Unsetenv("PI"); err != nil {
-		assert.Nil(t, err)
-	}
+	os.Unsetenv("PI")
+	assert.Nil(t, err)
 
 	assert.Equal(t, 3.0, GetAsFloat("PI", 3.0))
 }
