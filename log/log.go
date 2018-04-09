@@ -67,7 +67,7 @@ func SetFormatter(formatter Formatter) {
 func AddSlackHook(hook SlackHook) {
 	if hook.HookURL == "" {
 		WithField("name", hook.Name).
-			Warnf("Cannot add slack hook with empty webhook url")
+			Warn("Cannot add slack hook with empty webhook url")
 		return
 	}
 
