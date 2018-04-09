@@ -4,6 +4,7 @@ import:
   version: ^1.0.5
 - package: github.com/google/uuid
   version: ^0.2.0
+- package: github.com/johntdyer/slackrus
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.2.1
