@@ -134,6 +134,9 @@ func (l logger) caller() *logrus.Entry {
 		gopath = build.Default.GOPATH
 	}
 
-	file = strings.Replace(file, gopath+"/", "", -1)
+	if gopath != "" {
+		file = strings.Replace(file, gopath+"/", "", -1)
+	}
+
 	return l.entry.WithField("source", fmt.Sprintf("%s:%d", file, line))
 }
