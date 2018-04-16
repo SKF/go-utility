@@ -2,4 +2,5 @@
 
 #### Supported packages
 - env
+- log
 - uuid
