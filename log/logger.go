@@ -123,7 +123,7 @@ func (l logger) Panicln(args ...interface{}) {
 }
 
 func (l logger) caller() *logrus.Entry {
-	_, file, line, ok := runtime.Caller(3)
+	_, file, line, ok := runtime.Caller(2)
 	if !ok {
 		file = "<?>"
 		line = 1
