@@ -68,6 +68,10 @@ type Request struct {
 
 // Extract will get the Request ID Metadata out of the context.
 func Extract(ctx context.Context) (request Request) {
+	if ctx == nil {
+		return
+	}
+
 	tags := grpc_ctxtags.Extract(ctx)
 
 	if value, exists := tags.Values()[REQUEST_ID_KEY]; exists {
