@@ -3,7 +3,7 @@ package requestid_test
 import (
 	"context"
 
-	"github.com/SKF/go-utility/grpc_interceptor/requestid"
+	"github.com/SKF/go-utility/grpc-interceptor/requestid"
 	"github.com/SKF/go-utility/log"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
