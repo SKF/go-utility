@@ -34,10 +34,7 @@ func StreamServerInterceptor(serviceName string) grpc.StreamServerInterceptor {
 
 func addRequestID(ctx context.Context, serviceName string) {
 	tags := grpc_ctxtags.Extract(ctx)
-
-	var transactionID = uuid.New()
-	var requestID = transactionID
-	var requestChain []string
+	req := New(serviceName)
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
@@ -45,17 +42,16 @@ func addRequestID(ctx context.Context, serviceName string) {
 		if len(ids) > 0 {
 			id := uuid.UUID(ids[0])
 			if id.IsValid() {
-				requestID = id
+				req.ID = id
 			}
 		}
 
-		requestChain = md.Get(REQUEST_CHAIN_KEY)
+		req.Chain = append(md.Get(REQUEST_CHAIN_KEY), serviceName)
 	}
-	requestChain = append(requestChain, serviceName)
 
-	tags.Set(REQUEST_ID_KEY, requestID)
-	tags.Set(REQUEST_CHAIN_KEY, requestChain)
-	tags.Set(REQUEST_TRANSACTION_ID_KEY, transactionID)
+	tags.Set(REQUEST_ID_KEY, req.ID)
+	tags.Set(REQUEST_CHAIN_KEY, req.Chain)
+	tags.Set(REQUEST_TRANSACTION_ID_KEY, req.TransactionID)
 	return
 }
 
@@ -87,6 +83,15 @@ func Extract(ctx context.Context) (request Request) {
 	}
 
 	return
+}
+
+func New(serviceName string) Request {
+	transactionID := uuid.New()
+	return Request{
+		ID:            transactionID,
+		Chain:         []string{serviceName},
+		TransactionID: transactionID,
+	}
 }
 
 // NewOutgoingContext creates a new context with the outgoing
