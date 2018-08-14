@@ -66,7 +66,7 @@ func Test_GetInt_Env(t *testing.T) {
 	err := os.Setenv("INT", "3")
 	assert.Nil(t, err)
 
-	assert.Equal(t, 3, GetAsInt("INT", 3))
+	assert.Equal(t, 3, GetAsInt("INT", 11))
 }
 
 func Test_GetInt_Default(t *testing.T) {
