@@ -61,3 +61,24 @@ func Test_GetFloat_NumberFormatFailure(t *testing.T) {
 
 	assert.Equal(t, 3.0, GetAsFloat("PI", 3.0))
 }
+
+func Test_GetInt_Env(t *testing.T) {
+	err := os.Setenv("INT", "3")
+	assert.Nil(t, err)
+
+	assert.Equal(t, 3, GetAsInt("INT", 3))
+}
+
+func Test_GetInt_Default(t *testing.T) {
+	err := os.Unsetenv("INT")
+	assert.Nil(t, err)
+
+	assert.Equal(t, 42, GetAsInt("INT", 42))
+}
+
+func Test_GetInt_NumberFormatFailure(t *testing.T) {
+	err := os.Setenv("INT", "3A")
+	assert.Nil(t, err)
+
+	assert.Equal(t, 11, GetAsInt("INT", 11))
+}

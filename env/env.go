@@ -50,3 +50,24 @@ func GetAsFloat(variableName string, defaultValue float64) (floatValue float64) 
 	}
 	return
 }
+
+// GetAsInt returns int value for given environment variable,
+// returns default if not found or couldn't be parsed.
+func GetAsInt(variableName string, defaultValue int) (intValue int) {
+	stringValue := os.Getenv(variableName)
+	if stringValue == "" {
+		return defaultValue
+	}
+
+	var err error
+	if intValue, err = strconv.Atoi(stringValue); err != nil {
+		log.
+			WithField("variable", variableName).
+			WithField("value", stringValue).
+			WithField("error", err).
+			Error("Failed to parse string to int")
+		return defaultValue
+	}
+
+	return
+}
