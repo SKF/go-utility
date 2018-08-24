@@ -32,6 +32,24 @@ func StreamServerInterceptor(serviceName string) grpc.StreamServerInterceptor {
 	}
 }
 
+// UnaryClientInterceptor returns a new unary client interceptor that adds
+// the Request ID Metadata to the call.
+func UnaryClientInterceptor(serviceName string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		addRequestID(ctx, serviceName)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+// StreamClientInterceptor returns a new streaming client interceptor that adds
+// the Request ID Metadata to the call.
+func StreamClientInterceptor(serviceName string) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		addRequestID(ctx, serviceName)
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+}
+
 func addRequestID(ctx context.Context, serviceName string) {
 	tags := grpc_ctxtags.Extract(ctx)
 	req := New(serviceName)
