@@ -54,6 +54,8 @@ var baseLogger = logger{
 
 func init() {
 	SetFormatter(&logrus.JSONFormatter{})
+	StackTrace(false)
+	Source(true)
 }
 
 func Base() Logger {
@@ -62,6 +64,14 @@ func Base() Logger {
 
 func SetFormatter(formatter Formatter) {
 	origLogger.Formatter = formatter
+}
+
+func StackTrace(enable bool) {
+	baseLogger.StackTraceEnabled = enable
+}
+
+func Source(enable bool) {
+	baseLogger.SourceEnabled = enable
 }
 
 func AddSlackHook(hook SlackHook) {

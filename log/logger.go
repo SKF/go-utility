@@ -10,20 +10,25 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var MaxStackDepth = 50
+
 type logger struct {
 	entry *logrus.Entry
+
+	StackTraceEnabled bool
+	SourceEnabled     bool
 }
 
 func (l logger) WithField(key string, value interface{}) Logger {
-	return logger{l.entry.WithField(key, value)}
+	return logger{l.entry.WithField(key, value), l.StackTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) WithFields(fields Fields) Logger {
-	return logger{l.entry.WithFields(logrus.Fields(fields))}
+	return logger{l.entry.WithFields(logrus.Fields(fields)), l.StackTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) WithError(err error) Logger {
-	return logger{l.entry.WithError(err)}
+	return logger{l.entry.WithError(err), l.StackTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
@@ -155,9 +160,16 @@ func getStackTrace(skip int, maxSteps int) (trace []string) {
 }
 
 func (l logger) caller() *logrus.Entry {
-	source, _ := getCaller(4)
-	trace := getStackTrace(0, 100)
-	return l.entry.
-		WithField("source", source).
-		WithField("stacktrace", trace)
+	entry := l.entry
+	if l.SourceEnabled {
+		source, _ := getCaller(4)
+		entry = entry.WithField("source", source)
+	}
+
+	if l.StackTraceEnabled {
+		trace := getStackTrace(4, MaxStackDepth)
+		entry = entry.WithField("stacktrace", trace)
+	}
+
+	return entry
 }
