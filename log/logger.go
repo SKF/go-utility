@@ -122,11 +122,12 @@ func (l logger) Panicln(args ...interface{}) {
 	l.caller().Panicln(args...)
 }
 
-func (l logger) caller() *logrus.Entry {
-	_, file, line, ok := runtime.Caller(2)
+func getCaller(skip int) (string, bool) {
+	_, file, line, ok := runtime.Caller(skip)
 	if !ok {
 		file = "<?>"
 		line = 1
+		return fmt.Sprintf("%s:%d", file, line), false
 	}
 
 	gopath := os.Getenv("GOPATH")
@@ -138,5 +139,25 @@ func (l logger) caller() *logrus.Entry {
 		file = strings.Replace(file, gopath+"/", "", -1)
 	}
 
-	return l.entry.WithField("source", fmt.Sprintf("%s:%d", file, line))
+	return fmt.Sprintf("%s:%d", file, line), true
+}
+
+func getStackTrace(skip int, maxSteps int) (trace []string) {
+	for i := 0; i < maxSteps; i++ {
+		source, ok := getCaller(i + skip)
+		if !ok {
+			return
+		}
+
+		trace = append(trace, source)
+	}
+	return
+}
+
+func (l logger) caller() *logrus.Entry {
+	source, _ := getCaller(4)
+	trace := getStackTrace(0, 100)
+	return l.entry.
+		WithField("source", source).
+		WithField("stacktrace", trace)
 }
