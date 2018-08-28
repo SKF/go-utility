@@ -54,7 +54,7 @@ var baseLogger = logger{
 
 func init() {
 	SetFormatter(&logrus.JSONFormatter{})
-	StackTrace(false)
+	CallTrace(false)
 	Source(true)
 }
 
@@ -66,8 +66,8 @@ func SetFormatter(formatter Formatter) {
 	origLogger.Formatter = formatter
 }
 
-func StackTrace(enable bool) {
-	baseLogger.StackTraceEnabled = enable
+func CallTrace(enable bool) {
+	baseLogger.CallTraceEnabled = enable
 }
 
 func Source(enable bool) {

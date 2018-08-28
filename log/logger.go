@@ -15,20 +15,20 @@ var MaxStackDepth = 50
 type logger struct {
 	entry *logrus.Entry
 
-	StackTraceEnabled bool
-	SourceEnabled     bool
+	CallTraceEnabled bool
+	SourceEnabled    bool
 }
 
 func (l logger) WithField(key string, value interface{}) Logger {
-	return logger{l.entry.WithField(key, value), l.StackTraceEnabled, l.SourceEnabled}
+	return logger{l.entry.WithField(key, value), l.CallTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) WithFields(fields Fields) Logger {
-	return logger{l.entry.WithFields(logrus.Fields(fields)), l.StackTraceEnabled, l.SourceEnabled}
+	return logger{l.entry.WithFields(logrus.Fields(fields)), l.CallTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) WithError(err error) Logger {
-	return logger{l.entry.WithError(err), l.StackTraceEnabled, l.SourceEnabled}
+	return logger{l.entry.WithError(err), l.CallTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
@@ -166,9 +166,9 @@ func (l logger) caller() *logrus.Entry {
 		entry = entry.WithField("source", source)
 	}
 
-	if l.StackTraceEnabled {
+	if l.CallTraceEnabled {
 		trace := getStackTrace(4, MaxStackDepth)
-		entry = entry.WithField("stacktrace", trace)
+		entry = entry.WithField("calltrace", trace)
 	}
 
 	return entry
