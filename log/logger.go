@@ -10,20 +10,25 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var MaxStackDepth = 50
+
 type logger struct {
 	entry *logrus.Entry
+
+	CallTraceEnabled bool
+	SourceEnabled    bool
 }
 
 func (l logger) WithField(key string, value interface{}) Logger {
-	return logger{l.entry.WithField(key, value)}
+	return logger{l.entry.WithField(key, value), l.CallTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) WithFields(fields Fields) Logger {
-	return logger{l.entry.WithFields(logrus.Fields(fields))}
+	return logger{l.entry.WithFields(logrus.Fields(fields)), l.CallTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) WithError(err error) Logger {
-	return logger{l.entry.WithError(err)}
+	return logger{l.entry.WithError(err), l.CallTraceEnabled, l.SourceEnabled}
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
@@ -122,11 +127,12 @@ func (l logger) Panicln(args ...interface{}) {
 	l.caller().Panicln(args...)
 }
 
-func (l logger) caller() *logrus.Entry {
-	_, file, line, ok := runtime.Caller(2)
+func getCaller(skip int) (string, bool) {
+	_, file, line, ok := runtime.Caller(skip)
 	if !ok {
 		file = "<?>"
 		line = 1
+		return fmt.Sprintf("%s:%d", file, line), false
 	}
 
 	gopath := os.Getenv("GOPATH")
@@ -138,5 +144,32 @@ func (l logger) caller() *logrus.Entry {
 		file = strings.Replace(file, gopath+"/", "", -1)
 	}
 
-	return l.entry.WithField("source", fmt.Sprintf("%s:%d", file, line))
+	return fmt.Sprintf("%s:%d", file, line), true
+}
+
+func getStackTrace(skip int, maxSteps int) (trace []string) {
+	for i := 0; i < maxSteps; i++ {
+		source, ok := getCaller(i + skip)
+		if !ok {
+			return
+		}
+
+		trace = append(trace, source)
+	}
+	return
+}
+
+func (l logger) caller() *logrus.Entry {
+	entry := l.entry
+	if l.SourceEnabled {
+		source, _ := getCaller(4)
+		entry = entry.WithField("source", source)
+	}
+
+	if l.CallTraceEnabled {
+		trace := getStackTrace(4, MaxStackDepth)
+		entry = entry.WithField("calltrace", trace)
+	}
+
+	return entry
 }
