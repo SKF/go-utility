@@ -29,11 +29,7 @@ func ExampleExtract() {
 		Infof("Request ID Metadata")
 }
 
-func ExampleRequest_NewOutgoingContext() {
-	var grpcCallContext context.Context
-
+func ExampleExtendContext() {
 	outgoingGrpcCallContext := context.Background()
-	outgoingGrpcCallContext = requestid.
-		Extract(grpcCallContext).
-		NewOutgoingContext(outgoingGrpcCallContext)
+	requestid.ExtendContext(outgoingGrpcCallContext, "Example")
 }
