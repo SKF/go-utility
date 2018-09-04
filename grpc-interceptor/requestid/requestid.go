@@ -3,7 +3,7 @@ package requestid
 import (
 	"context"
 
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -18,8 +18,8 @@ const REQUEST_TRANSACTION_ID_KEY = "request.transaction.id"
 // the Request ID Metadata to the call.
 func UnaryServerInterceptor(serviceName string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, err error) {
-		addRequestID(ctx, serviceName)
-		return handler(ctx, req)
+		newCtx := ExtendContext(ctx, serviceName)
+		return handler(newCtx, req)
 	}
 }
 
@@ -27,32 +27,101 @@ func UnaryServerInterceptor(serviceName string) grpc.UnaryServerInterceptor {
 // the Request ID Metadata to the call.
 func StreamServerInterceptor(serviceName string) grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
-		addRequestID(stream.Context(), serviceName)
-		return handler(srv, stream)
+		newCtx := ExtendContext(stream.Context(), serviceName)
+		wrappedStream := grpc_middleware.WrapServerStream(stream)
+		wrappedStream.WrappedContext = newCtx
+		return handler(srv, wrappedStream)
 	}
 }
 
-func addRequestID(ctx context.Context, serviceName string) {
-	tags := grpc_ctxtags.Extract(ctx)
-	req := New(serviceName)
+// UnaryClientInterceptor returns a new unary client interceptor that adds
+// the Request ID Metadata to the call.
+func UnaryClientInterceptor(serviceName string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		newCtx := outgoingContextWithRequestID(ctx, serviceName)
+		return invoker(newCtx, method, req, reply, cc, opts...)
+	}
+}
 
-	md, ok := metadata.FromIncomingContext(ctx)
+// StreamClientInterceptor returns a new streaming client interceptor that adds
+// the Request ID Metadata to the call.
+func StreamClientInterceptor(serviceName string) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		newCtx := outgoingContextWithRequestID(ctx, serviceName)
+		return streamer(newCtx, desc, cc, method, opts...)
+	}
+}
+
+// ExtendContext extends the context with a Request ID Metadata.
+func ExtendContext(ctx context.Context, serviceName string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	transactionID := uuid.New()
+	request := Request{
+		ID:            transactionID,
+		Chain:         []string{serviceName},
+		TransactionID: transactionID,
+	}
+
+	incomingMD, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		ids := md.Get(REQUEST_ID_KEY)
+		ids := incomingMD.Get(REQUEST_ID_KEY)
 		if len(ids) > 0 {
 			id := uuid.UUID(ids[0])
 			if id.IsValid() {
-				req.ID = id
+				request.ID = id
 			}
 		}
 
-		req.Chain = append(md.Get(REQUEST_CHAIN_KEY), serviceName)
+		request.Chain = append(incomingMD.Get(REQUEST_CHAIN_KEY), serviceName)
 	}
 
-	tags.Set(REQUEST_ID_KEY, req.ID)
-	tags.Set(REQUEST_CHAIN_KEY, req.Chain)
-	tags.Set(REQUEST_TRANSACTION_ID_KEY, req.TransactionID)
-	return
+	outgoingMD := make(metadata.MD)
+	outgoingMD.Set(REQUEST_ID_KEY, request.ID.String())
+	outgoingMD.Set(REQUEST_CHAIN_KEY, request.Chain...)
+	outgoingMD.Set(REQUEST_TRANSACTION_ID_KEY, request.TransactionID.String())
+	return metadata.NewOutgoingContext(ctx, outgoingMD)
+}
+
+func outgoingContextWithRequestID(ctx context.Context, serviceName string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	transactionID := uuid.New()
+	request := Request{
+		ID:            transactionID,
+		Chain:         []string{serviceName},
+		TransactionID: transactionID,
+	}
+
+	incomingMD, ok := metadata.FromOutgoingContext(ctx)
+	if ok {
+		ids := incomingMD.Get(REQUEST_ID_KEY)
+		if len(ids) > 0 {
+			id := uuid.UUID(ids[0])
+			if id.IsValid() {
+				request.ID = id
+			}
+		}
+		ids = incomingMD.Get(REQUEST_TRANSACTION_ID_KEY)
+		if len(ids) > 0 {
+			id := uuid.UUID(ids[0])
+			if id.IsValid() {
+				request.TransactionID = id
+			}
+		}
+
+		request.Chain = append(incomingMD.Get(REQUEST_CHAIN_KEY))
+	}
+
+	outgoingMD := make(metadata.MD)
+	outgoingMD.Set(REQUEST_ID_KEY, request.ID.String())
+	outgoingMD.Set(REQUEST_CHAIN_KEY, request.Chain...)
+	outgoingMD.Set(REQUEST_TRANSACTION_ID_KEY, request.TransactionID.String())
+	return metadata.NewOutgoingContext(ctx, outgoingMD)
 }
 
 // Request is a data holder for the different Request ID Metadata
@@ -68,38 +137,27 @@ func Extract(ctx context.Context) (request Request) {
 		return
 	}
 
-	tags := grpc_ctxtags.Extract(ctx)
-
-	if value, exists := tags.Values()[REQUEST_ID_KEY]; exists {
-		request.ID = value.(uuid.UUID)
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		return
 	}
 
-	if value, exists := tags.Values()[REQUEST_CHAIN_KEY]; exists {
-		request.Chain = value.([]string)
+	ids := md.Get(REQUEST_ID_KEY)
+	if len(ids) > 0 {
+		id := uuid.UUID(ids[0])
+		if id.IsValid() {
+			request.ID = id
+		}
 	}
 
-	if value, exists := tags.Values()[REQUEST_TRANSACTION_ID_KEY]; exists {
-		request.TransactionID = value.(uuid.UUID)
+	ids = md.Get(REQUEST_TRANSACTION_ID_KEY)
+	if len(ids) > 0 {
+		id := uuid.UUID(ids[0])
+		if id.IsValid() {
+			request.TransactionID = id
+		}
 	}
 
+	request.Chain = append(md.Get(REQUEST_CHAIN_KEY))
 	return
-}
-
-func New(serviceName string) Request {
-	transactionID := uuid.New()
-	return Request{
-		ID:            transactionID,
-		Chain:         []string{serviceName},
-		TransactionID: transactionID,
-	}
-}
-
-// NewOutgoingContext creates a new context with the outgoing
-// Request ID Metadata attached.
-func (request Request) NewOutgoingContext(ctx context.Context) context.Context {
-	md := make(metadata.MD)
-	md.Set(REQUEST_ID_KEY, request.ID.String())
-	md.Set(REQUEST_CHAIN_KEY, request.Chain...)
-	md.Set(REQUEST_TRANSACTION_ID_KEY, request.TransactionID.String())
-	return metadata.NewOutgoingContext(ctx, md)
 }
