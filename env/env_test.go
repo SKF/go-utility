@@ -59,6 +59,11 @@ func Test_GetFloat_NumberFormatFailure(t *testing.T) {
 	err := os.Setenv("PI", "3.1A159")
 	assert.Nil(t, err)
 
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
 	assert.Equal(t, 3.0, GetAsFloat("PI", 3.0))
 }
 
@@ -80,5 +85,10 @@ func Test_GetInt_NumberFormatFailure(t *testing.T) {
 	err := os.Setenv("INT", "3A")
 	assert.Nil(t, err)
 
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The code did not panic")
+		}
+	}()
 	assert.Equal(t, 11, GetAsInt("INT", 11))
 }
