@@ -1,14 +1,15 @@
 package log
 
 import (
-	"github.com/johntdyer/slackrus"
-	"github.com/sirupsen/logrus"
+	"github.com/bluele/zapslack"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-type Fields logrus.Fields
-type Formatter logrus.Formatter
+type Fields = zapcore.Field
+
 type SlackHook struct {
-	AcceptedLevels []logrus.Level
+	AcceptedLevels []zapcore.Level
 	HookURL        string
 	Name           string
 	Asynchronous   bool
@@ -36,42 +37,26 @@ type Logger interface {
 	Error(args ...interface{})
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
-
-	Debugln(args ...interface{})
-	Infoln(args ...interface{})
-	Println(args ...interface{})
-	Warnln(args ...interface{})
-	Warningln(args ...interface{})
-	Errorln(args ...interface{})
-	Fatalln(args ...interface{})
-	Panicln(args ...interface{})
 }
 
-var origLogger = logrus.New()
-var baseLogger = logger{
-	entry: logrus.NewEntry(origLogger),
-}
+var origLogger *zap.SugaredLogger
+var baseLogger logger
 
 func init() {
-	SetFormatter(&logrus.JSONFormatter{})
-	CallTrace(false)
-	Source(true)
+	l, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	origLogger = l.Sugar()
+
+	baseLogger = logger{
+		entry: origLogger,
+	}
+
 }
 
 func Base() Logger {
 	return baseLogger
-}
-
-func SetFormatter(formatter Formatter) {
-	origLogger.Formatter = formatter
-}
-
-func CallTrace(enable bool) {
-	baseLogger.CallTraceEnabled = enable
-}
-
-func Source(enable bool) {
-	baseLogger.SourceEnabled = enable
 }
 
 func AddSlackHook(hook SlackHook) {
@@ -81,21 +66,20 @@ func AddSlackHook(hook SlackHook) {
 		return
 	}
 
-	extra := map[string]interface{}{}
-	if hook.Name != "" {
-		extra["name"] = hook.Name
-	}
-
 	if len(hook.AcceptedLevels) == 0 {
-		hook.AcceptedLevels = slackrus.LevelThreshold(logrus.ErrorLevel)
+		hook.AcceptedLevels = []zapcore.Level{zap.ErrorLevel}
 	}
 
-	origLogger.AddHook(&slackrus.SlackrusHook{
+	zl := zapslack.SlackHook{
 		HookURL:        hook.HookURL,
 		AcceptedLevels: hook.AcceptedLevels,
-		Asynchronous:   hook.Asynchronous,
-		Extra:          extra,
-	})
+		Async:          hook.Asynchronous,
+		FieldHeader:    hook.Name,
+	}
+	l := origLogger.Desugar()
+	l.WithOptions(
+		zap.Hooks(
+			zl.GetHook()))
 }
 
 func WithField(key string, value interface{}) Logger {
@@ -172,36 +156,4 @@ func Fatal(args ...interface{}) {
 
 func Panic(args ...interface{}) {
 	baseLogger.Panic(args...)
-}
-
-func Debugln(args ...interface{}) {
-	baseLogger.Debugln(args...)
-}
-
-func Infoln(args ...interface{}) {
-	baseLogger.Infoln(args...)
-}
-
-func Println(args ...interface{}) {
-	baseLogger.Println(args...)
-}
-
-func Warnln(args ...interface{}) {
-	baseLogger.Warnln(args...)
-}
-
-func Warningln(args ...interface{}) {
-	baseLogger.Warnln(args...)
-}
-
-func Errorln(args ...interface{}) {
-	baseLogger.Errorln(args...)
-}
-
-func Fatalln(args ...interface{}) {
-	baseLogger.Fatalln(args...)
-}
-
-func Panicln(args ...interface{}) {
-	baseLogger.Panicln(args...)
 }

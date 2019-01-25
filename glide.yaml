@@ -1,11 +1,13 @@
 package: github.com/SKF/go-utility
 import:
-- package: github.com/sirupsen/logrus
-  version: ^1.0.5
+- package: go.uber.org/zap
+  version: ^1
+- package: go.uber.org/zap/zapcore
+  version: ^1
+- package: github.com/bluele/zapslack
+  version: 3dde4cb45852a7666490b21e8aa97d072a7b9e20
 - package: github.com/google/uuid
   version: ^0.2.0
-- package: github.com/johntdyer/slackrus
-  version: 3992f319fd0ac349483279ef74742cd787841cba
 - package: github.com/grpc-ecosystem/go-grpc-middleware
   version: v1.0.0
 testImport:
