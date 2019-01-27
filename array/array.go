@@ -1,53 +1,63 @@
 package array
 
-func countMap(arrs ...[]string) (result map[string]int) {
-	result = make(map[string]int)
-	for _, arr := range arrs {
-		distinctArr := DistinctString(arr)
-		for _, value := range distinctArr {
-			if _, ok := result[value]; ok {
-				result[value]++
-			} else {
-				result[value] = 1
+type Arrayer interface {
+	Equal(i, j int) bool
+	Drop(i int)
+	Get(i int) interface{}
+	Len() int
+	Contains(elem interface{}) bool
+}
+
+type StringSlice []string
+
+func (ss StringSlice) Equal(i, j int) bool   { return ss[i] == ss[j] }
+func (ss *StringSlice) Drop(i int)           { *ss = append((*ss)[:i], (*ss)[i+1:]...) }
+func (ss StringSlice) Get(i int) interface{} { return ss[i] }
+func (ss StringSlice) Len() int              { return len(ss) }
+func (ss StringSlice) Contains(elem interface{}) bool {
+	elemString, ok := elem.(string)
+	if !ok {
+		return false
+	}
+
+	for _, s := range ss {
+		if s == elemString {
+			return true
+		}
+	}
+	return false
+}
+
+// Distinct drops all duplicate elements in arr
+func Distinct(arr Arrayer) {
+	for i := arr.Len() - 1; i > 0; i-- {
+		for j := i - 1; j >= 0; j-- {
+			if arr.Equal(j, i) {
+				arr.Drop(i)
+				break
 			}
 		}
 	}
-
-	return
 }
 
-func DistinctString(arr []string) (result []string) {
-	arrayMap := make(map[string]bool)
-	for _, value := range arr {
-		arrayMap[value] = true
-	}
-
-	for value := range arrayMap {
-		result = append(result, value)
-	}
-
-	return
-}
-
-func IntersectString(arrs ...[]string) (result []string) {
-	result = []string{}
-	noArrs := len(arrs)
-	for key, count := range countMap(arrs...) {
-		if count == noArrs {
-			result = append(result, key)
+// Intersect drops all elements in arr that is not present in all of arrs
+func Intersect(arr Arrayer, arrs ...Arrayer) {
+	for _, a := range arrs {
+		for i := arr.Len() - 1; i >= 0; i-- {
+			if !a.Contains(arr.Get(i)) {
+				arr.Drop(i)
+			}
 		}
 	}
-
-	return
 }
 
-func DifferenceString(arrs ...[]string) (result []string) {
-	result = []string{}
-	for key, count := range countMap(arrs...) {
-		if count == 1 {
-			result = append(result, key)
+// Difference drops all elements in arr that is also present in one of arrs
+func Difference(arr Arrayer, arrs ...Arrayer) {
+	for _, a := range arrs {
+		for i := arr.Len() - 1; i >= 0; i-- {
+			if a.Contains(arr.Get(i)) {
+				arr.Drop(i)
+			}
 		}
 	}
-
-	return
 }
