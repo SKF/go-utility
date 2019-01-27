@@ -86,3 +86,7 @@ func (l logger) Fatal(args ...interface{}) {
 func (l logger) Panic(args ...interface{}) {
 	l.entry.Panic(args...)
 }
+
+func (l logger) Sync() {
+	l.entry.Sync()
+}

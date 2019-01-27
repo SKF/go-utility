@@ -1,6 +1,9 @@
 package log
 
 import (
+	"os"
+	"time"
+
 	"github.com/bluele/zapslack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -37,16 +40,28 @@ type Logger interface {
 	Error(args ...interface{})
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
+
+	Sync()
 }
 
 var origLogger *zap.SugaredLogger
 var baseLogger logger
 
 func init() {
-	l, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
+	encoderConf := zap.NewProductionEncoderConfig()
+
+	// Set RFC3339 timestamp encoding format
+	encoderConf.TimeKey = "timestamp"
+	encoderConf.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format(time.RFC3339))
 	}
+
+	l := zap.New(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderConf),
+			zapcore.Lock(os.Stdout),
+			zap.NewAtomicLevel(),
+		))
 	origLogger = l.Sugar()
 
 	baseLogger = logger{
