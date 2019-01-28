@@ -5,88 +5,77 @@ import (
 )
 
 type logger struct {
-	entry *zap.SugaredLogger
-
-	CallTraceEnabled bool
-	SourceEnabled    bool
+	logger *zap.SugaredLogger
 }
 
 func (l logger) WithField(key string, value interface{}) Logger {
-	return logger{l.entry.With(zap.Any(key, value)), l.CallTraceEnabled, l.SourceEnabled}
+	return logger{l.logger.With(zap.Any(key, value))}
 }
 
 func (l logger) WithFields(fields Fields) Logger {
-	return logger{l.entry.With(fields), l.CallTraceEnabled, l.SourceEnabled}
+	return logger{l.logger.With(fields)}
 }
 
 func (l logger) WithError(err error) Logger {
-	return logger{l.entry.With(zap.Error(err)), l.CallTraceEnabled, l.SourceEnabled}
+	return logger{l.logger.With(zap.Error(err))}
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
-	l.entry.Debugf(format, args...)
+	l.logger.Debugf(format, args...)
 }
 
 func (l logger) Infof(format string, args ...interface{}) {
-	l.entry.Infof(format, args...)
-}
-
-func (l logger) Printf(format string, args ...interface{}) {
-	l.entry.Infof(format, args...) // Printf not present in zap
+	l.logger.Infof(format, args...)
 }
 
 func (l logger) Warnf(format string, args ...interface{}) {
-	l.entry.Warnf(format, args...)
+	l.logger.Warnf(format, args...)
 }
 
 func (l logger) Warningf(format string, args ...interface{}) {
-	l.entry.Warnf(format, args...)
+	l.logger.Warnf(format, args...)
 }
 
 func (l logger) Errorf(format string, args ...interface{}) {
-	l.entry.Errorf(format, args...)
+	l.logger.Errorf(format, args...)
 }
 
 func (l logger) Fatalf(format string, args ...interface{}) {
-	l.entry.Fatalf(format, args...)
+	l.logger.Fatalf(format, args...)
 }
 
 func (l logger) Panicf(format string, args ...interface{}) {
-	l.entry.Panicf(format, args...)
+	l.logger.Panicf(format, args...)
 }
 
 func (l logger) Debug(args ...interface{}) {
-	l.entry.Debug(args...)
+	l.logger.Debug(args...)
 }
 
 func (l logger) Info(args ...interface{}) {
-	l.entry.Info(args...)
-}
-
-func (l logger) Print(args ...interface{}) {
-	l.entry.Info(args...) // Print not present in zap
+	l.logger.Info(args...)
 }
 
 func (l logger) Warn(args ...interface{}) {
-	l.entry.Warn(args...)
+	l.logger.Warn(args...)
 }
 
 func (l logger) Warning(args ...interface{}) {
-	l.entry.Warn(args...)
+	l.logger.Warn(args...)
 }
 
 func (l logger) Error(args ...interface{}) {
-	l.entry.Error(args...)
+	l.logger.Error(args...)
 }
 
 func (l logger) Fatal(args ...interface{}) {
-	l.entry.Fatal(args...)
+	l.logger.Fatal(args...)
 }
 
 func (l logger) Panic(args ...interface{}) {
-	l.entry.Panic(args...)
+	l.logger.Panic(args...)
 }
 
 func (l logger) Sync() {
-	l.entry.Sync()
+	l.logger.Sync()
 }
