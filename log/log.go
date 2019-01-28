@@ -25,7 +25,6 @@ type Logger interface {
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
-	Printf(format string, args ...interface{})
 	Warnf(format string, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
@@ -34,7 +33,6 @@ type Logger interface {
 
 	Debug(args ...interface{})
 	Info(args ...interface{})
-	Print(args ...interface{})
 	Warn(args ...interface{})
 	Warning(args ...interface{})
 	Error(args ...interface{})
@@ -55,18 +53,21 @@ func init() {
 	encoderConf.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.Format(time.RFC3339))
 	}
+	encoderConf.CallerKey = "source"
 
 	l := zap.New(
 		zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConf),
 			zapcore.Lock(os.Stdout),
 			zap.NewAtomicLevel(),
-		))
+		),
+		zap.AddCaller(),
+		zap.AddCallerSkip(1),
+		zap.AddStacktrace(zapcore.InfoLevel),
+	)
 	origLogger = l.Sugar()
 
-	baseLogger = logger{
-		entry: origLogger,
-	}
+	baseLogger = logger{origLogger}
 
 }
 
@@ -109,66 +110,65 @@ func WithError(err error) Logger {
 	return baseLogger.WithError(err)
 }
 
+// We must directly call the bundled logger here (whenever a func instead of
+// method is used), reason is for the "caller skip" calculation to be correct
+// in all instances.
+// When we are called as a function `log.Info("msg")` vs method
+// `log.WithField("key", "val").Info("msg")` we would otherwise end up with
+// 3 vs 2 stack entries.
+
 func Debugf(format string, args ...interface{}) {
-	baseLogger.Debugf(format, args...)
+	baseLogger.logger.Debugf(format, args...)
 }
 
 func Infof(format string, args ...interface{}) {
-	baseLogger.Infof(format, args...)
-}
-
-func Printf(format string, args ...interface{}) {
-	baseLogger.Printf(format, args...)
+	baseLogger.logger.Infof(format, args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	baseLogger.Warnf(format, args...)
+	baseLogger.logger.Warnf(format, args...)
 }
 
 func Warningf(format string, args ...interface{}) {
-	baseLogger.Warnf(format, args...)
+	baseLogger.logger.Warnf(format, args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	baseLogger.Errorf(format, args...)
+	baseLogger.logger.Errorf(format, args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	baseLogger.Fatalf(format, args...)
+	baseLogger.logger.Fatalf(format, args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	baseLogger.Panicf(format, args...)
+	baseLogger.logger.Panicf(format, args...)
 }
 
 func Debug(args ...interface{}) {
-	baseLogger.Debug(args...)
+	baseLogger.logger.Debug(args...)
 }
 
 func Info(args ...interface{}) {
-	baseLogger.Info(args...)
-}
-
-func Print(args ...interface{}) {
-	baseLogger.Print(args...)
+	baseLogger.logger.Info(args...)
 }
 
 func Warn(args ...interface{}) {
-	baseLogger.Warn(args...)
+	baseLogger.logger.Warn(args...)
 }
 
 func Warning(args ...interface{}) {
-	baseLogger.Warn(args...)
+	baseLogger.logger.Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	baseLogger.Error(args...)
+	baseLogger.logger.Error(args...)
 }
 
 func Fatal(args ...interface{}) {
-	baseLogger.Fatal(args...)
+	baseLogger.logger.Fatal(args...)
 }
 
 func Panic(args ...interface{}) {
-	baseLogger.Panic(args...)
+	baseLogger.logger.Panic(args...)
 }
