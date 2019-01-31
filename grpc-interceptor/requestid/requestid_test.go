@@ -9,7 +9,7 @@ import (
 )
 
 func Test_ExtendNilContext(t *testing.T) {
-	newCtx := ExtendContext(nil, "Test_ExtendNilContext")
+	newCtx := ExtendContext(context.TODO(), "Test_ExtendNilContext")
 	req := Extract(newCtx)
 	require.Len(t, req.Chain, 1)
 	assert.Equal(t, "Test_ExtendNilContext", req.Chain[0])

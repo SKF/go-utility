@@ -1,5 +1,4 @@
 // Package uuid is a wrapper to github.com/google/uuid
-
 package uuid
 
 import (
