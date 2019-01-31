@@ -39,7 +39,7 @@ type Logger interface {
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
 
-	Sync()
+	Sync() error
 }
 
 var origLogger *zap.SugaredLogger
