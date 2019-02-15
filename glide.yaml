@@ -4,8 +4,6 @@ import:
   version: ^1
 - package: go.uber.org/zap/zapcore
   version: ^1
-- package: github.com/bluele/zapslack
-  version: 3dde4cb45852a7666490b21e8aa97d072a7b9e20
 - package: github.com/google/uuid
   version: ^0.2.0
 - package: github.com/grpc-ecosystem/go-grpc-middleware
