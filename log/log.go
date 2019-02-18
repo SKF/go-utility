@@ -4,19 +4,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/bluele/zapslack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 type Fields = zapcore.Field
-
-type SlackHook struct {
-	AcceptedLevels []zapcore.Level
-	HookURL        string
-	Name           string
-	Asynchronous   bool
-}
 
 type Logger interface {
 	WithField(key string, value interface{}) Logger
@@ -73,29 +65,6 @@ func init() {
 
 func Base() Logger {
 	return baseLogger
-}
-
-func AddSlackHook(hook SlackHook) {
-	if hook.HookURL == "" {
-		WithField("name", hook.Name).
-			Warn("Cannot add slack hook with empty webhook url")
-		return
-	}
-
-	if len(hook.AcceptedLevels) == 0 {
-		hook.AcceptedLevels = []zapcore.Level{zap.ErrorLevel}
-	}
-
-	zl := zapslack.SlackHook{
-		HookURL:        hook.HookURL,
-		AcceptedLevels: hook.AcceptedLevels,
-		Async:          hook.Asynchronous,
-		FieldHeader:    hook.Name,
-	}
-	l := origLogger.Desugar()
-	l.WithOptions(
-		zap.Hooks(
-			zl.GetHook()))
 }
 
 func WithField(key string, value interface{}) Logger {
