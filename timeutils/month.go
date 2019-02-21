@@ -11,6 +11,43 @@ import (
 const earliestYear = 1801
 const latestYear = 2999
 
+// GetPeriodsStartAndEndUTC returns the start and end timestamps (in milliseconds) given two months for location UTC (timezone)
+func GetPeriodsStartAndEndUTC(firstyyyymm string, lastyyyymm string) (start int64, end int64, err error) {
+	return getPeriodsStartAndEnd(firstyyyymm, lastyyyymm, *time.UTC)
+}
+
+// getPeriodsStartAndEnd returns the period start and end timestamps (in milliseconds) given two months and the location (timezone)
+func getPeriodsStartAndEnd(firstyyyymm string, lastyyyymm string, location time.Location) (start int64, end int64, err error) {
+	start, _, err = getMonthStartAndEnd(firstyyyymm, location)
+	if err == nil {
+		_, end, err = getMonthStartAndEnd(lastyyyymm, location)
+	}
+
+	if start > end {
+		start = 0
+		end = 0
+		err = fmt.Errorf("start %s may not be after end %s", firstyyyymm, lastyyyymm)
+	}
+
+	return
+}
+
+// getMonthStartAndEnd returns timstamps (in milliseconds) for the month's start and end for the given location
+func getMonthStartAndEnd(yyyymm string, location time.Location) (start int64, end int64, err error) {
+	syyyy, smm, err := validFormat(yyyymm)
+
+	yyyy, _ := strconv.Atoi(syyyy)
+	mm, _ := strconv.Atoi(smm)
+
+	tt := time.Date(yyyy, time.Month(mm), 1, 0, 0, 0, 0, &location)
+	start = milli.MillisecondsTime(tt)
+
+	tt = tt.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
+	end = milli.MillisecondsTime(tt)
+
+	return
+}
+
 // validFormat returns err if yyyymm string format invalid - otherwise returns yyyy and mm
 func validFormat(yyyymm string) (validatedyyyy string, validatedmm string, err error) {
 	// default to current month
@@ -54,41 +91,4 @@ func validFormat(yyyymm string) (validatedyyyy string, validatedmm string, err e
 	}
 
 	return syyyy, smm, err
-}
-
-// getMonthStartAndEnd returns time (milliseconds) for the month's start and end for the given location
-func getMonthStartAndEnd(yyyymm string, location time.Location) (start int64, end int64, err error) {
-	syyyy, smm, err := validFormat(yyyymm)
-
-	yyyy, _ := strconv.Atoi(syyyy)
-	mm, _ := strconv.Atoi(smm)
-
-	tt := time.Date(yyyy, time.Month(mm), 1, 0, 0, 0, 0, &location)
-	start = milli.MillisecondsTime(tt)
-
-	tt = tt.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
-	end = milli.MillisecondsTime(tt)
-
-	return
-}
-
-// GetPeriodsStartAndEndUTC returns the start and end timestamps given two months for location UTC (timezone)
-func GetPeriodsStartAndEndUTC(firstyyyymm string, lastyyyymm string) (start int64, end int64, err error) {
-	return getPeriodsStartAndEnd(firstyyyymm, lastyyyymm, *time.UTC)
-}
-
-// getPeriodsStartAndEnd returns the period start and end timestamps given two months and the location (timezone)
-func getPeriodsStartAndEnd(firstyyyymm string, lastyyyymm string, location time.Location) (start int64, end int64, err error) {
-	start, _, err = getMonthStartAndEnd(firstyyyymm, location)
-	if err == nil {
-		_, end, err = getMonthStartAndEnd(lastyyyymm, location)
-	}
-
-	if start > end {
-		start = 0
-		end = 0
-		err = fmt.Errorf("start %s may not be after end %s", firstyyyymm, lastyyyymm)
-	}
-
-	return
 }

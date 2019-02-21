@@ -13,7 +13,7 @@ func Test_MillisecondsShouldBeWithinRealisticInterval(t *testing.T) {
 	assert.True(t, Milliseconds() < 9999999999999) // 2286-11-20
 }
 
-func Test_HappyPathMillisecondsTime(t *testing.T) {
+func Test_MillisecondsTime(t *testing.T) {
 	now := time.Now()
 	assert.Equal(t, MillisecondsTime(now.Add(time.Second)), MillisecondsTime(now)+1000)
 }

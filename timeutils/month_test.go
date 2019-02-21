@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Month_HappyPath(t *testing.T) {
+func Test_getMonthStartAndEnd(t *testing.T) {
 	start, end, err := getMonthStartAndEnd("201805", *time.UTC)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1525132800000), start)
@@ -16,11 +16,13 @@ func Test_Month_HappyPath(t *testing.T) {
 }
 
 func Test_Month_Default(t *testing.T) {
-	_, _, err := getMonthStartAndEnd("", *time.UTC)
+	start, end, err := getMonthStartAndEnd("", *time.UTC)
 	assert.Nil(t, err)
+
 	// values for 201805:
-	//	assert.Equal(t, int64(1525132800000), start)
-	//	assert.Equal(t, int64(1527811199999), end)
+	assert.True(t, start > 1525132800000)
+	assert.True(t, end > 1527811199999)
+	assert.True(t, end > start)
 }
 
 func Test_NotNumeric(t *testing.T) {
@@ -53,7 +55,7 @@ func Test_WrongLength(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func Test_Periods_HappyPath(t *testing.T) {
+func Test_GetPeriodsStartAndEndUTC(t *testing.T) {
 	start, end, err := GetPeriodsStartAndEndUTC("201801", "201809")
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1514764800000), start)
@@ -65,7 +67,7 @@ func Test_Periods_HappyPath(t *testing.T) {
 	assert.Equal(t, int64(1538351999999), end)
 }
 
-func Test_PeriodUTC_HappyPath(t *testing.T) {
+func Test_PeriodUTC(t *testing.T) {
 	start, end, err := getPeriodsStartAndEnd("201801", "201809", *time.UTC)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1514764800000), start)

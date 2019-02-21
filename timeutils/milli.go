@@ -20,6 +20,8 @@ func MillisecondsToTime(milli int64) time.Time {
 	return time.Unix(0, milli*1000000)
 }
 
+// AssertMilliseconds ensures that a given timestamp is in milliseconds.
+// If not, a timestamp converted into milliseconds as well as an error will be returned.
 func AssertMilliseconds(timestamp int64) (timestampMilliseconds int64, err error) {
 	var timestampYear3000Milliseconds int64 = 32503680000000
 	for timestamp > timestampYear3000Milliseconds {
