@@ -33,9 +33,19 @@ func getPeriodsStartAndEnd(firstyyyymm string, lastyyyymm string, location time.
 // getMonthStartAndEnd returns timstamps (in milliseconds) for the month's start and end for the given location
 func getMonthStartAndEnd(yyyymm string, location time.Location) (start int64, end int64, err error) {
 	syyyy, smm, err := validFormat(yyyymm)
+	if err != nil {
+		return 0, 0, err
+	}
 
-	yyyy, _ := strconv.Atoi(syyyy)
-	mm, _ := strconv.Atoi(smm)
+	yyyy, err := strconv.Atoi(syyyy)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	mm, err := strconv.Atoi(smm)
+	if err != nil {
+		return 0, 0, err
+	}
 
 	tt := time.Date(yyyy, time.Month(mm), 1, 0, 0, 0, 0, &location)
 	start = MillisecondsTime(tt)
@@ -43,7 +53,7 @@ func getMonthStartAndEnd(yyyymm string, location time.Location) (start int64, en
 	tt = tt.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
 	end = MillisecondsTime(tt)
 
-	return
+	return start, end, nil
 }
 
 // validFormat returns err if yyyymm string format invalid - otherwise returns yyyy and mm
@@ -65,15 +75,15 @@ func validFormat(yyyymm string) (validatedyyyy string, validatedmm string, err e
 	}
 
 	syyyy := yyyymm[0:4]
-	var yyyy = int64(0)
-	if yyyy, err = strconv.ParseInt(syyyy, 10, 64); err != nil {
+	yyyy, err := strconv.ParseInt(syyyy, 10, 64)
+	if err != nil {
 		err = fmt.Errorf("yyyy cannot be parsed - %s", syyyy)
 		return
 	}
 
 	smm := yyyymm[4:]
-	var mm = int64(0)
-	if mm, err = strconv.ParseInt(smm, 10, 64); err != nil {
+	mm, err := strconv.ParseInt(smm, 10, 64)
+	if err != nil {
 		err = fmt.Errorf("mm cannot be parsed - %s", smm)
 		return
 	}
