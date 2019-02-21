@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"skfdc.visualstudio.com/enlightcentre/analyze-functional-location/backend/core/milli"
 )
 
 const earliestYear = 1801
@@ -40,10 +38,10 @@ func getMonthStartAndEnd(yyyymm string, location time.Location) (start int64, en
 	mm, _ := strconv.Atoi(smm)
 
 	tt := time.Date(yyyy, time.Month(mm), 1, 0, 0, 0, 0, &location)
-	start = milli.MillisecondsTime(tt)
+	start = MillisecondsTime(tt)
 
 	tt = tt.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
-	end = milli.MillisecondsTime(tt)
+	end = MillisecondsTime(tt)
 
 	return
 }
