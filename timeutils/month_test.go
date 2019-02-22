@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,17 +59,12 @@ func Test_GetPeriodsStartAndEndUTC(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1514764800000), start)
 	assert.Equal(t, int64(1538351999999), end)
-
-	start, end, err = GetPeriodsStartAndEndUTC("201809", "201809") // same month
-	assert.Nil(t, err)
-	assert.Equal(t, int64(1535760000000), start)
-	assert.Equal(t, int64(1538351999999), end)
 }
 
-func Test_PeriodUTC(t *testing.T) {
-	start, end, err := getPeriodsStartAndEnd("201801", "201809", *time.UTC)
+func Test_PeriodUTC_SameMonth(t *testing.T) {
+	start, end, err := GetPeriodsStartAndEndUTC("201809", "201809")
 	assert.Nil(t, err)
-	assert.Equal(t, int64(1514764800000), start)
+	assert.Equal(t, int64(1535760000000), start)
 	assert.Equal(t, int64(1538351999999), end)
 }
 

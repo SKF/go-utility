@@ -11,14 +11,9 @@ const latestYear = 2999
 
 // GetPeriodsStartAndEndUTC returns the start and end timestamps (in milliseconds) given two months for location UTC (timezone)
 func GetPeriodsStartAndEndUTC(firstyyyymm string, lastyyyymm string) (start int64, end int64, err error) {
-	return getPeriodsStartAndEnd(firstyyyymm, lastyyyymm, *time.UTC)
-}
-
-// getPeriodsStartAndEnd returns the period start and end timestamps (in milliseconds) given two months and the location (timezone)
-func getPeriodsStartAndEnd(firstyyyymm string, lastyyyymm string, location time.Location) (start int64, end int64, err error) {
-	start, _, err = getMonthStartAndEnd(firstyyyymm, location)
+	start, _, err = getMonthStartAndEnd(firstyyyymm, *time.UTC)
 	if err == nil {
-		_, end, err = getMonthStartAndEnd(lastyyyymm, location)
+		_, end, err = getMonthStartAndEnd(lastyyyymm, *time.UTC)
 	}
 
 	if start > end {
@@ -48,10 +43,10 @@ func getMonthStartAndEnd(yyyymm string, location time.Location) (start int64, en
 	}
 
 	tt := time.Date(yyyy, time.Month(mm), 1, 0, 0, 0, 0, &location)
-	start = MillisecondsTime(tt)
+	start = MillisecondsUnix(tt)
 
 	tt = tt.AddDate(0, 1, 0).Add(time.Nanosecond * -1)
-	end = MillisecondsTime(tt)
+	end = MillisecondsUnix(tt)
 
 	return start, end, nil
 }

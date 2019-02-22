@@ -4,16 +4,48 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_MillisecondsShouldBeWithinRealisticInterval(t *testing.T) {
-	assert.True(t, Milliseconds() > 1528030261000) // 2018-03-06
-	assert.True(t, Milliseconds() < 9999999999999) // 2286-11-20
+	assert.True(t, MillisecondsNow() > 1528030261000) // 2018-03-06
+	assert.True(t, MillisecondsNow() < 9999999999999) // 2286-11-20
 }
 
-func Test_MillisecondsTime(t *testing.T) {
+func Test_MillisecondsUnix(t *testing.T) {
 	now := time.Now()
-	assert.Equal(t, MillisecondsTime(now.Add(time.Second)), MillisecondsTime(now)+1000)
+	assert.Equal(t, MillisecondsUnix(now.Add(time.Second)), MillisecondsUnix(now)+1000)
+}
+
+func Test_MillisecondsConversion(t *testing.T) {
+	ms := MillisecondsNow()
+	assert.Equal(t, ms, MillisecondsUnix(MillisecondsTime(ms)))
+}
+
+func Test_AssertMilliseconds(t *testing.T) {
+	var ms int64 = 1550837382666
+	result, err := AssertMilliseconds(ms)
+	assert.Equal(t, ms, result)
+	assert.NoError(t, err)
+}
+
+func Test_SecondsShouldBeConvertedIntoMilliseconds(t *testing.T) {
+	var seconds int64 = 1550837382
+	result, err := AssertMilliseconds(seconds)
+	assert.Equal(t, seconds*int64(time.Second/time.Millisecond), result)
+	assert.Error(t, err)
+}
+
+func Test_MicrosecondsShouldBeConvertedIntoMilliseconds(t *testing.T) {
+	var microseconds int64 = 1550837382666000
+	result, err := AssertMilliseconds(microseconds)
+	assert.Equal(t, microseconds/int64(time.Millisecond/time.Microsecond), result)
+	assert.Error(t, err)
+}
+
+func Test_NanosecondsShouldBeConvertedIntoMilliseconds(t *testing.T) {
+	var nanoseconds int64 = 1550837382666000456
+	result, err := AssertMilliseconds(nanoseconds)
+	assert.Equal(t, nanoseconds/int64(time.Millisecond/time.Nanosecond), result)
+	assert.Error(t, err)
 }
