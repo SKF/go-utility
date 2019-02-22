@@ -8,80 +8,86 @@ import (
 )
 
 func Test_getMonthStartAndEnd(t *testing.T) {
-	start, end, err := getMonthStartAndEnd("201805", *time.UTC)
-	assert.Nil(t, err)
+	start, end, err := GetPeriodsStartAndEndUTC("201805", "201805")
+	assert.NoError(t, err)
 	assert.Equal(t, int64(1525132800000), start)
 	assert.Equal(t, int64(1527811199999), end)
 }
 
-func Test_Month_Default(t *testing.T) {
-	start, end, err := getMonthStartAndEnd("", *time.UTC)
-	assert.Nil(t, err)
-
-	// values for 201805:
-	assert.True(t, start > 1525132800000)
-	assert.True(t, end > 1527811199999)
-	assert.True(t, end > start)
+func Test_NotNumericStart(t *testing.T) {
+	_, _, err := GetPeriodsStartAndEndUTC("abcdef", "201805")
+	assert.Error(t, err)
 }
 
-func Test_NotNumeric(t *testing.T) {
-	_, _, err := getMonthStartAndEnd("abcdef", *time.UTC)
-	assert.NotNil(t, err)
+func Test_NotNumericEnd(t *testing.T) {
+	_, _, err := GetPeriodsStartAndEndUTC("201805", "abcdef")
+	assert.Error(t, err)
 }
 
 func Test_OutOfRange(t *testing.T) {
-	_, _, err := getMonthStartAndEnd("987613", *time.UTC)
-	assert.NotNil(t, err)
-	_, _, err = getMonthStartAndEnd("299913", *time.UTC)
-	assert.NotNil(t, err)
-	_, _, err = getMonthStartAndEnd("201813", *time.UTC)
-	assert.NotNil(t, err)
-	_, _, err = getMonthStartAndEnd("201800", *time.UTC)
-	assert.NotNil(t, err)
+	_, _, err := GetPeriodsStartAndEndUTC("987613", "201805")
+	assert.Error(t, err)
+
+	_, _, err = GetPeriodsStartAndEndUTC("299913", "201805")
+	assert.Error(t, err)
+
+	_, _, err = GetPeriodsStartAndEndUTC("201813", "201805")
+	assert.Error(t, err)
+
+	_, _, err = GetPeriodsStartAndEndUTC("201800", "201805")
+	assert.Error(t, err)
 }
 
 func Test_WrongLength(t *testing.T) {
-	_, _, err := getMonthStartAndEnd(" ", *time.UTC)
-	assert.NotNil(t, err)
+	_, _, err := GetPeriodsStartAndEndUTC(" ", "201805")
+	assert.Error(t, err)
 
-	_, _, err = getMonthStartAndEnd("2018", *time.UTC)
-	assert.NotNil(t, err)
+	_, _, err = GetPeriodsStartAndEndUTC("2018", "201805")
+	assert.Error(t, err)
 
-	_, _, err = getMonthStartAndEnd("20181", *time.UTC)
-	assert.NotNil(t, err)
+	_, _, err = GetPeriodsStartAndEndUTC("20181", "201805")
+	assert.Error(t, err)
 
-	_, _, err = getMonthStartAndEnd("2018 12", *time.UTC)
-	assert.NotNil(t, err)
+	_, _, err = GetPeriodsStartAndEndUTC("2018 12", "201805")
+	assert.Error(t, err)
 }
 
 func Test_GetPeriodsStartAndEndUTC(t *testing.T) {
 	start, end, err := GetPeriodsStartAndEndUTC("201801", "201809")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, int64(1514764800000), start)
 	assert.Equal(t, int64(1538351999999), end)
 }
 
 func Test_PeriodUTC_SameMonth(t *testing.T) {
 	start, end, err := GetPeriodsStartAndEndUTC("201809", "201809")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, int64(1535760000000), start)
 	assert.Equal(t, int64(1538351999999), end)
 }
 
 func Test_PeriodWrongOrder(t *testing.T) {
 	_, _, err := GetPeriodsStartAndEndUTC("201812", "201809")
-	assert.NotNil(t, err)
+	assert.Error(t, err)
 }
 
-func Test_validFormat(t *testing.T) {
-	_, _, err := validFormat("123400")
-	assert.NotNil(t, err)
+func Test_toTime(t *testing.T) {
+	input := "201411"
+	result, err := toTime(input)
+	expected := time.Date(2014, 11, 1, 0, 0, 0, 0, time.UTC)
+	assert.Equal(t, expected, result)
+	assert.NoError(t, err)
+}
 
-	_, _, err = validFormat("20171")
-	assert.NotNil(t, err)
+func Test_toTime_InvalidInput(t *testing.T) {
+	input := "20141x"
+	_, err := toTime(input)
+	assert.Error(t, err)
+}
 
-	yyyy, mm, err := validFormat("201712")
-	assert.Nil(t, err)
-	assert.Equal(t, "2017", yyyy)
-	assert.Equal(t, "12", mm)
+func Test_lastDayOfMonth(t *testing.T) {
+	input := time.Date(2014, 11, 1, 0, 0, 0, 0, time.UTC)
+	expected := time.Date(2014, 11, 30, 23, 59, 59, 999999999, time.UTC)
+	result := lastDayOfMonth(input)
+	assert.Equal(t, expected, result)
 }
