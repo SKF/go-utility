@@ -5,9 +5,6 @@ import (
 	"time"
 )
 
-const earliestYear = 1801
-const latestYear = 2999
-
 // GetPeriodsStartAndEndUTC returns the start and end timestamps (in milliseconds) given two months for location UTC (timezone)
 func GetPeriodsStartAndEndUTC(firstyyyymm string, lastyyyymm string) (int64, int64, error) {
 	start, err := toTime(firstyyyymm)
