@@ -41,7 +41,7 @@ func (c Claims) Valid() (err error) {
 	}
 
 	if c.Email == "" {
-		return errors.New("Missing email in claims")
+		return errors.New("missing email in claims")
 	}
 
 	return
@@ -50,6 +50,7 @@ func (c Claims) Valid() (err error) {
 func Parse(jwtToken string) (_ Token, err error) {
 	keySets, err := jwk.GetKeySets()
 	if err != nil {
+		err = errors.Wrap(err, "failed to get key sets")
 		return
 	}
 
@@ -59,11 +60,12 @@ func Parse(jwtToken string) (_ Token, err error) {
 		func(token *jwt.Token) (_ interface{}, err error) {
 			keyID, ok := token.Header["kid"].(string)
 			if !ok {
-				return nil, errors.New("Expecting JWT header to have string `kid`")
+				return nil, errors.New("expecting JWT header to have string `kid`")
 			}
 
 			key, err := keySets.LookupKeyID(keyID)
 			if err != nil {
+				err = errors.Wrap(err, "failed to look up key id")
 				return
 			}
 
@@ -72,15 +74,17 @@ func Parse(jwtToken string) (_ Token, err error) {
 	)
 
 	if err != nil {
+		err = errors.Wrap(err, "parse with claims failed")
 		return
 	}
 
 	if !token.Valid {
-		err = errors.New("Token is not valid")
+		err = errors.New("token is not valid")
 		return
 	}
 
 	if err = token.Claims.Valid(); err != nil {
+		err = errors.Wrap(err, "failed to validate claims")
 		return
 	}
 

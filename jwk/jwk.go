@@ -5,17 +5,16 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"math/big"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 var KeySetURL string
 var keySets JWKeySets
 
 type JWKeySets []JWKeySet
-
-const ErrUnableToFindPublicKey = "unable to find public key"
 
 func (kss JWKeySets) LookupKeyID(keyID string) (ks JWKeySet, err error) {
 	for _, ks := range kss {
@@ -34,7 +33,7 @@ func (kss JWKeySets) LookupKeyID(keyID string) (ks JWKeySet, err error) {
 		}
 	}
 
-	return JWKeySet{}, errors.New(ErrUnableToFindPublicKey)
+	return JWKeySet{}, errors.New("unable to find public key")
 }
 
 type JWKeySet struct {
@@ -49,6 +48,7 @@ type JWKeySet struct {
 func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 	decodedE, err := base64.RawURLEncoding.DecodeString(ks.Exp)
 	if err != nil {
+		err = errors.Wrap(err, "failed to decode key set `exp`")
 		return
 	}
 
@@ -65,6 +65,7 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 
 	decodedN, err := base64.RawURLEncoding.DecodeString(ks.Mod)
 	if err != nil {
+		err = errors.Wrap(err, "failed to decode key set `mod`")
 		return
 	}
 
@@ -82,6 +83,7 @@ func GetKeySets() (_ JWKeySets, err error) {
 func RefreshKeySets() (err error) {
 	resp, err := http.Get(KeySetURL) // nolint: gosec
 	if err != nil {
+		err = errors.Wrap(err, "failed to fetch key sets")
 		return
 	}
 	defer resp.Body.Close()
@@ -91,6 +93,7 @@ func RefreshKeySets() (err error) {
 	}
 
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		err = errors.Wrap(err, "failed to unmarshal key sets")
 		return
 	}
 

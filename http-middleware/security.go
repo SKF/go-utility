@@ -64,7 +64,7 @@ func handleAccessToken(req *http.Request, header string) error {
 
 	token, err := jwt.Parse(base64Token)
 	if err != nil {
-		return errors.New("authorization token not valid")
+		return errors.Wrap(err, "authorization token not valid")
 	}
 
 	*req = *req.WithContext(
