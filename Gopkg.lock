@@ -2,6 +2,22 @@
 
 
 [[projects]]
+  digest = "1:ebaeb414df9abd72ff910cbd5ea19a4c6c98febbbef756eb07fb6e66b8148ba2"
+  name = "github.com/DataDog/datadog-go"
+  packages = ["statsd"]
+  pruneopts = "UT"
+  revision = "8a13fa761f51039f900738876f2837198fba804f"
+  version = "2.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6302833ba59ef0ff9c3feadfac74bdaaad087a9a63097a3d60580c7eca26f88b"
+  name = "github.com/Datadog/opencensus-go-exporter-datadog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0f32ad59ab087b08465a23717814771f007bcb88"
+
+[[projects]]
   digest = "1:079f8f13669133a1f839bd40aa8ae2e9da0b2b87f11a22dd386c7d8fac4e4e6d"
   name = "github.com/SKF/proto"
   packages = ["common"]
@@ -48,12 +64,12 @@
   version = "0.2"
 
 [[projects]]
-  digest = "1:3af6be4fee7c08f81f13d36f04ffb63ad4b6b5aaba12cce96095c7c2863d4912"
+  digest = "1:cbec35fe4d5a4fba369a656a8cd65e244ea2c743007d8f6c1ccb132acf9d1296"
   name = "github.com/gorilla/mux"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ed099d42384823742bba0bf9a72b53b55c9e2e38"
-  version = "v1.7.2"
+  revision = "00bdffe0f3c77e27d2cf6f5c70232a2d3e4d9c15"
+  version = "v1.7.3"
 
 [[projects]]
   digest = "1:c805a0558c867a671fc2dd1c6134b92a4d15c3fee5803abc70fdabdcb683ea0b"
@@ -73,6 +89,14 @@
   pruneopts = "UT"
   revision = "7087cb70de9f7a8bc0a10c375cb0d2280a8edf9c"
   version = "v0.5.1"
+
+[[projects]]
+  digest = "1:5e73b34a27d827212102605789de00bd411b2e434812133c83935fe9897c75e1"
+  name = "github.com/philhofer/fwd"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bb6d471dc95d4fe11e432687f8b70ff496cf3136"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -102,13 +126,32 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:556be1f91ad1230445813f3f2daf752d6a07fc7577ab736beffabd308bf4a92d"
+  digest = "1:c97e8a5e5c435c3287f581cdb4441ba34577ec6ead8422bfedafa6269af7abf6"
+  name = "github.com/tinylib/msgp"
+  packages = ["msgp"]
+  pruneopts = "UT"
+  revision = "af6442a0fcf6e2a1b824f70dd0c734f01e817751"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:74055050ea547bb04600be79cc501965cb3de8988018262f2ca430f0a0b48ec3"
   name = "go.opencensus.io"
   packages = [
     ".",
     "internal",
+    "internal/tagencoding",
+    "metric/metricdata",
+    "metric/metricproducer",
+    "plugin/ochttp",
+    "plugin/ochttp/propagation/b3",
+    "resource",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
     "trace",
     "trace/internal",
+    "trace/propagation",
     "trace/tracestate",
   ]
   pruneopts = "UT"
@@ -160,7 +203,7 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "3b0461eec859c4b73bb64fdc8285971fd33e3938"
+  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
 
 [[projects]]
   branch = "master"
@@ -244,10 +287,19 @@
   revision = "501c41df7f472c740d0674ff27122f3f48c80ce7"
   version = "v1.21.1"
 
+[[projects]]
+  digest = "1:dd02645a043d39e0ea1e84ee5cae56ac81c15b856d9ce85c438a972650f22918"
+  name = "gopkg.in/DataDog/dd-trace-go.v1"
+  packages = ["ddtrace/ext"]
+  pruneopts = "UT"
+  revision = "8d2998bc69008aa4553846ac9a044aa730bd4ce4"
+  version = "v1.15.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Datadog/opencensus-go-exporter-datadog",
     "github.com/SKF/proto/common",
     "github.com/dgrijalva/jwt-go",
     "github.com/google/uuid",
@@ -257,6 +309,8 @@
     "github.com/pkg/errors",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
+    "go.opencensus.io/plugin/ochttp",
+    "go.opencensus.io/stats/view",
     "go.opencensus.io/trace",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",

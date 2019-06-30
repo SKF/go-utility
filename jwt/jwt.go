@@ -17,22 +17,14 @@ func (t Token) GetClaims() Claims {
 	return Claims{}
 }
 
-type UserClaims struct {
-	UserID         string `json:"enlightUserId"`
-	Email          string `json:"enlightEmail"`
-	CompanyID      string `json:"enlightCompanyId"`
-	EulaAgreedDate string `json:"enlightEulaAgreedDate"`
-	ValidEula      string `json:"enlightValidEula"`
-	Username       string `json:"enlightName"`
-	UserStatus     string `json:"enlightStatus"`
-	UserRoles      string `json:"enlightRoles"`
-	UserAccess     string `json:"enlightAccess"`
+type CognitoClaims struct {
+	Username string `json:"username"`
+	TokenUse string `json:"token_use"`
 }
 
 type Claims struct {
 	jwt.StandardClaims
-	UserClaims
-	Picture string `json:"picture"`
+	CognitoClaims
 }
 
 func (c Claims) Valid() (err error) {
@@ -40,8 +32,13 @@ func (c Claims) Valid() (err error) {
 		return
 	}
 
-	if c.Email == "" {
-		return errors.New("missing email in claims")
+	if c.Username == "" {
+		return errors.New("missing username in claims")
+	}
+
+	const accessToken = "access"
+	if c.TokenUse != accessToken {
+		return errors.Errorf("wrong type of token: %s, should be: %s", c.TokenUse, accessToken)
 	}
 
 	return

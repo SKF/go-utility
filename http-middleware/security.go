@@ -15,15 +15,17 @@ import (
 	"go.opencensus.io/trace"
 )
 
-type claimsContextKey struct{}
-
 const (
 	HeaderAuthorization = "Authorization"
 )
 
+type Users interface {
+	GetUserIDByEmail(ctx context.Context, email string) (string, error)
+}
+
 // AuthenticateMiddleware retrieves the security configuration for the matched route
 // and handles Access Token validation and stores the token claims in the request context.
-func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
+func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 	jwk.KeySetURL = keySetURL
 	if err := jwk.RefreshKeySets(); err != nil {
 		log.
@@ -43,7 +45,7 @@ func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessToken(req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessToken(users, req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
 					http_model.WriteJSONResponse(w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
@@ -56,7 +58,15 @@ func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 	}
 }
 
-func handleAccessToken(req *http.Request, header string) error {
+type userIDContextKey struct{}
+
+const maxNumberOfCognitoUsers = 2 * (10 ^ 7)
+
+var userIDs = make(map[string]string, maxNumberOfCognitoUsers)
+
+func handleAccessToken(users Users, req *http.Request, header string) error {
+	ctx := req.Context()
+
 	base64Token := req.Header.Get(header)
 	if base64Token == "" {
 		return errors.Errorf("auth header [%s] was empty", header)
@@ -67,22 +77,29 @@ func handleAccessToken(req *http.Request, header string) error {
 		return errors.Wrap(err, "authorization token not valid")
 	}
 
-	*req = *req.WithContext(
-		context.WithValue(req.Context(), claimsContextKey{}, token.GetClaims()),
-	)
+	email := token.GetClaims().Username
+	userID, exists := userIDs[email]
+	if users != nil && !exists {
+		if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
+			return errors.Wrap(err, "couldn't get User ID by email")
+		}
+		userIDs[email] = userID
+	}
+
+	ctx = context.WithValue(ctx, userIDContextKey{}, userID)
+	*req = *req.WithContext(ctx)
+
 	return nil
 }
 
-// ExtractClaimsFromContext extracts JWT claims from a context.
-func ExtractClaimsFromContext(ctx context.Context) (_ jwt.Claims, err error) {
-	v := ctx.Value(claimsContextKey{})
+// ExtractUserIDFromContext extracts User ID from a context.
+func ExtractUserIDFromContext(ctx context.Context) (_ string, err error) {
+	v := ctx.Value(userIDContextKey{})
 	if v == nil {
-		err = errors.New("unable to parse Claims from context")
+		err = errors.New("unable to parse User ID from context")
 		return
 	}
-
-	claims := v.(jwt.Claims)
-	return claims, nil
+	return v.(string), nil
 }
 
 type Authorizer interface {
@@ -109,9 +126,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 
-			claims, err := ExtractClaimsFromContext(req.Context())
+			userID, err := ExtractUserIDFromContext(req.Context())
 			if err != nil {
-				logFields.Error("Couldn't extract claims from context.")
+				logFields.Error("Couldn't extract User ID from context.")
 				http_model.WriteJSONResponse(w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
 			}
@@ -126,13 +143,13 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 
 				ok, err := authorizer.IsAuthorizedWithContext(
 					ctx,
-					claims.UserID,
+					userID,
 					authorizeConfig.action,
 					resource,
 				)
 				if !ok || err != nil {
 					logFields.
-						WithField("userId", claims.UserID).
+						WithField("userId", userID).
 						WithField("action", authorizeConfig.action).
 						WithField("resource", resource).
 						Warn("User is not Authorized")
