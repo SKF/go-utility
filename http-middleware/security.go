@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	http_model "github.com/SKF/go-utility/http-model"
+	http_server "github.com/SKF/go-utility/http-server"
 	"github.com/SKF/go-utility/jwk"
 	"github.com/SKF/go-utility/jwt"
 	"github.com/SKF/go-utility/log"
@@ -47,7 +48,7 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 			if secConfig.accessTokenHeader != "" {
 				if err := handleAccessToken(users, req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
-					http_model.WriteJSONResponse(w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
+					http_server.WriteJSONResponse(w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
 				}
 			}
@@ -129,7 +130,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			userID, err := ExtractUserIDFromContext(req.Context())
 			if err != nil {
 				logFields.Error("Couldn't extract User ID from context.")
-				http_model.WriteJSONResponse(w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+				http_server.WriteJSONResponse(w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
 			}
 
@@ -137,7 +138,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				resource, err := authorizeConfig.resourceFunc(req)
 				if err != nil {
 					logFields.WithError(err).Error("ResourceFunc failed.")
-					http_model.WriteJSONResponse(w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+					http_server.WriteJSONResponse(w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 					return
 				}
 
@@ -153,7 +154,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 						WithField("action", authorizeConfig.action).
 						WithField("resource", resource).
 						Warn("User is not Authorized")
-					http_model.WriteJSONResponse(w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
+					http_server.WriteJSONResponse(w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
 				}
 			}
