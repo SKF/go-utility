@@ -4,3 +4,4 @@
 - env
 - log
 - uuid
+- **timeutils**: contains some useful helper methods for working with time and timestamps.

@@ -17,7 +17,7 @@ const REQUEST_TRANSACTION_ID_KEY = "request.transaction.id"
 // UnaryServerInterceptor returns a new unary server interceptor that adds
 // the Request ID Metadata to the call.
 func UnaryServerInterceptor(serviceName string) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, err error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, err error) {
 		newCtx := ExtendContext(ctx, serviceName)
 		return handler(newCtx, req)
 	}
@@ -26,7 +26,7 @@ func UnaryServerInterceptor(serviceName string) grpc.UnaryServerInterceptor {
 // StreamServerInterceptor returns a new streaming server interceptor that adds
 // the Request ID Metadata to the call.
 func StreamServerInterceptor(serviceName string) grpc.StreamServerInterceptor {
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
+	return func(srv interface{}, stream grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) (err error) {
 		newCtx := ExtendContext(stream.Context(), serviceName)
 		wrappedStream := grpc_middleware.WrapServerStream(stream)
 		wrappedStream.WrappedContext = newCtx

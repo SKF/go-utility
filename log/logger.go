@@ -76,6 +76,6 @@ func (l logger) Panic(args ...interface{}) {
 	l.logger.Panic(args...)
 }
 
-func (l logger) Sync() {
-	l.logger.Sync()
+func (l logger) Sync() error {
+	return l.logger.Sync()
 }
