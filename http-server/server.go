@@ -17,7 +17,7 @@ import (
 
 func StartHealthServer(port string) {
 	http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
+		WriteJSONResponse(w, http.StatusOK, []byte(`{"status": "ok"}`))
 	})
 
 	log.Infof("Starting health server on port %s", port)
