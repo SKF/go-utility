@@ -1,8 +1,10 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	datadog "github.com/Datadog/opencensus-go-exporter-datadog"
@@ -16,8 +18,8 @@ import (
 )
 
 func StartHealthServer(port string) {
-	http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
-		WriteJSONResponse(w, http.StatusOK, []byte(`{"status": "ok"}`))
+	http.HandleFunc("/health", func(w http.ResponseWriter, req *http.Request) {
+		WriteJSONResponse(req.Context(), w, http.StatusOK, []byte(`{"status": "ok"}`))
 	})
 
 	log.Infof("Starting health server on port %s", port)
@@ -52,29 +54,32 @@ func SetupDatadogInstrumentation(service, awsRegion, awsAccountID, stage string)
 	return ddTracer
 }
 
-func UnmarshalRequest(r *http.Request, v interface{}) (err error) {
-	defer r.Body.Close()
-	if err = json.NewDecoder(r.Body).Decode(v); err != nil {
+func UnmarshalRequest(body io.ReadCloser, v interface{}) (err error) {
+	defer body.Close()
+	if err = json.NewDecoder(body).Decode(v); err != nil {
 		err = errors.Wrap(err, "failed to unmarshal request body")
 	}
 	return
 }
 
-func MarshalAndWriteJSONResponse(w http.ResponseWriter, code int, v interface{}) {
+func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, v interface{}) {
 	response, err := json.Marshal(v)
 	if err != nil {
 		log.WithError(err).
+			WithTracing(ctx).
 			WithField("type", fmt.Sprintf("%T", v)).
 			Error("Failed to marshal response body")
 		response = http_model.ErrResponseInternalServerError
 	}
-	WriteJSONResponse(w, code, response)
+	WriteJSONResponse(ctx, w, code, response)
 }
 
-func WriteJSONResponse(w http.ResponseWriter, code int, body []byte) {
+func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, body []byte) {
 	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write(body); err != nil {
-		log.WithError(err).Error("Failed to write response")
+		log.WithError(err).
+			WithTracing(ctx).
+			Error("Failed to write response")
 	}
 }

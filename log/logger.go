@@ -1,6 +1,10 @@
 package log
 
 import (
+	"context"
+	"encoding/binary"
+
+	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +22,20 @@ func (l logger) WithFields(fields Fields) Logger {
 
 func (l logger) WithError(err error) Logger {
 	return logger{l.logger.With(zap.Error(err))}
+}
+
+// WithTracing will take an OpenCensus trace and add log fields for Datadog.
+// based on convertSpan in https://github.com/DataDog/opencensus-go-exporter-datadog/blob/master/span.go
+// and https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/?tab=go
+func (l logger) WithTracing(ctx context.Context) (returnedLogger Logger) {
+	if span := trace.FromContext(ctx); span != nil {
+		traceID := span.SpanContext().TraceID
+		spanID := span.SpanContext().SpanID
+		returnedLogger = l.
+			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
+			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
+	}
+	return
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
