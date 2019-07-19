@@ -34,15 +34,6 @@ func (l logger) WithTracing(ctx context.Context) (returnedLogger Logger) {
 		returnedLogger = l.
 			WithField("trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("span_id", binary.BigEndian.Uint64(spanID[:]))
-
-		// returnedLogger = l.
-		// 	WithField("dd", struct {
-		// 		TraceID uint64 `json:"trace_id"`
-		// 		SpanID  uint64 `json:"span_id"`
-		// 	}{
-		// 		TraceID: binary.BigEndian.Uint64(traceID[8:]),
-		// 		SpanID:  binary.BigEndian.Uint64(spanID[:]),
-		// 	})
 	}
 	return
 }
