@@ -10,14 +10,6 @@
   version = "2.2.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:6302833ba59ef0ff9c3feadfac74bdaaad087a9a63097a3d60580c7eca26f88b"
-  name = "github.com/Datadog/opencensus-go-exporter-datadog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "0f32ad59ab087b08465a23717814771f007bcb88"
-
-[[projects]]
   digest = "1:079f8f13669133a1f839bd40aa8ae2e9da0b2b87f11a22dd386c7d8fac4e4e6d"
   name = "github.com/SKF/proto"
   packages = ["common"]
@@ -89,6 +81,14 @@
   pruneopts = "UT"
   revision = "7087cb70de9f7a8bc0a10c375cb0d2280a8edf9c"
   version = "v0.5.1"
+
+[[projects]]
+  branch = "feature/oc-error-tag"
+  digest = "1:df5071503488f23ddb913e3fd61db0c3fe901126bdeb14a699862d45b6ddca30"
+  name = "github.com/lonnblad/opencensus-go-exporter-datadog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "45b0eb3636c791ce6a24efa07d3196ddb5358e97"
 
 [[projects]]
   digest = "1:5e73b34a27d827212102605789de00bd411b2e434812133c83935fe9897c75e1"
@@ -300,13 +300,13 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Datadog/opencensus-go-exporter-datadog",
     "github.com/SKF/proto/common",
     "github.com/dgrijalva/jwt-go",
     "github.com/google/uuid",
     "github.com/gorilla/mux",
     "github.com/grpc-ecosystem/go-grpc-middleware",
     "github.com/grpc-ecosystem/go-grpc-middleware/tags",
+    "github.com/lonnblad/opencensus-go-exporter-datadog",
     "github.com/pkg/errors",
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
