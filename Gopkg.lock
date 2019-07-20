@@ -84,11 +84,11 @@
 
 [[projects]]
   branch = "feature/oc-error-tag"
-  digest = "1:df5071503488f23ddb913e3fd61db0c3fe901126bdeb14a699862d45b6ddca30"
+  digest = "1:a9433efb04cad6d6d615e6617b5ccdaa583f3e6da6fc8173a6c5ff98134bfe9a"
   name = "github.com/lonnblad/opencensus-go-exporter-datadog"
   packages = ["."]
   pruneopts = "UT"
-  revision = "45b0eb3636c791ce6a24efa07d3196ddb5358e97"
+  revision = "9686ccb0a056d435756f6dac73357350aeb45e58"
 
 [[projects]]
   digest = "1:5e73b34a27d827212102605789de00bd411b2e434812133c83935fe9897c75e1"
