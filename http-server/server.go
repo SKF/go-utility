@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	datadog "github.com/lonnblad/opencensus-go-exporter-datadog"
+	datadog "github.com/DataDog/opencensus-go-exporter-datadog"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"

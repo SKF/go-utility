@@ -22,10 +22,6 @@
   name = "google.golang.org/grpc"
   version = "1.12.2"
 
-[[constraint]]
-  name = "github.com/lonnblad/opencensus-go-exporter-datadog"
-  branch = "feature/oc-error-tag"
-
 [prune]
   go-tests = true
   unused-packages = true
