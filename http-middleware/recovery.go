@@ -9,19 +9,16 @@ import (
 )
 
 func Recovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.WithField("recover", err).Error("Recovered from a panic")
-				http_server.WriteJSONResponse(
-					w,
-					http.StatusInternalServerError,
-					http_model.ErrResponseInternalServerError,
-				)
+				ctx := req.Context()
+				log.WithTracing(ctx).WithField("recover", err).Error("Recovered from a panic")
+				http_server.WriteJSONResponse(ctx, w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 			}
 
 		}()
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, req)
 	})
 }

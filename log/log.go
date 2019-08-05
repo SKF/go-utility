@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -14,6 +15,7 @@ type Logger interface {
 	WithField(key string, value interface{}) Logger
 	WithFields(fields Fields) Logger
 	WithError(err error) Logger
+	WithTracing(ctx context.Context) Logger
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -60,7 +62,6 @@ func init() {
 	origLogger = l.Sugar()
 
 	baseLogger = logger{origLogger}
-
 }
 
 func Base() Logger {
@@ -77,6 +78,11 @@ func WithFields(fields Fields) Logger {
 
 func WithError(err error) Logger {
 	return baseLogger.WithError(err)
+}
+
+// WithTracing will take an OpenCensus trace and add log fields for Datadog.
+func WithTracing(ctx context.Context) Logger {
+	return baseLogger.WithTracing(ctx)
 }
 
 // We must directly call the bundled logger here (whenever a func instead of
