@@ -4,13 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SKF/go-utility/env"
-	"github.com/SKF/go-utility/log"
 	"github.com/aws/aws-lambda-go/events"
 
 	aws_cloudwatch_log_events "github.com/SKF/go-utility/datadog/aws-cloudwatch-log-events"
 	datadog "github.com/SKF/go-utility/datadog/client"
 	"github.com/SKF/go-utility/datadog/tags"
+	"github.com/SKF/go-utility/env"
+	"github.com/SKF/go-utility/log"
 )
 
 var (

@@ -11,8 +11,8 @@ import (
 
 const defaultMaxRetries = 2
 
-// ClientHttp is an http client structure supporting http operations for the datadog api
-type ClientTCP struct {
+// TCP is an TCP client structure supporting http operations for the datadog api
+type TCP struct {
 	conn       net.Conn
 	maxRetries int
 	host       string
@@ -22,8 +22,8 @@ type ClientTCP struct {
 }
 
 // NewTCPClient creates a new http client for the datadog api
-func NewTCPClient(host string, port string, apiKey string, useSsl bool) *ClientTCP {
-	client := &ClientTCP{
+func NewTCPClient(host string, port string, apiKey string, useSsl bool) *TCP {
+	client := &TCP{
 		host:       host,
 		port:       port,
 		apiKey:     apiKey,
@@ -35,18 +35,18 @@ func NewTCPClient(host string, port string, apiKey string, useSsl bool) *ClientT
 }
 
 // WithMaxRetries configures the max allowed retries to post to the api
-func (c *ClientTCP) WithMaxRetries(maxRetries int) *ClientTCP {
+func (c *TCP) WithMaxRetries(maxRetries int) *TCP {
 	c.maxRetries = maxRetries
 	return c
 }
 
 // URL returns the host:port for the client to connect to
-func (c *ClientTCP) URL() string {
+func (c *TCP) URL() string {
 	return fmt.Sprintf("%s:%s", c.host, c.port)
 }
 
 // Connect attempts to establish a tcp connection to the datadog api
-func (c *ClientTCP) Connect() (err error) {
+func (c *TCP) Connect() (err error) {
 	url := c.URL()
 	if c.conn, err = net.Dial("tcp", url); err != nil {
 		return err
@@ -74,7 +74,7 @@ func (c *ClientTCP) Connect() (err error) {
 }
 
 // Disconnect tries to disconnect from the datadog api
-func (c *ClientTCP) Disconnect() (err error) {
+func (c *TCP) Disconnect() (err error) {
 	if c.conn == nil {
 		return
 	}
@@ -90,18 +90,18 @@ func (c *ClientTCP) Disconnect() (err error) {
 }
 
 // PostLogEntry tries to post the log entry to the DataDog lambda ingestion api
-func (c *ClientTCP) PostLogEntry(logEntry interface{}) (err error) {
+func (c *TCP) PostLogEntry(logEntry interface{}) (err error) {
 	// make sure we have a connection
 	if c.conn == nil {
 		if err = c.Connect(); err != nil {
-			return err
+			return
 			// errors.Wrap(err, "failed to post to datadog api - no connection could be established").
 			// 	WithParams("logEntry", logEntry)
 		}
 
 		// we should have a connection now!
 		if c.conn == nil {
-			return err
+			return
 			// errors.Wrap(err, "failed to post to datadog api - no connection available after connecting").
 			// 	WithParams("logEntry", logEntry)
 		}
@@ -111,7 +111,7 @@ func (c *ClientTCP) PostLogEntry(logEntry interface{}) (err error) {
 	var jsonBytes []byte
 	if jsonBytes, err = json.Marshal(logEntry); err != nil {
 		// don't retry on marshal error... can't really be fixed
-		return err
+		return
 		// errors.Wrap(err, "failed to marshal logEntry to json").
 		// 	WithParams("logEntry", logEntry)
 	}
@@ -130,32 +130,23 @@ func (c *ClientTCP) PostLogEntry(logEntry interface{}) (err error) {
 
 	// keep retrying to send and after each retry... disconnect and reconnect to the datadog api
 	for numRetries <= maxRetries {
-		numRetries++
-
-		if err != nil {
-			// disconnect & reconnect
-			if dcErr := c.Disconnect(); dcErr != nil {
-				log.WithError(dcErr).
-					WithField("logEntry", logEntry).
-					Debugf("failed to disconnect from datadog api during a retry attempt")
-			}
-
-			// reconnect with ssl
-			if connErr := c.Connect(); connErr != nil {
-				log.WithError(connErr).
-					WithField("logEntry", logEntry).
-					Debugf("failed to connect to datadog api during a retry attempt")
-			}
-		}
-
-		if _, err = c.conn.Write([]byte(logEntryJSONStr)); err != nil {
-			// err = errors.Wrap(err, "failed to send logEntry to datadog api").
-			// 	WithParams("logEntry", logEntry)
-		} else {
-			// success... we are done
-			err = nil
+		if _, err = c.conn.Write([]byte(logEntryJSONStr)); err == nil {
 			break
 		}
+
+		if dcErr := c.Disconnect(); dcErr != nil {
+			log.WithError(dcErr).
+				WithField("logEntry", logEntry).
+				Debugf("failed to disconnect from datadog api during a retry attempt")
+		}
+
+		if connErr := c.Connect(); connErr != nil {
+			log.WithError(connErr).
+				WithField("logEntry", logEntry).
+				Debugf("failed to connect to datadog api during a retry attempt")
+		}
+
+		numRetries++
 	}
 
 	return err

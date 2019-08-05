@@ -89,35 +89,10 @@ func (w *worker) mapToDatadogLog(event events.CloudwatchLogsLogEvent) (_ interfa
 
 	jsonDict := map[string]interface{}{}
 
-	// Datadog tracing information
-	// https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/#manual-trace-id-injection
-	tracing := struct {
-		TraceID *uint64 `json:"dd.trace_id,omitempty"`
-		SpanID  *uint64 `json:"dd.span_id,omitempty"`
-	}{}
-
 	if strings.HasPrefix(msg, "{") && strings.HasSuffix(msg, "}") {
 		// probably json
-
-		// trim any UTF-8 encoding prefix from the incoming message data
-		var messageBytes = bytes.TrimPrefix([]byte(msg), []byte("\xef\xbb\xbf"))
-		if err = json.Unmarshal(messageBytes, &jsonDict); err != nil {
+		if err = handleJSON(msg, jsonDict); err != nil {
 			return
-		}
-
-		if err = json.Unmarshal(messageBytes, &tracing); err != nil {
-			return
-		}
-		if tracing.TraceID != nil {
-			jsonDict["dd.trace_id"] = *tracing.TraceID
-			jsonDict["dd.span_id"] = *tracing.SpanID
-		}
-
-		// change any "msg" field to "message" for Datadog
-		// https://docs.datadoghq.com/logs/processing/#message-attribute
-		if msgValue, ok := jsonDict["msg"]; ok {
-			jsonDict["message"] = msgValue
-			delete(jsonDict, "msg")
 		}
 	} else {
 		// probably not json, just set the message
@@ -145,4 +120,35 @@ func (w *worker) mapToDatadogLog(event events.CloudwatchLogsLogEvent) (_ interfa
 	jsonDict["ddtags"] = w.tags.String()
 
 	return jsonDict, nil
+}
+
+func handleJSON(msg string, jsonDict map[string]interface{}) (err error) {
+	// trim any UTF-8 encoding prefix from the incoming message data
+	var messageBytes = bytes.TrimPrefix([]byte(msg), []byte("\xef\xbb\xbf"))
+	if err = json.Unmarshal(messageBytes, &jsonDict); err != nil {
+		return
+	}
+
+	// Datadog tracing information
+	// https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/#manual-trace-id-injection
+	tracing := struct {
+		TraceID *uint64 `json:"dd.trace_id,omitempty"`
+		SpanID  *uint64 `json:"dd.span_id,omitempty"`
+	}{}
+	if err = json.Unmarshal(messageBytes, &tracing); err != nil {
+		return
+	}
+	if tracing.TraceID != nil {
+		jsonDict["dd.trace_id"] = *tracing.TraceID
+		jsonDict["dd.span_id"] = *tracing.SpanID
+	}
+
+	// change any "msg" field to "message" for Datadog
+	// https://docs.datadoghq.com/logs/processing/#message-attribute
+	if msgValue, ok := jsonDict["msg"]; ok {
+		jsonDict["message"] = msgValue
+		delete(jsonDict, "msg")
+	}
+
+	return
 }
