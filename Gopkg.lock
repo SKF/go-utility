@@ -11,11 +11,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6302833ba59ef0ff9c3feadfac74bdaaad087a9a63097a3d60580c7eca26f88b"
-  name = "github.com/Datadog/opencensus-go-exporter-datadog"
+  digest = "1:5bff2303114e11ae44205459fab71af50f1618763515b5c9508d0cf172ebe87d"
+  name = "github.com/DataDog/opencensus-go-exporter-datadog"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0f32ad59ab087b08465a23717814771f007bcb88"
+  revision = "c7b72e836616d5d093305cdf0103398610385717"
 
 [[projects]]
   digest = "1:079f8f13669133a1f839bd40aa8ae2e9da0b2b87f11a22dd386c7d8fac4e4e6d"
@@ -83,12 +83,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:67474f760e9ac3799f740db2c489e6423a4cde45520673ec123ac831ad849cb8"
+  digest = "1:7fae9ec96d10b2afce0da23c378c8b3389319b7f92fa092f2621bba3078cfb4b"
   name = "github.com/hashicorp/golang-lru"
   packages = ["simplelru"]
   pruneopts = "UT"
-  revision = "7087cb70de9f7a8bc0a10c375cb0d2280a8edf9c"
-  version = "v0.5.1"
+  revision = "7f827b33c0f158ec5dfbba01bb0b14a4541fd81d"
+  version = "v0.5.3"
 
 [[projects]]
   digest = "1:5e73b34a27d827212102605789de00bd411b2e434812133c83935fe9897c75e1"
@@ -191,7 +191,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b5936d38011189ba9b2e5890a38c7ffe0ac7f157eef2ddc0fe752117c50d394d"
+  digest = "1:d2aa096fe6b539afe74dd6ab8e9a160304707f1477b01c637b4bbe20d262a25c"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -203,15 +203,15 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
+  revision = "ca1201d0de80cfde86cb01aea620983605dfe99b"
 
 [[projects]]
   branch = "master"
-  digest = "1:5632b0c4d972da51b5914f09fc5c1a8535e9d8d5d937e95ef83c423a0dd67f13"
+  digest = "1:fdfd985fe7956d77128572032636b5c1b7b58a81acd7089e96923e2f9539c573"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "fae7ac547cb717d141c433a2a173315e216b64c4"
+  revision = "51ab0e2deafac1f46c46ad59cf0921be2f180c3d"
 
 [[projects]]
   digest = "1:8d8faad6b12a3a4c819a3f9618cb6ee1fa1cfc33253abeeea8b55336721e3405"
@@ -244,10 +244,10 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
-  revision = "c506a9f9061087022822e8da603a52fc387115a8"
+  revision = "fa694d86fc64c7654a660f8908de4e879866748d"
 
 [[projects]]
-  digest = "1:cf01ae0753310464677058b125fa31e74fd943781782ada503180ad784fc83d3"
+  digest = "1:581c9b0fe9354faf730ff231cf3682089e0b703073cf10e3976219609d27a9ea"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -285,22 +285,22 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "1d89a3c832915b2314551c1d2a506874d62e53f7"
-  version = "v1.22.0"
+  revision = "045159ad57f3781d409358e3ade910a018c16b30"
+  version = "v1.22.1"
 
 [[projects]]
   digest = "1:171240120c3ed1aa7c583e07210d9456218c83d12aae9df8e4b00eb9ae870aa8"
   name = "gopkg.in/DataDog/dd-trace-go.v1"
   packages = ["ddtrace/ext"]
   pruneopts = "UT"
-  revision = "71b316f38986652bee96feac2bbaae53de819d0d"
-  version = "v1.16.0"
+  revision = "612cde3ce8a9ac1d5cb7070075d6e275bd62752d"
+  version = "v1.16.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Datadog/opencensus-go-exporter-datadog",
+    "github.com/DataDog/opencensus-go-exporter-datadog",
     "github.com/SKF/proto/common",
     "github.com/dgrijalva/jwt-go",
     "github.com/google/uuid",
