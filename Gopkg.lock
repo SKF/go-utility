@@ -26,6 +26,14 @@
   version = "v1.21.0-go"
 
 [[projects]]
+  digest = "1:ec49ab6d44f187df8a1e2e897aef3561a77b2f012e56d0cc42f6a9bdfb9857f9"
+  name = "github.com/aws/aws-lambda-go"
+  packages = ["events"]
+  pruneopts = "UT"
+  revision = "578ce6d457b2e74402b4abadbff3d37ea8173f87"
+  version = "v1.12.0"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -302,6 +310,7 @@
   input-imports = [
     "github.com/DataDog/opencensus-go-exporter-datadog",
     "github.com/SKF/proto/common",
+    "github.com/aws/aws-lambda-go/events",
     "github.com/dgrijalva/jwt-go",
     "github.com/google/uuid",
     "github.com/gorilla/mux",
