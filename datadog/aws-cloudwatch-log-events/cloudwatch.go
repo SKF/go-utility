@@ -15,19 +15,23 @@ const (
 	lambdaEventType     = "lambda"
 	ecsEventType        = "ecs"
 	cloudwatchEventType = "cloudwatch"
-	noOfWorkers         = 1
+	defaultNoOfWorkers  = 1
 )
 
 type Processor struct {
-	tags    tags.Tags
-	service string
-	client  datadog.Client
-	errs    []error
+	tags        tags.Tags
+	service     string
+	client      datadog.Client
+	noOfWorkers int
+	errs        []error
 }
 
-func (p *Processor) WithClient(client datadog.Client) *Processor {
-	p.client = client
-	return p
+func NewProcessor(service string, client datadog.Client) *Processor {
+	return &Processor{
+		service:     service,
+		client:      client,
+		noOfWorkers: defaultNoOfWorkers,
+	}
 }
 
 func (p *Processor) Withtags(tags tags.Tags) *Processor {
@@ -35,8 +39,8 @@ func (p *Processor) Withtags(tags tags.Tags) *Processor {
 	return p
 }
 
-func (p *Processor) WithService(service string) *Processor {
-	p.service = service
+func (p *Processor) WithNoOfWorkers(noOfWorkers int) *Processor {
+	p.noOfWorkers = noOfWorkers
 	return p
 }
 
@@ -67,15 +71,14 @@ func (p *Processor) Process(ctx context.Context, request events.CloudwatchLogsEv
 	}()
 
 	done := make(chan int)
-	workers := make([]*worker, noOfWorkers)
+	workers := make([]*worker, p.noOfWorkers)
 	for idx := range workers {
-		w := &worker{id: idx}
-		go w.withDatadogClient(p.client).
+		w := newWorker(idx, p.service, p.client).
 			withTags(p.tags).
-			withService(p.service).
 			withEventType(eventType).
-			withSource(source).
-			start(done, work)
+			withSource(source)
+
+		go w.start(done, work)
 		workers[idx] = w
 	}
 

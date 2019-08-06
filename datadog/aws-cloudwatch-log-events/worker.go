@@ -15,30 +15,24 @@ import (
 
 type worker struct {
 	id        int
+	service   string
 	client    datadog.Client
 	errs      []error
 	tags      tags.Tags
 	eventType string
 	source    string
-	service   string
 }
 
-func (w *worker) errors() []error {
-	return w.errs
-}
-
-func (w *worker) withDatadogClient(client datadog.Client) *worker {
-	w.client = client
-	return w
+func newWorker(id int, service string, client datadog.Client) *worker {
+	return &worker{
+		id:      id,
+		service: service,
+		client:  client,
+	}
 }
 
 func (w *worker) withTags(tags tags.Tags) *worker {
 	w.tags = tags
-	return w
-}
-
-func (w *worker) withService(service string) *worker {
-	w.service = service
 	return w
 }
 
@@ -50,6 +44,10 @@ func (w *worker) withEventType(eventType string) *worker {
 func (w *worker) withSource(source string) *worker {
 	w.source = source
 	return w
+}
+
+func (w *worker) errors() []error {
+	return w.errs
 }
 
 func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {

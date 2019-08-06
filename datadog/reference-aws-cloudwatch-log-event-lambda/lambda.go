@@ -47,11 +47,8 @@ func Handler(ctx context.Context, request events.CloudwatchLogsEvent) (err error
 	tags.AddTag("vsts_release_def", vstsReleaseDef)
 	tags.AddTag("vsts_build_number", vstsBuildNumber)
 
-	p := &aws_cloudwatch_log_events.Processor{}
-	p.WithClient(client).
-		Withtags(tags).
-		WithService(service).
-		Process(ctx, request)
+	p := aws_cloudwatch_log_events.NewProcessor(service, client).Withtags(tags)
+	p.Process(ctx, request)
 	for _, err := range p.Errors() {
 		log.WithError(err).Error("failed to send log events to Datadog")
 	}

@@ -32,11 +32,9 @@ func Test_Process_Valid_Request(t *testing.T) {
 	require.Nil(t, err)
 	request := events.CloudwatchLogsEvent{AWSLogs: rawLog}
 
-	p := &aws_cloudwatch_log_events.Processor{}
-	p.WithClient(client).
-		Withtags(tags).
-		WithService(service).
-		Process(context.Background(), request)
+	p := aws_cloudwatch_log_events.NewProcessor(service, client).
+		Withtags(tags)
+	p.Process(context.Background(), request)
 
 	assert.Len(t, p.Errors(), 0)
 	assert.EqualValues(t, expectedDatadogLogs, client.logEntries)
