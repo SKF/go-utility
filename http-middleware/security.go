@@ -38,7 +38,6 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := trace.StartSpan(req.Context(), "Authenticator")
 			defer span.End()
-			*req = *req.WithContext(ctx)
 
 			logFields := log.
 				WithTracing(ctx).
@@ -47,7 +46,7 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessToken(users, req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessToken(ctx, users, req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
 					http_server.WriteJSONResponse(ctx, w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
@@ -66,9 +65,7 @@ const maxNumberOfCognitoUsers = 2 * (10 ^ 7)
 
 var userIDs = make(map[string]string, maxNumberOfCognitoUsers)
 
-func handleAccessToken(users Users, req *http.Request, header string) error {
-	ctx := req.Context()
-
+func handleAccessToken(ctx context.Context, users Users, req *http.Request, header string) error {
 	base64Token := req.Header.Get(header)
 	if base64Token == "" {
 		return errors.Errorf("auth header [%s] was empty", header)
@@ -88,9 +85,7 @@ func handleAccessToken(users Users, req *http.Request, header string) error {
 		userIDs[email] = userID
 	}
 
-	ctx = context.WithValue(ctx, userIDContextKey{}, userID)
-	*req = *req.WithContext(ctx)
-
+	*req = *req.WithContext(context.WithValue(req.Context(), userIDContextKey{}, userID))
 	return nil
 }
 
@@ -115,7 +110,6 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := trace.StartSpan(req.Context(), "Authorizer")
 			defer span.End()
-			*req = *req.WithContext(ctx)
 
 			logFields := log.
 				WithTracing(ctx).
@@ -144,12 +138,23 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 					return
 				}
 
+				isAuthorizedCtx, isAuthorizedSpan := trace.StartSpan(ctx, "auth.IsAuthorized")
+				isAuthorizedSpan.AddAttributes(
+					trace.StringAttribute("auth.userId", userID),
+					trace.StringAttribute("auth.action", authorizeConfig.action),
+					trace.StringAttribute("auth.resource.id", resource.Id),
+					trace.StringAttribute("auth.resource.type", resource.Type),
+				)
+
 				ok, err := authorizer.IsAuthorizedWithContext(
-					ctx,
+					isAuthorizedCtx,
 					userID,
 					authorizeConfig.action,
 					resource,
 				)
+
+				isAuthorizedSpan.End()
+
 				if !ok || err != nil {
 					logFields.
 						WithField("userId", userID).
