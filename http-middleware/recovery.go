@@ -16,7 +16,6 @@ func Recovery(next http.Handler) http.Handler {
 				log.WithTracing(ctx).WithField("recover", err).Error("Recovered from a panic")
 				http_server.WriteJSONResponse(ctx, w, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 			}
-
 		}()
 
 		next.ServeHTTP(w, req)

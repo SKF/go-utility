@@ -55,14 +55,6 @@ func (c *TCP) WithMaxRetries(maxRetries int) *TCP {
 	return c
 }
 
-// URL returns the host:port for the client to connect to
-func (c *TCP) URL() string {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
-	return fmt.Sprintf("%s:%s", c.host, c.port)
-}
-
 // Connect attempts to establish a tcp connection to the datadog api
 func (c *TCP) Connect() (err error) {
 	c.mutex.Lock()
@@ -72,7 +64,7 @@ func (c *TCP) Connect() (err error) {
 		return
 	}
 
-	url := c.URL()
+	url := fmt.Sprintf("%s:%s", c.host, c.port)
 	if c.conn, err = net.Dial("tcp", url); err != nil {
 		return errors.Wrapf(err, "failed to connect to datadog api on [%s]", url)
 	}
