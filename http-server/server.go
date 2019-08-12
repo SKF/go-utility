@@ -83,3 +83,9 @@ func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, bod
 			Error("Failed to write response")
 	}
 }
+
+func StatusNotFoundHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		WriteJSONResponse(r.Context(), w, http.StatusNotFound, http_model.ErrResponseNotFound)
+	})
+}
