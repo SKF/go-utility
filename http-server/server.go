@@ -75,8 +75,8 @@ func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, cod
 }
 
 func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, body []byte) {
-	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
 	if _, err := w.Write(body); err != nil {
 		log.WithError(err).
 			WithTracing(ctx).
