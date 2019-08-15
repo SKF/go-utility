@@ -25,6 +25,11 @@ func OpenCensusMiddleware(next http.Handler) http.Handler {
 		if name, err := route.GetPathTemplate(); err == nil {
 			span.SetName(req.Method + " " + name)
 		}
+		if body, _ := req.GetBody(); body != nil {
+			var bodyData []byte
+			body.Read(bodyData)
+			span.AddAttributes(trace.StringAttribute("http.body", string(bodyData)))
+		}
 
 		next.ServeHTTP(w, req)
 	})
