@@ -1,6 +1,8 @@
 package httpmiddleware
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -25,10 +27,10 @@ func OpenCensusMiddleware(next http.Handler) http.Handler {
 		if name, err := route.GetPathTemplate(); err == nil {
 			span.SetName(req.Method + " " + name)
 		}
-		if body, _ := req.GetBody(); body != nil {
-			var bodyData []byte
-			body.Read(bodyData)
-			span.AddAttributes(trace.StringAttribute("http.body", string(bodyData)))
+		body, _ := ioutil.ReadAll(req.Body)
+		if len(body) > 0 {
+			span.AddAttributes(trace.StringAttribute("http.body", string(body)))
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 		}
 
 		next.ServeHTTP(w, req)
