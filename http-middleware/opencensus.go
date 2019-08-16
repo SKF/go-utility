@@ -30,8 +30,8 @@ func OpenCensusMiddleware(next http.Handler) http.Handler {
 		body, _ := ioutil.ReadAll(req.Body)
 		if len(body) > 0 {
 			span.AddAttributes(trace.StringAttribute("http.body", string(body)))
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 		}
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 		next.ServeHTTP(w, req)
 	})
