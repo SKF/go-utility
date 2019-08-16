@@ -78,7 +78,7 @@ var errorCodeMapping = map[int]trace.Status{
 }
 
 func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, v interface{}) {
-	_, span := trace.StartSpan(ctx, "MarsharResponse")
+	_, span := trace.StartSpan(ctx, "MarshalResponse")
 	response, err := json.Marshal(v)
 	span.End()
 	if err != nil {
