@@ -62,21 +62,6 @@ func UnmarshalRequest(body io.ReadCloser, v interface{}) (err error) {
 	return
 }
 
-var errorCodeMapping = map[int]trace.Status{
-	http.StatusBadRequest: trace.Status{
-		Code:    trace.StatusCodeInvalidArgument,
-		Message: "Bad request",
-	},
-	http.StatusInternalServerError: trace.Status{
-		Code:    trace.StatusCodeInternal,
-		Message: "Internal server error",
-	},
-	http.StatusNotFound: trace.Status{
-		Code:    trace.StatusCodeNotFound,
-		Message: "Bad request",
-	},
-}
-
 func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, v interface{}) {
 	_, span := trace.StartSpan(ctx, "MarshalResponse")
 	response, err := json.Marshal(v)
@@ -93,9 +78,6 @@ func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, cod
 
 func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, code int, body []byte) {
 	ctx, span := trace.StartSpan(ctx, "WriteJSONResponse")
-	if openCensusStatus, ok := errorCodeMapping[code]; ok {
-		span.SetStatus(openCensusStatus)
-	}
 	defer span.End()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
