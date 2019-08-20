@@ -60,7 +60,7 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 	}
 }
 
-type userIDContextKey struct{}
+type UserIDContextKey struct{}
 
 const maxNumberOfCognitoUsers = 2 * (10 ^ 7)
 
@@ -88,7 +88,7 @@ func handleAccessToken(users Users, req *http.Request, header string) error {
 		userIDs[email] = userID
 	}
 
-	ctx = context.WithValue(ctx, userIDContextKey{}, userID)
+	ctx = context.WithValue(ctx, UserIDContextKey{}, userID)
 	*req = *req.WithContext(ctx)
 
 	return nil
@@ -96,7 +96,7 @@ func handleAccessToken(users Users, req *http.Request, header string) error {
 
 // ExtractUserIDFromContext extracts User ID from a context.
 func ExtractUserIDFromContext(ctx context.Context) (_ string, err error) {
-	v := ctx.Value(userIDContextKey{})
+	v := ctx.Value(UserIDContextKey{})
 	if v == nil {
 		err = errors.New("unable to parse User ID from context")
 		return
