@@ -11,12 +11,17 @@
 //
 //   const pathToCreateCompanyUser = "/companies/{companyID:[a-zA-Z0-9-]+}/users"
 //   router.
-//       HandleFunc(
-//           pathToCreateCompanyUser,
-//           server.createCompanyUserHandler,
-//       ).
-//       Methods(http.MethodPost, http.MethodOptions).
-//       HeadersRegexp("Content-Type", "application/json")
+//       HandleFunc(pathToCreateUser, http_middleware.ContentType(
+//           server.createCompanyUserHandler, http_model.MimeJSON,
+//       )).
+//       Methods(http.MethodPost)
+//
+//   router.
+//       HandleFunc(pathToCreateUser, http_middleware.Options(
+//           []string{http.MethodPost},
+//           []string{http_model.HeaderContentType},
+//       )).
+//       Methods(http.MethodOptions)
 //
 //   http_middleware.
 //       HandleSecureEndpoint(pathToCreateCompanyUser).
