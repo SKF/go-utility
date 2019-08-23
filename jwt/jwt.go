@@ -23,15 +23,7 @@ type CognitoClaims struct {
 }
 
 type EnlightClaims struct {
-	EnlightUserID         string `json:"enlightUserId"`
-	EnlightEmail          string `json:"enlightEmail"`
-	EnlightCompanyID      string `json:"enlightCompanyId"`
-	EnlightEulaAgreedDate string `json:"enlightEulaAgreedDate"`
-	EnlightValidEula      string `json:"enlightValidEula"`
-	EnlightName           string `json:"enlightName"`
-	EnlightStatus         string `json:"enlightStatus"`
-	EnlightRoles          string `json:"enlightRoles"`
-	EnlightAccess         string `json:"enlightAccess"`
+	EnlightUserID string `json:"enlightUserId"`
 }
 
 type Claims struct {
@@ -45,13 +37,19 @@ func (c Claims) Valid() (err error) {
 		return
 	}
 
-	if c.Username == "" {
-		return errors.New("missing username in claims")
-	}
-
 	const accessToken = "access"
-	if c.TokenUse != accessToken {
-		return errors.Errorf("wrong type of token: %s, should be: %s", c.TokenUse, accessToken)
+	const idToken = "id"
+	switch c.TokenUse {
+	case accessToken:
+		if c.Username == "" {
+			return errors.New("missing username in claims")
+		}
+	case idToken:
+		if c.EnlightUserID == "" {
+			return errors.New("missing enlight user ID in claims")
+		}
+	default:
+		return errors.Errorf("wrong type of token: %s, should be %s or %s", c.TokenUse, accessToken, idToken)
 	}
 
 	return
