@@ -32,24 +32,25 @@ type Claims struct {
 	EnlightClaims
 }
 
+const TokenUseAccess = "access"
+const TokenUseID = "id"
+
 func (c Claims) Valid() (err error) {
 	if err = c.StandardClaims.Valid(); err != nil {
 		return
 	}
 
-	const accessToken = "access"
-	const idToken = "id"
 	switch c.TokenUse {
-	case accessToken:
+	case TokenUseAccess:
 		if c.Username == "" {
 			return errors.New("missing username in claims")
 		}
-	case idToken:
+	case TokenUseID:
 		if c.EnlightUserID == "" {
 			return errors.New("missing enlight user ID in claims")
 		}
 	default:
-		return errors.Errorf("wrong type of token: %s, should be %s or %s", c.TokenUse, accessToken, idToken)
+		return errors.Errorf("wrong type of token: %s, should be %s or %s", c.TokenUse, TokenUseAccess, TokenUseID)
 	}
 
 	return
