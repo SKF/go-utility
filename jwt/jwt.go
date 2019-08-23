@@ -22,23 +22,35 @@ type CognitoClaims struct {
 	TokenUse string `json:"token_use"`
 }
 
+type EnlightClaims struct {
+	EnlightUserID string `json:"enlightUserId"`
+}
+
 type Claims struct {
 	jwt.StandardClaims
 	CognitoClaims
+	EnlightClaims
 }
+
+const TokenUseAccess = "access"
+const TokenUseID = "id"
 
 func (c Claims) Valid() (err error) {
 	if err = c.StandardClaims.Valid(); err != nil {
 		return
 	}
 
-	if c.Username == "" {
-		return errors.New("missing username in claims")
-	}
-
-	const accessToken = "access"
-	if c.TokenUse != accessToken {
-		return errors.Errorf("wrong type of token: %s, should be: %s", c.TokenUse, accessToken)
+	switch c.TokenUse {
+	case TokenUseAccess:
+		if c.Username == "" {
+			return errors.New("missing username in claims")
+		}
+	case TokenUseID:
+		if c.EnlightUserID == "" {
+			return errors.New("missing enlight user ID in claims")
+		}
+	default:
+		return errors.Errorf("wrong type of token: %s, should be %s or %s", c.TokenUse, TokenUseAccess, TokenUseID)
 	}
 
 	return

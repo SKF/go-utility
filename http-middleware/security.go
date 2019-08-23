@@ -47,7 +47,7 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessToken(users, req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessOrIDToken(users, req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
 					http_server.WriteJSONResponse(ctx, w, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
@@ -66,7 +66,7 @@ const maxNumberOfCognitoUsers = 2 * (10 ^ 7)
 
 var userIDs = make(map[string]string, maxNumberOfCognitoUsers)
 
-func handleAccessToken(users Users, req *http.Request, header string) error {
+func handleAccessOrIDToken(users Users, req *http.Request, header string) error {
 	ctx := req.Context()
 
 	base64Token := req.Header.Get(header)
@@ -79,13 +79,23 @@ func handleAccessToken(users Users, req *http.Request, header string) error {
 		return errors.Wrap(err, "authorization token not valid")
 	}
 
-	email := token.GetClaims().Username
-	userID, exists := userIDs[email]
-	if users != nil && !exists {
-		if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
-			return errors.Wrap(err, "couldn't get User ID by email")
+	var userID string
+	claims := token.GetClaims()
+	switch claims.TokenUse {
+	case jwt.TokenUseID:
+		userID = claims.EnlightUserID
+	case jwt.TokenUseAccess:
+		var exists bool
+		email := claims.Username
+		userID, exists = userIDs[email]
+		if users != nil && !exists {
+			if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
+				return errors.Wrap(err, "couldn't get User ID by email")
+			}
+			userIDs[email] = userID
 		}
-		userIDs[email] = userID
+	default:
+		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
 	ctx = context.WithValue(ctx, UserIDContextKey{}, userID)
