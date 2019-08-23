@@ -85,11 +85,10 @@ func handleAccessOrIDToken(users Users, req *http.Request, header string) error 
 	case jwt.TokenUseID:
 		userID = claims.EnlightUserID
 	case jwt.TokenUseAccess:
-		email := claims.Username
 		var exists bool
+		email := claims.Username
 		userID, exists = userIDs[email]
 		if users != nil && !exists {
-			userID = token.GetClaims().EnlightUserID
 			if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
 				return errors.Wrap(err, "couldn't get User ID by email")
 			}
