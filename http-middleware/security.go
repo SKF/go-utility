@@ -79,13 +79,20 @@ func handleAccessToken(users Users, req *http.Request, header string) error {
 		return errors.Wrap(err, "authorization token not valid")
 	}
 
-	email := token.GetClaims().Username
-	userID, exists := userIDs[email]
-	if users != nil && !exists {
-		if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
-			return errors.Wrap(err, "couldn't get User ID by email")
+	var userID string
+	claims := token.GetClaims()
+	if claims.EnlightUserID != "" {
+		userID = claims.EnlightUserID
+	} else {
+		email := claims.Username
+		userID, exists := userIDs[email]
+		if users != nil && !exists {
+			userID = token.GetClaims().EnlightUserID
+			if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
+				return errors.Wrap(err, "couldn't get User ID by email")
+			}
+			userIDs[email] = userID
 		}
-		userIDs[email] = userID
 	}
 
 	ctx = context.WithValue(ctx, UserIDContextKey{}, userID)

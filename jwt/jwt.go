@@ -22,9 +22,22 @@ type CognitoClaims struct {
 	TokenUse string `json:"token_use"`
 }
 
+type EnlightClaims struct {
+	EnlightUserID         string `json:"enlightUserId"`
+	EnlightEmail          string `json:"enlightEmail"`
+	EnlightCompanyID      string `json:"enlightCompanyId"`
+	EnlightEulaAgreedDate string `json:"enlightEulaAgreedDate"`
+	EnlightValidEula      string `json:"enlightValidEula"`
+	EnlightName           string `json:"enlightName"`
+	EnlightStatus         string `json:"enlightStatus"`
+	EnlightRoles          string `json:"enlightRoles"`
+	EnlightAccess         string `json:"enlightAccess"`
+}
+
 type Claims struct {
 	jwt.StandardClaims
 	CognitoClaims
+	EnlightClaims
 }
 
 func (c Claims) Valid() (err error) {
