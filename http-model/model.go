@@ -4,6 +4,7 @@ const (
 	HeaderContentType   = "Content-Type"
 	HeaderAuthorization = "Authorization"
 	MimeJSON            = "application/json"
+	MimeParameterUTF8   = "charset=utf-8"
 )
 
 type ErrorResponse struct {
