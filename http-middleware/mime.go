@@ -26,7 +26,7 @@ func ContentType(next http.HandlerFunc, contentTypes ...string) http.HandlerFunc
 		if !validContentTypes[parts[0]] {
 			ctx := req.Context()
 			log.WithTracing(ctx).WithField("contentType", reqContentType).Warn("Unsupported Content-Type")
-			http_server.WriteJSONResponse(ctx, w, http.StatusUnsupportedMediaType, http_model.ErrResponseUnsupportedMediaType)
+			http_server.WriteJSONResponse(ctx, w, nil, http.StatusUnsupportedMediaType, http_model.ErrResponseUnsupportedMediaType)
 			return
 		}
 
@@ -37,6 +37,6 @@ func ContentType(next http.HandlerFunc, contentTypes ...string) http.HandlerFunc
 
 		ctx := req.Context()
 		log.WithTracing(ctx).WithField("contentType", reqContentType).Warn("Unsupported Content-Type Parameter")
-		http_server.WriteJSONResponse(ctx, w, http.StatusUnsupportedMediaType, http_model.ErrResponseUnsupportedMediaType)
+		http_server.WriteJSONResponse(ctx, w, nil, http.StatusUnsupportedMediaType, http_model.ErrResponseUnsupportedMediaType)
 	}
 }
