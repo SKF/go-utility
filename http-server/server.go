@@ -76,10 +76,13 @@ func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *
 	WriteJSONResponse(ctx, w, r, code, response)
 }
 
+// Don't gzip body if smaller than one packet, as it will be transmitted as a full packet anyway.
+const gzipMinBodySize = 1400
+
 func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, code int, body []byte) {
 	w.Header().Set("Content-Type", "application/json")
 	var err error
-	if r != nil && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && len(body) > 1400 {
+	if r != nil && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && len(body) > gzipMinBodySize {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.WriteHeader(code)
 		gz := gzip.NewWriter(w)
