@@ -78,14 +78,15 @@ func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *
 
 func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, code int, body []byte) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
 	var err error
 	if r != nil && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && len(body) > 1400 {
 		w.Header().Set("Content-Encoding", "gzip")
+		w.WriteHeader(code)
 		gz := gzip.NewWriter(w)
 		defer gz.Close()
 		gz.Write(body)
 	} else {
+		w.WriteHeader(code)
 		_, err = w.Write(body)
 	}
 	if err != nil {
