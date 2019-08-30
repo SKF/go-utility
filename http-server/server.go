@@ -84,7 +84,7 @@ func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(code)
 		gz := gzip.NewWriter(w)
 		defer gz.Close()
-		gz.Write(body)
+		_, err = gz.Write(body)
 	} else {
 		w.WriteHeader(code)
 		_, err = w.Write(body)
