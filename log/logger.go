@@ -27,15 +27,15 @@ func (l logger) WithError(err error) Logger {
 // WithTracing will take an OpenCensus trace and add log fields for Datadog.
 // based on convertSpan in https://github.com/DataDog/opencensus-go-exporter-datadog/blob/master/span.go
 // and https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/?tab=go
-func (l logger) WithTracing(ctx context.Context) (returnedLogger Logger) {
+func (l logger) WithTracing(ctx context.Context) Logger {
 	if span := trace.FromContext(ctx); span != nil {
 		traceID := span.SpanContext().TraceID
 		spanID := span.SpanContext().SpanID
-		returnedLogger = l.
+		return l.
 			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
 	}
-	return
+	return l
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
