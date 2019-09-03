@@ -35,7 +35,7 @@ func (l logger) WithTracing(ctx context.Context) (returnedLogger Logger) {
 			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
 	}
-	return
+	return l
 }
 
 func (l logger) Debugf(format string, args ...interface{}) {
