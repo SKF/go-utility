@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/SKF/go-utility/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/SKF/go-utility/log"
 )
 
 func TestLog(t *testing.T) {
