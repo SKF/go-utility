@@ -53,11 +53,11 @@ func init() {
 		zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConf),
 			zapcore.Lock(os.Stdout),
-			zap.NewAtomicLevel(),
+			zap.NewAtomicLevelAt(zapcore.DebugLevel),
 		),
 		zap.AddCaller(),
 		zap.AddCallerSkip(1),
-		zap.AddStacktrace(zapcore.InfoLevel),
+		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
 	origLogger = l.Sugar()
 
