@@ -62,10 +62,6 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 
 type UserIDContextKey struct{}
 
-const maxNumberOfCognitoUsers = 2 * (10 ^ 7)
-
-var userIDs = make(map[string]string, maxNumberOfCognitoUsers)
-
 func handleAccessOrIDToken(users Users, req *http.Request, header string) error {
 	ctx := req.Context()
 
@@ -85,14 +81,8 @@ func handleAccessOrIDToken(users Users, req *http.Request, header string) error 
 	case jwt.TokenUseID:
 		userID = claims.EnlightUserID
 	case jwt.TokenUseAccess:
-		var exists bool
-		email := claims.Username
-		userID, exists = userIDs[email]
-		if users != nil && !exists {
-			if userID, err = users.GetUserIDByEmail(ctx, email); err != nil {
-				return errors.Wrap(err, "couldn't get User ID by email")
-			}
-			userIDs[email] = userID
+		if userID, err = users.GetUserIDByEmail(ctx, claims.Username); err != nil {
+			return errors.Wrap(err, "couldn't get User ID by email")
 		}
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
