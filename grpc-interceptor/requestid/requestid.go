@@ -10,9 +10,9 @@ import (
 	"github.com/SKF/go-utility/uuid"
 )
 
-const REQUEST_ID_KEY = "request.id"
-const REQUEST_CHAIN_KEY = "request.chain"
-const REQUEST_TRANSACTION_ID_KEY = "request.transaction.id"
+const RequestIDKey = "request.id"
+const RequestChainKey = "request.chain"
+const RequestTransactionIDKey = "request.transaction.id"
 
 // UnaryServerInterceptor returns a new unary server interceptor that adds
 // the Request ID Metadata to the call.
@@ -67,7 +67,7 @@ func ExtendContext(ctx context.Context, serviceName string) context.Context {
 
 	incomingMD, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		ids := incomingMD.Get(REQUEST_ID_KEY)
+		ids := incomingMD.Get(RequestIDKey)
 		if len(ids) > 0 {
 			id := uuid.UUID(ids[0])
 			if id.IsValid() {
@@ -75,13 +75,13 @@ func ExtendContext(ctx context.Context, serviceName string) context.Context {
 			}
 		}
 
-		request.Chain = append(incomingMD.Get(REQUEST_CHAIN_KEY), serviceName)
+		request.Chain = append(incomingMD.Get(RequestChainKey), serviceName)
 	}
 
 	outgoingMD := make(metadata.MD)
-	outgoingMD.Set(REQUEST_ID_KEY, request.ID.String())
-	outgoingMD.Set(REQUEST_CHAIN_KEY, request.Chain...)
-	outgoingMD.Set(REQUEST_TRANSACTION_ID_KEY, request.TransactionID.String())
+	outgoingMD.Set(RequestIDKey, request.ID.String())
+	outgoingMD.Set(RequestChainKey, request.Chain...)
+	outgoingMD.Set(RequestTransactionIDKey, request.TransactionID.String())
 	return metadata.NewOutgoingContext(ctx, outgoingMD)
 }
 
@@ -99,14 +99,14 @@ func outgoingContextWithRequestID(ctx context.Context, serviceName string) conte
 
 	incomingMD, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
-		ids := incomingMD.Get(REQUEST_ID_KEY)
+		ids := incomingMD.Get(RequestIDKey)
 		if len(ids) > 0 {
 			id := uuid.UUID(ids[0])
 			if id.IsValid() {
 				request.ID = id
 			}
 		}
-		ids = incomingMD.Get(REQUEST_TRANSACTION_ID_KEY)
+		ids = incomingMD.Get(RequestTransactionIDKey)
 		if len(ids) > 0 {
 			id := uuid.UUID(ids[0])
 			if id.IsValid() {
@@ -114,13 +114,13 @@ func outgoingContextWithRequestID(ctx context.Context, serviceName string) conte
 			}
 		}
 
-		request.Chain = append(incomingMD.Get(REQUEST_CHAIN_KEY))
+		request.Chain = incomingMD.Get(RequestChainKey)
 	}
 
 	outgoingMD := make(metadata.MD)
-	outgoingMD.Set(REQUEST_ID_KEY, request.ID.String())
-	outgoingMD.Set(REQUEST_CHAIN_KEY, request.Chain...)
-	outgoingMD.Set(REQUEST_TRANSACTION_ID_KEY, request.TransactionID.String())
+	outgoingMD.Set(RequestIDKey, request.ID.String())
+	outgoingMD.Set(RequestChainKey, request.Chain...)
+	outgoingMD.Set(RequestTransactionIDKey, request.TransactionID.String())
 	return metadata.NewOutgoingContext(ctx, outgoingMD)
 }
 
@@ -142,7 +142,7 @@ func Extract(ctx context.Context) (request Request) {
 		return
 	}
 
-	ids := md.Get(REQUEST_ID_KEY)
+	ids := md.Get(RequestIDKey)
 	if len(ids) > 0 {
 		id := uuid.UUID(ids[0])
 		if id.IsValid() {
@@ -150,7 +150,7 @@ func Extract(ctx context.Context) (request Request) {
 		}
 	}
 
-	ids = md.Get(REQUEST_TRANSACTION_ID_KEY)
+	ids = md.Get(RequestTransactionIDKey)
 	if len(ids) > 0 {
 		id := uuid.UUID(ids[0])
 		if id.IsValid() {
@@ -158,6 +158,6 @@ func Extract(ctx context.Context) (request Request) {
 		}
 	}
 
-	request.Chain = append(md.Get(REQUEST_CHAIN_KEY))
+	request.Chain = md.Get(RequestChainKey)
 	return
 }
