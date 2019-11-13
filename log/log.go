@@ -61,7 +61,7 @@ func init() {
 		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
-	baseLogger = logger{sugar, origLogger}
+	baseLogger = logger{origLogger.Sugar()}
 }
 
 func Base() Logger {
