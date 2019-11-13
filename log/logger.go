@@ -17,8 +17,8 @@ func (l logger) WithField(key string, value interface{}) Logger {
 }
 
 func (l logger) CheckWrite(lvl Level, msg string, fields ...Field) {
-	if ce := l.logger.Check(lvl, msg); ce != nil {
-		ce.Write(fields)
+	if ce := l.logger.Desugar().Check(lvl, msg); ce != nil {
+		ce.Write(fields...)
 	}
 }
 
