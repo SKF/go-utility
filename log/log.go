@@ -9,7 +9,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Fields = zapcore.Field
+type Field = zapcore.Field
+type Fields = []Field
 
 type Logger interface {
 	WithField(key string, value interface{}) Logger
