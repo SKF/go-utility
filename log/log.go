@@ -11,6 +11,7 @@ import (
 
 type Field = zapcore.Field
 type Fields = []Field
+type Level = zapcore.Level
 
 type Logger interface {
 	WithField(key string, value interface{}) Logger
@@ -34,10 +35,10 @@ type Logger interface {
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
 
+	CheckWrite(lvl Level, msg string, fields ...Field)
 	Sync() error
 }
 
-var origLogger *zap.SugaredLogger
 var baseLogger logger
 
 func init() {
@@ -50,7 +51,7 @@ func init() {
 	}
 	encoderConf.CallerKey = "source"
 
-	l := zap.New(
+	origLogger := zap.New(
 		zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConf),
 			zapcore.Lock(os.Stdout),
@@ -60,9 +61,7 @@ func init() {
 		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
-	origLogger = l.Sugar()
-
-	baseLogger = logger{origLogger}
+	baseLogger = logger{origLogger.Sugar()}
 }
 
 func Base() Logger {
@@ -147,4 +146,8 @@ func Fatal(args ...interface{}) {
 
 func Panic(args ...interface{}) {
 	baseLogger.logger.Panic(args...)
+}
+
+func CheckWrite(lvl Level, msg string, fields ...Field) {
+	baseLogger.CheckWrite(lvl, msg, fields...)
 }
