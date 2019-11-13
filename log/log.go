@@ -39,7 +39,6 @@ type Logger interface {
 	Sync() error
 }
 
-var origLogger *zap.SugaredLogger
 var baseLogger logger
 
 func init() {
@@ -52,7 +51,7 @@ func init() {
 	}
 	encoderConf.CallerKey = "source"
 
-	l := zap.New(
+	origLogger := zap.New(
 		zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConf),
 			zapcore.Lock(os.Stdout),
@@ -62,9 +61,7 @@ func init() {
 		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
-	origLogger = l.Sugar()
-
-	baseLogger = logger{origLogger}
+	baseLogger = logger{sugar, origLogger}
 }
 
 func Base() Logger {

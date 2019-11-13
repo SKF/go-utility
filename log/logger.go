@@ -23,7 +23,7 @@ func (l logger) CheckWrite(lvl Level, msg string, fields ...Field) {
 }
 
 func (l logger) WithFields(fields Fields) Logger {
-	return logger{l.logger.With(fields)}
+	return logger{l.logger.Desugar().With(fields...).Sugar()}
 }
 
 func (l logger) WithError(err error) Logger {
