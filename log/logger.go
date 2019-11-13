@@ -16,6 +16,12 @@ func (l logger) WithField(key string, value interface{}) Logger {
 	return logger{l.logger.With(zap.Any(key, value))}
 }
 
+func (l logger) CheckWrite(lvl Level, msg string, fields ...Field) {
+	if ce := l.logger.Check(lvl, msg); ce != nil {
+		ce.Write(fields)
+	}
+}
+
 func (l logger) WithFields(fields Fields) Logger {
 	return logger{l.logger.With(fields)}
 }

@@ -11,6 +11,7 @@ import (
 
 type Field = zapcore.Field
 type Fields = []Field
+type Level = zapcore.Level
 
 type Logger interface {
 	WithField(key string, value interface{}) Logger
@@ -34,6 +35,7 @@ type Logger interface {
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
 
+	CheckWrite(lvl Level, msg string, fields ...Field)
 	Sync() error
 }
 
@@ -147,4 +149,8 @@ func Fatal(args ...interface{}) {
 
 func Panic(args ...interface{}) {
 	baseLogger.logger.Panic(args...)
+}
+
+func CheckWrite(lvl Level, msg string, fields ...Field) {
+	baseLogger.CheckWrite(lvl, msg, fields...)
 }
