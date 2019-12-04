@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SKF/go-utility/env"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/SKF/go-utility/env"
 )
 
 type Field = zapcore.Field
@@ -62,11 +62,16 @@ func init() {
 
 func getLogLevel() zapcore.Level {
 	levelStr := env.GetAsString("LOG_LEVEL", "info")
+
 	switch levelStr {
-	case "debug": return zapcore.DebugLevel
-	case "info": return zapcore.InfoLevel
-	case "warn": return zapcore.WarnLevel
-	case "error": return zapcore.ErrorLevel
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
 	default:
 		return zapcore.InfoLevel
 	}
