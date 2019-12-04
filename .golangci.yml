@@ -40,5 +40,3 @@ linters:
     - gochecknoglobals
     - lll
     - prealloc
-    - wsl
-    - gomnd
