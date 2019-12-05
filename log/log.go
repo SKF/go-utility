@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/SKF/go-utility/env"
@@ -87,10 +87,7 @@ func getEncoder() zapcore.Encoder {
 	}
 	encoderConf.CallerKey = "source"
 
-	useConsoleEncoder, err := strconv.ParseBool(env.GetAsString("CONSOLE_LOGGER", "false"))
-	if err != nil {
-		useConsoleEncoder = false
-	}
+	useConsoleEncoder := strings.EqualFold(os.Getenv("CONSOLE_LOGGER"), "true")
 	encoder := zapcore.NewJSONEncoder(encoderConf)
 	if useConsoleEncoder {
 		encoder = zapcore.NewConsoleEncoder(encoderConf)
