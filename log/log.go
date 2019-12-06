@@ -3,7 +3,10 @@ package log
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/SKF/go-utility/env"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -42,6 +45,39 @@ type Logger interface {
 var baseLogger logger
 
 func init() {
+	encoder := getEncoder()
+
+	origLogger := zap.New(
+		zapcore.NewCore(
+			encoder,
+			zapcore.Lock(os.Stdout),
+			zap.NewAtomicLevelAt(getLogLevel()),
+		),
+		zap.AddCaller(),
+		zap.AddCallerSkip(1),
+		zap.AddStacktrace(zapcore.ErrorLevel),
+	)
+	baseLogger = logger{origLogger.Sugar()}
+}
+
+func getLogLevel() zapcore.Level {
+	levelStr := env.GetAsString("LOG_LEVEL", "info")
+
+	switch levelStr {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
+}
+
+func getEncoder() zapcore.Encoder {
 	encoderConf := zap.NewProductionEncoderConfig()
 
 	// Set RFC3339 timestamp encoding format
@@ -51,17 +87,12 @@ func init() {
 	}
 	encoderConf.CallerKey = "source"
 
-	origLogger := zap.New(
-		zapcore.NewCore(
-			zapcore.NewJSONEncoder(encoderConf),
-			zapcore.Lock(os.Stdout),
-			zap.NewAtomicLevelAt(zapcore.DebugLevel),
-		),
-		zap.AddCaller(),
-		zap.AddCallerSkip(1),
-		zap.AddStacktrace(zapcore.ErrorLevel),
-	)
-	baseLogger = logger{origLogger.Sugar()}
+	useConsoleEncoder := strings.EqualFold(os.Getenv("CONSOLE_LOGGER"), "true")
+	encoder := zapcore.NewJSONEncoder(encoderConf)
+	if useConsoleEncoder {
+		encoder = zapcore.NewConsoleEncoder(encoderConf)
+	}
+	return encoder
 }
 
 func Base() Logger {
