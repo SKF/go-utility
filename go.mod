@@ -7,6 +7,7 @@ require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616
 	github.com/SKF/proto v1.21.0-go
 	github.com/aws/aws-lambda-go v1.12.0
+	github.com/aws/aws-sdk-go v1.25.49
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.0 // indirect
 	github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c
