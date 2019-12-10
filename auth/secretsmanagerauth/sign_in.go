@@ -1,4 +1,4 @@
-package secretsmanagerlogin
+package secretsmanagerauth
 
 import (
 	"context"
@@ -44,7 +44,7 @@ func GetTokens(ctx context.Context) auth.Tokens {
 // SignIn will fetch credentials from the Secret Manager and Sign In using those credentials
 func SignIn(ctx context.Context) error {
 	if config == nil {
-		return errors.New("secretmanagerlogin is not configured")
+		return errors.New("secretsmanagerauth is not configured")
 	}
 
 	// handle multiple concurrent calls to secretsmanagerlogin.SignIn
