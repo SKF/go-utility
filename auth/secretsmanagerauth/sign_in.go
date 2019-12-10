@@ -22,9 +22,11 @@ var config *Config
 
 // Config is the configuration of the package
 type Config struct {
-	AWSSession *session.Session
-	SecretKey  string
-	Stage      string
+	AWSSession               *session.Session
+	AWSSecretsManagerAccount string
+	AWSSecretsManagerRegion  string
+	SecretKey                string
+	Stage                    string
 }
 
 // Configure will configure the package
@@ -34,7 +36,7 @@ func Configure(conf Config) {
 }
 
 // GetTokens will return the cached tokens
-func GetTokens(ctx context.Context) auth.Tokens {
+func GetTokens() auth.Tokens {
 	tokensMutex.RLock()
 	defer tokensMutex.RUnlock()
 
@@ -42,7 +44,7 @@ func GetTokens(ctx context.Context) auth.Tokens {
 }
 
 // SignIn will fetch credentials from the Secret Manager and Sign In using those credentials
-func SignIn(ctx context.Context) error {
+func SignIn(ctx context.Context) (err error) {
 	if config == nil {
 		return errors.New("secretsmanagerauth is not configured")
 	}
@@ -69,15 +71,20 @@ func SignIn(ctx context.Context) error {
 		fetchingTokensMutex.Unlock()
 	}()
 
-	return signIn(ctx)
+	tokens, err = signIn(ctx)
+
+	return
 }
 
-func signIn(ctx context.Context) error {
+func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 	svc := secretsmanager.New(config.AWSSession)
 
-	output, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{SecretId: &config.SecretKey})
+	secretKey := "arn:aws:secretsmanager:" + config.AWSSecretsManagerRegion + ":" + config.AWSSecretsManagerAccount + ":secret:" + config.SecretKey
+
+	output, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{SecretId: &secretKey})
 	if err != nil {
-		return errors.Wrap(err, "failed to get secret value")
+		err = errors.Wrap(err, "failed to get secret value")
+		return
 	}
 
 	var secret struct {
@@ -86,12 +93,14 @@ func signIn(ctx context.Context) error {
 	}
 
 	if err = json.Unmarshal(output.SecretBinary, &secret); err != nil {
-		return errors.Wrap(err, "failed to unmarshal secret value")
+		err = errors.Wrap(err, "failed to unmarshal secret value")
+		return
 	}
 
 	if tokens, err = auth.SignIn(ctx, secret.Username, secret.Password); err != nil {
-		return errors.Wrap(err, "failed to sign in")
+		err = errors.Wrap(err, "failed to sign in")
+		return
 	}
 
-	return nil
+	return tokens, err
 }
