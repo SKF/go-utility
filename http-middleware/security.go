@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/SKF/proto/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
@@ -18,6 +17,7 @@ import (
 	"github.com/SKF/go-utility/jwt"
 	"github.com/SKF/go-utility/log"
 	"github.com/SKF/go-utility/useridcontext"
+	"github.com/SKF/proto/common"
 )
 
 const (
@@ -80,6 +80,7 @@ func handleAccessOrIDToken(req *http.Request, header string) error {
 	}
 
 	var userID string
+
 	claims := token.GetClaims()
 	switch claims.TokenUse {
 	case jwt.TokenUseID:
@@ -93,7 +94,7 @@ func handleAccessOrIDToken(req *http.Request, header string) error {
 	}
 
 	ctx = useridcontext.NewContext(ctx, userID)
-	req = req.WithContext(ctx)
+	*req = *req.WithContext(ctx)
 
 	return nil
 }
