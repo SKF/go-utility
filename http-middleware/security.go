@@ -4,17 +4,17 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SKF/proto/common"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
+
+	"github.com/SKF/go-utility/auth"
 	http_model "github.com/SKF/go-utility/http-model"
 	http_server "github.com/SKF/go-utility/http-server"
 	"github.com/SKF/go-utility/jwk"
 	"github.com/SKF/go-utility/jwt"
 	"github.com/SKF/go-utility/log"
-	"github.com/SKF/proto/common"
-	auth "github.com/SKF/go-utility/auth/secretsmanagerauth"
-
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -97,8 +97,7 @@ func handleAccessOrIDToken(req *http.Request, header string) error {
 	return nil
 }
 
-
-func getUserIDByToken(ctx, base64Token) (string, error){
+func getUserIDByToken(ctx, base64Token) (string, error) {
 	const endpoint = "/users/me"
 
 	baseURL, err := auth.GetBaseURL()
@@ -144,7 +143,11 @@ func getUserIDByToken(ctx, base64Token) (string, error){
 		return
 	}
 
-	var myUserResp = struct{Data struct{ID string `json:"id"`} `json:"data"`}
+	var myUserResp struct {
+		Data struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
 	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
