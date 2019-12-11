@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SKF/go-utility/env"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/SKF/go-utility/env"
 )
 
 type Field = zapcore.Field
@@ -21,6 +21,7 @@ type Logger interface {
 	WithFields(fields Fields) Logger
 	WithError(err error) Logger
 	WithTracing(ctx context.Context) Logger
+	WithUserID(ctx context.Context) Logger
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})

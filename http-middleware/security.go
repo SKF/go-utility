@@ -2,11 +2,13 @@ package httpmiddleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/SKF/proto/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
 
 	"github.com/SKF/go-utility/auth"
@@ -15,13 +17,14 @@ import (
 	"github.com/SKF/go-utility/jwk"
 	"github.com/SKF/go-utility/jwt"
 	"github.com/SKF/go-utility/log"
+	"github.com/SKF/go-utility/useridcontext"
 )
 
 const (
 	HeaderAuthorization = "Authorization"
 )
 
-type Config auth.Config
+type Config = auth.Config
 
 func Configure(conf Config) {
 	auth.Configure(conf)
@@ -63,8 +66,6 @@ func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 	}
 }
 
-type UserIDContextKey struct{}
-
 func handleAccessOrIDToken(req *http.Request, header string) error {
 	ctx := req.Context()
 
@@ -91,13 +92,13 @@ func handleAccessOrIDToken(req *http.Request, header string) error {
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
-	ctx = context.WithValue(ctx, UserIDContextKey{}, userID)
-	*req = *req.WithContext(ctx)
+	ctx = useridcontext.NewContext(ctx, userID)
+	req = req.WithContext(ctx)
 
 	return nil
 }
 
-func getUserIDByToken(ctx, base64Token) (string, error) {
+func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err error) {
 	const endpoint = "/users/me"
 
 	baseURL, err := auth.GetBaseURL()
@@ -106,7 +107,7 @@ func getUserIDByToken(ctx, base64Token) (string, error) {
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, baseURL+endpoint, bytes.NewBufferString(jsonBody))
+	req, err := http.NewRequest(http.MethodGet, baseURL+endpoint, nil)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create new HTTP request")
 		return
@@ -114,7 +115,7 @@ func getUserIDByToken(ctx, base64Token) (string, error) {
 
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", auth.GetTokens().AccessToken)
+	req.Header.Set("Authorization", accessToken)
 
 	client := &http.Client{Transport: &ochttp.Transport{}}
 
@@ -156,16 +157,6 @@ func getUserIDByToken(ctx, base64Token) (string, error) {
 	return myUserResp.Data.ID, err
 }
 
-// ExtractUserIDFromContext extracts User ID from a context.
-func ExtractUserIDFromContext(ctx context.Context) (_ string, err error) {
-	v := ctx.Value(UserIDContextKey{})
-	if v == nil {
-		err = errors.New("unable to parse User ID from context")
-		return
-	}
-	return v.(string), nil
-}
-
 type Authorizer interface {
 	IsAuthorizedWithContext(ctx context.Context, userID, action string, resource *common.Origin) (bool, error)
 }
@@ -177,7 +168,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := trace.StartSpan(req.Context(), "Authorizer")
 			defer span.End()
-			*req = *req.WithContext(ctx)
+			req = req.WithContext(ctx)
 
 			logFields := log.
 				WithTracing(ctx).
@@ -191,8 +182,8 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 
-			userID, err := ExtractUserIDFromContext(req.Context())
-			if err != nil {
+			userID, ok := useridcontext.FromContext(req.Context())
+			if !ok {
 				logFields.Error("Couldn't extract User ID from context.")
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return

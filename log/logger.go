@@ -7,7 +7,7 @@ import (
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 
-	http_middleware "github.com/SKF/go-utility/http-middleware"
+	"github.com/SKF/go-utility/useridcontext"
 )
 
 type logger struct {
@@ -47,9 +47,8 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 }
 
 func (l logger) WithUserID(ctx context.Context) Logger {
-	if userID, err := http_middleware.ExtractUserIDFromContext(ctx); err == nil {
-		return l.
-			WithField("userId", userID)
+	if userID, ok := useridcontext.FromContext(ctx); ok {
+		return l.WithField("userId", userID)
 	}
 	return l
 }
