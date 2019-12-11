@@ -6,6 +6,8 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
+
+	http_middleware "github.com/SKF/go-utility/http-middleware"
 )
 
 type logger struct {
@@ -40,6 +42,14 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 		return l.
 			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
+	}
+	return l
+}
+
+func (l logger) WithUserID(ctx context.Context) Logger {
+	if userID, err := http_middleware.ExtractUserIDFromContext(ctx); err == nil {
+		return l.
+			WithField("userId", userID)
 	}
 	return l
 }

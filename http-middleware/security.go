@@ -10,6 +10,7 @@ import (
 	"github.com/SKF/go-utility/jwt"
 	"github.com/SKF/go-utility/log"
 	"github.com/SKF/proto/common"
+	auth "github.com/SKF/go-utility/auth/secretsmanagerauth"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -20,13 +21,15 @@ const (
 	HeaderAuthorization = "Authorization"
 )
 
-type Users interface {
-	GetUserIDByEmail(ctx context.Context, email string) (string, error)
+type Config auth.Config
+
+func Configure(conf Config) {
+	auth.Configure(conf)
 }
 
 // AuthenticateMiddleware retrieves the security configuration for the matched route
 // and handles Access Token validation and stores the token claims in the request context.
-func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
+func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 	jwk.KeySetURL = keySetURL
 	if err := jwk.RefreshKeySets(); err != nil {
 		log.
@@ -47,7 +50,7 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessOrIDToken(users, req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessOrIDToken(req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
 					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
@@ -62,7 +65,7 @@ func AuthenticateMiddleware(users Users, keySetURL string) mux.MiddlewareFunc {
 
 type UserIDContextKey struct{}
 
-func handleAccessOrIDToken(users Users, req *http.Request, header string) error {
+func handleAccessOrIDToken(req *http.Request, header string) error {
 	ctx := req.Context()
 
 	base64Token := req.Header.Get(header)
@@ -81,8 +84,8 @@ func handleAccessOrIDToken(users Users, req *http.Request, header string) error 
 	case jwt.TokenUseID:
 		userID = claims.EnlightUserID
 	case jwt.TokenUseAccess:
-		if userID, err = users.GetUserIDByEmail(ctx, claims.Username); err != nil {
-			return errors.Wrap(err, "couldn't get User ID by email")
+		if userID, err = getUserIDByToken(ctx, base64Token); err != nil {
+			return errors.Wrap(err, "couldn't get User by token")
 		}
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
@@ -92,6 +95,62 @@ func handleAccessOrIDToken(users Users, req *http.Request, header string) error 
 	*req = *req.WithContext(ctx)
 
 	return nil
+}
+
+
+func getUserIDByToken(ctx, base64Token) (string, error){
+	const endpoint = "/users/me"
+
+	baseURL, err := auth.GetBaseURL()
+	if err != nil {
+		err = errors.Wrap(err, "failed to get base URL")
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodPost, baseURL+endpoint, bytes.NewBufferString(jsonBody))
+	if err != nil {
+		err = errors.Wrap(err, "failed to create new HTTP request")
+		return
+	}
+
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", auth.GetTokens().AccessToken)
+
+	client := &http.Client{Transport: &ochttp.Transport{}}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		err = errors.Wrap(err, "failed to execute HTTP request")
+		return
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errorResp struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+
+		if err = json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
+			err = errors.Wrap(err, "failed to decode Error response to JSON")
+			return
+		}
+
+		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message)
+
+		return
+	}
+
+	var myUserResp = struct{Data struct{ID string `json:"id"`} `json:"data"`}
+	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
+		err = errors.Wrap(err, "failed to decode My User response to JSON")
+		return
+	}
+
+	return myUserResp.Data.ID, err
 }
 
 // ExtractUserIDFromContext extracts User ID from a context.
@@ -135,6 +194,8 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
 			}
+
+			logFields = logFields.WithUserID(ctx)
 
 			for _, authorizeConfig := range secConfig.authorizations {
 				resource, err := authorizeConfig.resourceFunc(req)

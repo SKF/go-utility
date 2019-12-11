@@ -116,6 +116,10 @@ func WithTracing(ctx context.Context) Logger {
 	return baseLogger.WithTracing(ctx)
 }
 
+func WithUserID(ctx context.Context) Logger {
+	return baseLogger.WithUserID(ctx)
+}
+
 // We must directly call the bundled logger here (whenever a func instead of
 // method is used), reason is for the "caller skip" calculation to be correct
 // in all instances.

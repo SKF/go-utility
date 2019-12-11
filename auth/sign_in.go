@@ -11,6 +11,8 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 )
 
+const stageProd = "prod"
+
 var config *Config
 
 type Config struct {
@@ -21,15 +23,23 @@ func Configure(conf Config) {
 	config = &conf
 }
 
-const ssoBaseURL = "https://sso-api.%s.users.enlight.skf.com"
+func GetBaseURL() (string, error) {
+	if config == nil {
+		return "", errors.New("auth is not configured")
+	}
+
+	if config.Stage == stageProd {
+		return "https://sso-api.users.enlight.skf.com", nil
+	}
+
+	const ssoBaseURL = "https://sso-api.%s.users.enlight.skf.com"
+	url := fmt.Sprintf(ssoBaseURL, config.Stage)
+
+	return url, nil
+}
 
 // SignIn will sign in the user and if needed complete the change password challenge
 func SignIn(ctx context.Context, username, password string) (tokens Tokens, err error) {
-	if config == nil {
-		err = errors.New("auth is not configured")
-		return
-	}
-
 	var resp SignInResponse
 
 	if resp, err = initiateSignIn(ctx, username, password); err != nil {
@@ -51,23 +61,30 @@ func SignIn(ctx context.Context, username, password string) (tokens Tokens, err 
 }
 
 func initiateSignIn(ctx context.Context, username, password string) (signInResp SignInResponse, err error) {
-	url := fmt.Sprintf(ssoBaseURL+"/sign-in/initiate", config.Stage)
+	const endpoint = "/sign-in/initiate"
+
 	jsonBody := `{"username": "` + username + `", "password": "` + password + `"}`
 
-	return signIn(ctx, url, jsonBody)
+	return signIn(ctx, endpoint, jsonBody)
 }
 
 func completeSignIn(ctx context.Context, challenge Challenge, username, newPassword string) (signInResp SignInResponse, err error) {
-	url := fmt.Sprintf(ssoBaseURL+"/sign-in/complete", config.Stage)
+	const endpoint = "/sign-in/complete"
 
 	baseJSON := `{"username": "%s", "id": "%s", "type": "%s", "properties": {"newPassword": "%s"}}`
 	jsonBody := fmt.Sprintf(baseJSON, username, challenge.ID, challenge.Type, newPassword)
 
-	return signIn(ctx, url, jsonBody)
+	return signIn(ctx, endpoint, jsonBody)
 }
 
-func signIn(ctx context.Context, url, jsonBody string) (signInResp SignInResponse, err error) {
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBufferString(jsonBody))
+func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInResponse, err error) {
+	baseURL, err := GetBaseURL()
+	if err != nil {
+		err = errors.Wrap(err, "failed to get base URL")
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodPost, baseURL+endpoint, bytes.NewBufferString(jsonBody))
 	if err != nil {
 		err = errors.Wrap(err, "failed to create new HTTP request")
 		return
