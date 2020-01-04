@@ -6,6 +6,8 @@ import (
 
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
+
+	"github.com/SKF/go-utility/useridcontext"
 )
 
 type logger struct {
@@ -40,6 +42,13 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 		return l.
 			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
+	}
+	return l
+}
+
+func (l logger) WithUserID(ctx context.Context) Logger {
+	if userID, ok := useridcontext.FromContext(ctx); ok {
+		return l.WithField("userId", userID)
 	}
 	return l
 }

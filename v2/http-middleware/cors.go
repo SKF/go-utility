@@ -5,26 +5,8 @@ import (
 	"strings"
 )
 
-// CorsMiddleware adds CORS headers to requests.
-// Shouldn't be use, instead use the combination of helper
-// functions below.
+// CorsMiddleware adds Access-Control-Allow-Origin header to responses.
 func CorsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-// CorsMiddleware adds CORS Origin header to responses.
-func CorsMiddlewareV2(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 		next.ServeHTTP(w, r)

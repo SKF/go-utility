@@ -8,7 +8,6 @@
   - secretsmanagerauth
 - datadog
 - env
-- grpc-interceptor
 - http-middleware
 - http-model
 - http-server
@@ -16,14 +15,16 @@
 - jwt
 - log
 - timeutils
+- useridcontext
 - uuid
 
 ## Migration
-If you previously were using `github.com/SKF/go-utility/env` and want to use version `vN.*.*`, update import path to `github.com/SKF/go-utility/vN/env`.
+If you previously were using `github.com/SKF/go-utility/env` and want to use version `v2.*.*`, update import path to `github.com/SKF/go-utility/v2/env`.
 
 For more information:
 - https://blog.golang.org/v2-go-modules
 - https://research.swtch.com/vgo-import
 
-Migrations
-- [Migration from `1.*` to `2.*`](v2/README.md)
+### Migration from `1.*` to `2.*`
+- `http-middleware` have some updates, more info [here](http-middleware/README.md).
+- `grpc-interceptor/requestid` has been removed in favor of Opencensus.
