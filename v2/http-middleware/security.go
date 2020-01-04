@@ -10,13 +10,13 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
 
-	"github.com/SKF/go-utility/auth"
-	http_model "github.com/SKF/go-utility/http-model"
-	http_server "github.com/SKF/go-utility/http-server"
-	"github.com/SKF/go-utility/jwk"
-	"github.com/SKF/go-utility/jwt"
-	"github.com/SKF/go-utility/log"
-	"github.com/SKF/go-utility/useridcontext"
+	"github.com/SKF/go-utility/v2/auth"
+	http_model "github.com/SKF/go-utility/v2/http-model"
+	http_server "github.com/SKF/go-utility/v2/http-server"
+	"github.com/SKF/go-utility/v2/jwk"
+	"github.com/SKF/go-utility/v2/jwt"
+	"github.com/SKF/go-utility/v2/log"
+	"github.com/SKF/go-utility/v2/useridcontext"
 	"github.com/SKF/proto/common"
 )
 

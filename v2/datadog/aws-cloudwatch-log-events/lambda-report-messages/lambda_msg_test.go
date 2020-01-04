@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	lambda_report_messages "github.com/SKF/go-utility/datadog/aws-cloudwatch-log-events/lambda-report-messages"
+	lambda_report_messages "github.com/SKF/go-utility/v2/datadog/aws-cloudwatch-log-events/lambda-report-messages"
 )
 
 func Test_Parse_Report_Msg(t *testing.T) {

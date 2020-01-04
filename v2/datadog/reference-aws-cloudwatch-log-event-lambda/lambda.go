@@ -6,11 +6,11 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 
-	aws_cloudwatch_log_events "github.com/SKF/go-utility/datadog/aws-cloudwatch-log-events"
-	datadog "github.com/SKF/go-utility/datadog/client"
-	"github.com/SKF/go-utility/datadog/tags"
-	"github.com/SKF/go-utility/env"
-	"github.com/SKF/go-utility/log"
+	aws_cloudwatch_log_events "github.com/SKF/go-utility/v2/datadog/aws-cloudwatch-log-events"
+	datadog "github.com/SKF/go-utility/v2/datadog/client"
+	"github.com/SKF/go-utility/v2/datadog/tags"
+	"github.com/SKF/go-utility/v2/env"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 var (

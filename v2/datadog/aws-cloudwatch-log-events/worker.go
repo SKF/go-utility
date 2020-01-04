@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 
-	lambda_report_messages "github.com/SKF/go-utility/datadog/aws-cloudwatch-log-events/lambda-report-messages"
-	datadog "github.com/SKF/go-utility/datadog/client"
-	"github.com/SKF/go-utility/datadog/tags"
+	lambda_report_messages "github.com/SKF/go-utility/v2/datadog/aws-cloudwatch-log-events/lambda-report-messages"
+	datadog "github.com/SKF/go-utility/v2/datadog/client"
+	"github.com/SKF/go-utility/v2/datadog/tags"
 )
 
 type worker struct {

@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/SKF/go-utility/env"
+	"github.com/SKF/go-utility/v2/env"
 )
 
 type Field = zapcore.Field

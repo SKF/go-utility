@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/SKF/go-utility/log"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 const (

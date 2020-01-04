@@ -7,7 +7,7 @@ import (
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
 
-	"github.com/SKF/go-utility/useridcontext"
+	"github.com/SKF/go-utility/v2/useridcontext"
 )
 
 type logger struct {

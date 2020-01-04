@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	aws_cloudwatch_log_events "github.com/SKF/go-utility/datadog/aws-cloudwatch-log-events"
-	lambda_report_messages "github.com/SKF/go-utility/datadog/aws-cloudwatch-log-events/lambda-report-messages"
-	"github.com/SKF/go-utility/datadog/tags"
+	aws_cloudwatch_log_events "github.com/SKF/go-utility/v2/datadog/aws-cloudwatch-log-events"
+	lambda_report_messages "github.com/SKF/go-utility/v2/datadog/aws-cloudwatch-log-events/lambda-report-messages"
+	"github.com/SKF/go-utility/v2/datadog/tags"
 )
 
 func Test_Process_Valid_Request(t *testing.T) {

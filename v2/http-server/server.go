@@ -15,8 +15,8 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 
-	http_model "github.com/SKF/go-utility/http-model"
-	"github.com/SKF/go-utility/log"
+	http_model "github.com/SKF/go-utility/v2/http-model"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 func StartHealthServer(port string) {

@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/pkg/errors"
 
-	"github.com/SKF/go-utility/auth"
+	"github.com/SKF/go-utility/v2/auth"
 )
 
 var tokensMutex = new(sync.RWMutex)

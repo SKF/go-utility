@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	http_model "github.com/SKF/go-utility/http-model"
-	http_server "github.com/SKF/go-utility/http-server"
-	"github.com/SKF/go-utility/log"
+	http_model "github.com/SKF/go-utility/v2/http-model"
+	http_server "github.com/SKF/go-utility/v2/http-server"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 // ContentType wraps a HandlerFunc and checks the incoming

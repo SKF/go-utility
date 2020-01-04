@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/SKF/go-utility/log"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 func TestLog(t *testing.T) {

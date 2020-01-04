@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/pkg/errors"
 
-	datadog "github.com/SKF/go-utility/datadog/client"
-	"github.com/SKF/go-utility/datadog/tags"
+	datadog "github.com/SKF/go-utility/v2/datadog/client"
+	"github.com/SKF/go-utility/v2/datadog/tags"
 )
 
 const (
