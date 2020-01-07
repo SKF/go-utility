@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SKF/go-utility/env"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/SKF/go-utility/v2/env"
 )
 
 type Field = zapcore.Field
@@ -21,6 +21,7 @@ type Logger interface {
 	WithFields(fields Fields) Logger
 	WithError(err error) Logger
 	WithTracing(ctx context.Context) Logger
+	WithUserID(ctx context.Context) Logger
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -114,6 +115,10 @@ func WithError(err error) Logger {
 // WithTracing will take an OpenCensus trace and add log fields for Datadog.
 func WithTracing(ctx context.Context) Logger {
 	return baseLogger.WithTracing(ctx)
+}
+
+func WithUserID(ctx context.Context) Logger {
+	return baseLogger.WithUserID(ctx)
 }
 
 // We must directly call the bundled logger here (whenever a func instead of
