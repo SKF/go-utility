@@ -36,6 +36,7 @@ var userIDCache map[string]string
 
 func Configure(conf Config) {
 	config = conf
+
 	auth.Configure(auth.Config{Stage: conf.Stage})
 
 	if conf.UseUserIDCache {
@@ -175,6 +176,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 			ID string `json:"id"`
 		} `json:"data"`
 	}
+
 	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
@@ -211,7 +213,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
 				logFields.Error("Couldn't extract User ID from context.")
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+				http_server.WriteJSONResponse(
+					ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
+				)
 				return
 			}
 
@@ -221,7 +225,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				resource, err := authorizeConfig.resourceFunc(req)
 				if err != nil {
 					logFields.WithError(err).Error("ResourceFunc failed.")
-					http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+					http_server.WriteJSONResponse(
+						ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
+					)
 					return
 				}
 
@@ -288,6 +294,7 @@ type authorizationConfig struct {
 func HandleSecureEndpoint(endpoint string) *SecurityConfig {
 	s := &SecurityConfig{endpoint: endpoint}
 	securityConfigurations = append(securityConfigurations, s)
+
 	return s
 }
 
@@ -304,6 +311,7 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 	if len(headers) > 0 {
 		s.accessTokenHeader = headers[0]
 	}
+
 	return s
 }
 
@@ -321,5 +329,6 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 		s.authorizations,
 		authorizationConfig{action, resourceFunc},
 	)
+
 	return s
 }
