@@ -10,8 +10,8 @@ import (
 func Test_getMonthStartAndEnd(t *testing.T) {
 	start, end, err := GetPeriodsStartAndEndUTC("201805", "201805")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1525132800000), start)
-	assert.Equal(t, int64(1527811199999), end)
+	assert.Equal(t, int64(1525132800000), start) // nolint: gomnd
+	assert.Equal(t, int64(1527811199999), end)   // nolint: gomnd
 }
 
 func Test_NotNumericStart(t *testing.T) {
@@ -55,15 +55,15 @@ func Test_WrongLength(t *testing.T) {
 func Test_GetPeriodsStartAndEndUTC(t *testing.T) {
 	start, end, err := GetPeriodsStartAndEndUTC("201801", "201809")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1514764800000), start)
-	assert.Equal(t, int64(1538351999999), end)
+	assert.Equal(t, int64(1514764800000), start) // nolint: gomnd
+	assert.Equal(t, int64(1538351999999), end)   // nolint: gomnd
 }
 
 func Test_PeriodUTC_SameMonth(t *testing.T) {
 	start, end, err := GetPeriodsStartAndEndUTC("201809", "201809")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1535760000000), start)
-	assert.Equal(t, int64(1538351999999), end)
+	assert.Equal(t, int64(1535760000000), start) // nolint: gomnd
+	assert.Equal(t, int64(1538351999999), end)   // nolint: gomnd
 }
 
 func Test_PeriodWrongOrder(t *testing.T) {

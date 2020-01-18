@@ -50,6 +50,7 @@ func parseStartMsg(msg string) *LambdaBaseMsg {
 			RequestID: matches[0][1],
 		}
 	}
+
 	return nil
 }
 
@@ -61,6 +62,7 @@ func parseEndMsg(msg string) *LambdaBaseMsg {
 			RequestID: matches[0][1],
 		}
 	}
+
 	return nil
 }
 
@@ -68,6 +70,7 @@ func parseReportMsg(msg string) *LambdaReportMsg {
 	matches := patternReportMsg.FindAllStringSubmatch(msg, -1)
 	if len(matches) == 1 && len(matches[0]) == 10 {
 		base := LambdaBaseMsg{Type: "report", RequestID: matches[0][1]}
+
 		return &LambdaReportMsg{
 			LambdaBaseMsg:      base,
 			Duration:           matches[0][2],
@@ -80,5 +83,6 @@ func parseReportMsg(msg string) *LambdaReportMsg {
 			MaxMemoryUsedUnit:  matches[0][9],
 		}
 	}
+
 	return nil
 }

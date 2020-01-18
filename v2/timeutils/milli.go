@@ -32,6 +32,7 @@ func AssertMilliseconds(ms int64) (timestampMilliseconds int64, err error) {
 	if ms < timestampYear3000Seconds {
 		ms *= 1000
 		err = errors.New("got timestamp was in seconds (not milliseconds), had to convert")
+
 		return ms, err
 	}
 

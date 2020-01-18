@@ -47,6 +47,7 @@ func SetupDatadogInstrumentation(service, awsRegion, awsAccountID, stage string)
 	if err := view.Register(ochttp.DefaultServerViews...); err != nil {
 		log.Fatalf("Failed to register server views for HTTP metrics: %v", err)
 	}
+
 	view.RegisterExporter(ddTracer)
 	trace.RegisterExporter(ddTracer)
 
@@ -58,9 +59,11 @@ func SetupDatadogInstrumentation(service, awsRegion, awsAccountID, stage string)
 
 func UnmarshalRequest(body io.ReadCloser, v interface{}) (err error) {
 	defer body.Close()
+
 	if err = json.NewDecoder(body).Decode(v); err != nil {
 		err = errors.Wrap(err, "failed to unmarshal request body")
 	}
+
 	return
 }
 
@@ -71,8 +74,10 @@ func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *
 			WithTracing(ctx).
 			WithField("type", fmt.Sprintf("%T", v)).
 			Error("Failed to marshal response body")
+
 		response = http_model.ErrResponseInternalServerError
 	}
+
 	WriteJSONResponse(ctx, w, r, code, response)
 }
 
@@ -81,17 +86,21 @@ const gzipMinBodySize = 1400
 
 func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, code int, body []byte) {
 	w.Header().Set("Content-Type", "application/json")
+
 	var err error
+
 	if r != nil && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && len(body) > gzipMinBodySize {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.WriteHeader(code)
 		gz := gzip.NewWriter(w)
+
 		defer gz.Close()
 		_, err = gz.Write(body)
 	} else {
 		w.WriteHeader(code)
 		_, err = w.Write(body)
 	}
+
 	if err != nil {
 		log.WithError(err).
 			WithTracing(ctx).

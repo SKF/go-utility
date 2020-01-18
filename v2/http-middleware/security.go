@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SKF/proto/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
@@ -17,7 +18,6 @@ import (
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
-	"github.com/SKF/proto/common"
 )
 
 const (
@@ -150,6 +150,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 			ID string `json:"id"`
 		} `json:"data"`
 	}
+
 	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
@@ -263,6 +264,7 @@ type authorizationConfig struct {
 func HandleSecureEndpoint(endpoint string) *SecurityConfig {
 	s := &SecurityConfig{endpoint: endpoint}
 	securityConfigurations = append(securityConfigurations, s)
+
 	return s
 }
 
@@ -279,6 +281,7 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 	if len(headers) > 0 {
 		s.accessTokenHeader = headers[0]
 	}
+
 	return s
 }
 
@@ -296,5 +299,6 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 		s.authorizations,
 		authorizationConfig{action, resourceFunc},
 	)
+
 	return s
 }

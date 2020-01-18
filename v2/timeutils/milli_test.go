@@ -8,13 +8,13 @@ import (
 )
 
 func Test_MillisecondsShouldBeWithinRealisticInterval(t *testing.T) {
-	assert.True(t, MillisecondsNow() > 1528030261000) // 2018-03-06
-	assert.True(t, MillisecondsNow() < 9999999999999) // 2286-11-20
+	assert.True(t, MillisecondsNow() > 1528030261000) // nolint: gomnd
+	assert.True(t, MillisecondsNow() < 9999999999999) // nolint: gomnd
 }
 
 func Test_MillisecondsUnix(t *testing.T) {
 	now := time.Now()
-	assert.Equal(t, MillisecondsUnix(now.Add(time.Second)), MillisecondsUnix(now)+1000)
+	assert.Equal(t, MillisecondsUnix(now.Add(time.Second)), MillisecondsUnix(now)+1000) // nolint: gomnd
 }
 
 func Test_MillisecondsConversion(t *testing.T) {

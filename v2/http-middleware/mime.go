@@ -27,6 +27,7 @@ func ContentType(next http.HandlerFunc, contentTypes ...string) http.HandlerFunc
 			ctx := req.Context()
 			log.WithTracing(ctx).WithField("contentType", reqContentType).Warn("Unsupported Content-Type")
 			http_server.WriteJSONResponse(ctx, w, nil, http.StatusUnsupportedMediaType, http_model.ErrResponseUnsupportedMediaType)
+
 			return
 		}
 

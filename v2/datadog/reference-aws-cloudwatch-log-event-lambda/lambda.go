@@ -49,6 +49,7 @@ func Handler(ctx context.Context, request events.CloudwatchLogsEvent) (err error
 
 	p := aws_cloudwatch_log_events.NewProcessor(service, client).Withtags(tags)
 	p.Process(ctx, request)
+
 	for _, err := range p.Errors() {
 		log.WithError(err).Error("failed to send log events to Datadog")
 	}
