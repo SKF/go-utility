@@ -4,16 +4,16 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SKF/proto/common"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
+
 	http_model "github.com/SKF/go-utility/http-model"
 	http_server "github.com/SKF/go-utility/http-server"
 	"github.com/SKF/go-utility/jwk"
 	"github.com/SKF/go-utility/jwt"
 	"github.com/SKF/go-utility/log"
-	"github.com/SKF/proto/common"
-
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"go.opencensus.io/trace"
 )
 
 const (
