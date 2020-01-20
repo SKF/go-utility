@@ -7,9 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	millisecondsFor20180306 = 1528030261000
+	millisecondsFor22861120 = 9999999999999
+)
+
 func Test_MillisecondsShouldBeWithinRealisticInterval(t *testing.T) {
-	assert.True(t, MillisecondsNow() > 1528030261000) // nolint: gomnd
-	assert.True(t, MillisecondsNow() < 9999999999999) // nolint: gomnd
+	assert.True(t, MillisecondsNow() > millisecondsFor20180306)
+	assert.True(t, MillisecondsNow() < millisecondsFor22861120)
 }
 
 func Test_MillisecondsUnix(t *testing.T) {
