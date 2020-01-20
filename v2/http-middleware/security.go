@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/SKF/proto/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
@@ -17,17 +18,30 @@ import (
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
-	"github.com/SKF/proto/common"
 )
 
 const (
 	HeaderAuthorization = "Authorization"
 )
 
-type Config = auth.Config
+type Config struct {
+	Stage string
+
+	// Configures the usage of a User ID Cache when using an Access Token
+	UseUserIDCache bool
+}
+
+var config Config
+var userIDCache map[string]string
 
 func Configure(conf Config) {
-	auth.Configure(conf)
+	config = conf
+
+	auth.Configure(auth.Config{Stage: conf.Stage})
+
+	if conf.UseUserIDCache {
+		userIDCache = map[string]string{}
+	}
 }
 
 // AuthenticateMiddleware retrieves the security configuration for the matched route
@@ -86,9 +100,21 @@ func handleAccessOrIDToken(req *http.Request, header string) error {
 	case jwt.TokenUseID:
 		userID = claims.EnlightUserID
 	case jwt.TokenUseAccess:
+		if config.UseUserIDCache {
+			var found bool
+			if userID, found = userIDCache[claims.Username]; found {
+				break
+			}
+		}
+
 		if userID, err = getUserIDByToken(ctx, base64Token); err != nil {
 			return errors.Wrap(err, "couldn't get User by token")
 		}
+
+		if config.UseUserIDCache {
+			userIDCache[claims.Username] = userID
+		}
+
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
@@ -150,6 +176,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 			ID string `json:"id"`
 		} `json:"data"`
 	}
+
 	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
@@ -186,7 +213,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
 				logFields.Error("Couldn't extract User ID from context.")
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+				http_server.WriteJSONResponse(
+					ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
+				)
 				return
 			}
 
@@ -196,7 +225,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				resource, err := authorizeConfig.resourceFunc(req)
 				if err != nil {
 					logFields.WithError(err).Error("ResourceFunc failed.")
-					http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+					http_server.WriteJSONResponse(
+						ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
+					)
 					return
 				}
 
@@ -263,6 +294,7 @@ type authorizationConfig struct {
 func HandleSecureEndpoint(endpoint string) *SecurityConfig {
 	s := &SecurityConfig{endpoint: endpoint}
 	securityConfigurations = append(securityConfigurations, s)
+
 	return s
 }
 
@@ -279,6 +311,7 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 	if len(headers) > 0 {
 		s.accessTokenHeader = headers[0]
 	}
+
 	return s
 }
 
@@ -296,5 +329,6 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 		s.authorizations,
 		authorizationConfig{action, resourceFunc},
 	)
+
 	return s
 }
