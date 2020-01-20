@@ -12,6 +12,7 @@ func MustGetAsString(variableName string) string {
 	if value == "" {
 		log.Panicf("System variable %s not set", variableName)
 	}
+
 	return value
 }
 
@@ -21,6 +22,7 @@ func GetAsString(variableName string, defaultValue string) string {
 	if value == "" {
 		return defaultValue
 	}
+
 	return value
 }
 
@@ -30,10 +32,12 @@ func GetAsFloat(variableName string, defaultValue float64) (floatValue float64) 
 	if stringValue == "" {
 		return defaultValue
 	}
+
 	var err error
 	if floatValue, err = strconv.ParseFloat(stringValue, 64); err != nil {
 		log.Panicf("Failed to parse string %s to float - %+v", stringValue, err)
 	}
+
 	return
 }
 
@@ -43,10 +47,12 @@ func GetAsInt(variableName string, defaultValue int) (intValue int) {
 	if stringValue == "" {
 		return defaultValue
 	}
+
 	var err error
 	if intValue, err = strconv.Atoi(stringValue); err != nil {
 		log.Panicf("Failed to parse string %s to int - %+v", stringValue, err)
 	}
+
 	return
 }
 
@@ -56,9 +62,11 @@ func GetAsBool(variableName string, defaultValue bool) (boolValue bool) {
 	if stringValue == "" {
 		return defaultValue
 	}
+
 	var err error
 	if boolValue, err = strconv.ParseBool(stringValue); err != nil {
 		log.Panicf("Failed to parse string %s to bool - %+v", stringValue, err)
 	}
+
 	return
 }

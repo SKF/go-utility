@@ -32,7 +32,8 @@ type Config struct {
 // Configure will configure the package
 func Configure(conf Config) {
 	config = &conf
-	auth.Configure(auth.Config{Stage: conf.Stage}) //nolint: wsl
+
+	auth.Configure(auth.Config{Stage: conf.Stage})
 }
 
 // GetTokens will return the cached tokens

@@ -60,6 +60,7 @@ func (p *Processor) Process(ctx context.Context, request events.CloudwatchLogsEv
 	source := parseSource(eventType, logsData)
 
 	work := make(chan events.CloudwatchLogsLogEvent)
+
 	go func() {
 		for _, event := range logsData.LogEvents {
 			select {
@@ -67,10 +68,12 @@ func (p *Processor) Process(ctx context.Context, request events.CloudwatchLogsEv
 			case work <- event:
 			}
 		}
+
 		close(work)
 	}()
 
 	done := make(chan int)
+
 	workers := make([]*worker, p.noOfWorkers)
 	for idx := range workers {
 		w := newWorker(idx, p.service, p.client).
@@ -93,9 +96,11 @@ func parseEventType(logGroup string) string {
 	if strings.Contains(logGroup, "/aws/lambda/") {
 		return lambdaEventType
 	}
+
 	if strings.Contains(logGroup, "/aws/ecs/") {
 		return ecsEventType
 	}
+
 	return cloudwatchEventType
 }
 

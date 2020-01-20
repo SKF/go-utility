@@ -2,6 +2,7 @@ package array
 
 func countMap(arrs ...[]string) (result map[string]int) {
 	result = make(map[string]int)
+
 	for _, arr := range arrs {
 		distinctArr := DistinctString(arr)
 		for _, value := range distinctArr {
@@ -32,6 +33,7 @@ func DistinctString(arr []string) (result []string) {
 func IntersectString(arrs ...[]string) (result []string) {
 	result = []string{}
 	noArrs := len(arrs)
+
 	for key, count := range countMap(arrs...) {
 		if count == noArrs {
 			result = append(result, key)
@@ -41,10 +43,13 @@ func IntersectString(arrs ...[]string) (result []string) {
 	return
 }
 
+const oneOccurence = 1
+
 func DifferenceString(arrs ...[]string) (result []string) {
 	result = []string{}
+
 	for key, count := range countMap(arrs...) {
-		if count == 1 {
+		if count == oneOccurence {
 			result = append(result, key)
 		}
 	}

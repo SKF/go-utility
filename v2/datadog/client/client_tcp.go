@@ -52,6 +52,7 @@ func (c *TCP) WithMaxRetries(maxRetries int) *TCP {
 	if maxRetries >= 0 {
 		c.maxRetries = maxRetries
 	}
+
 	return c
 }
 
@@ -137,6 +138,7 @@ func (c *TCP) PostLogEntry(logEntry interface{}) (err error) {
 			c.mutex.RUnlock()
 			break
 		}
+
 		c.mutex.RUnlock()
 
 		numRetries++
@@ -145,6 +147,7 @@ func (c *TCP) PostLogEntry(logEntry interface{}) (err error) {
 		if backoff > maxBackoffInMS {
 			backoff = maxBackoffInMS
 		}
+
 		time.Sleep(time.Millisecond * time.Duration(backoff))
 
 		c.Reconnect()

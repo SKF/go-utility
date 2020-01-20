@@ -45,6 +45,8 @@ type JWKeySet struct {
 	Use       string `json:"use"`
 }
 
+const smallestExpLengthInBytes = 4
+
 func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 	decodedE, err := base64.RawURLEncoding.DecodeString(ks.Exp)
 	if err != nil {
@@ -52,9 +54,9 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 		return
 	}
 
-	if len(decodedE) < 4 {
-		ndata := make([]byte, 4)
-		copy(ndata[4-len(decodedE):], decodedE)
+	if len(decodedE) < smallestExpLengthInBytes {
+		ndata := make([]byte, smallestExpLengthInBytes)
+		copy(ndata[smallestExpLengthInBytes-len(decodedE):], decodedE)
 		decodedE = ndata
 	}
 
@@ -70,6 +72,7 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 	}
 
 	pubKey.N.SetBytes(decodedN)
+
 	return pubKey, nil
 }
 
@@ -77,6 +80,7 @@ func GetKeySets() (_ JWKeySets, err error) {
 	if len(keySets) == 0 {
 		err = RefreshKeySets()
 	}
+
 	return keySets, err
 }
 
@@ -98,5 +102,6 @@ func RefreshKeySets() (err error) {
 	}
 
 	keySets = data.Keys
+
 	return
 }

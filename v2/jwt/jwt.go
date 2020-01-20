@@ -14,6 +14,7 @@ func (t Token) GetClaims() Claims {
 	if ok {
 		return *c
 	}
+
 	return Claims{}
 }
 

@@ -39,10 +39,12 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 	if span := trace.FromContext(ctx); span != nil {
 		traceID := span.SpanContext().TraceID
 		spanID := span.SpanContext().SpanID
+
 		return l.
 			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
 	}
+
 	return l
 }
 
@@ -50,6 +52,7 @@ func (l logger) WithUserID(ctx context.Context) Logger {
 	if userID, ok := useridcontext.FromContext(ctx); ok {
 		return l.WithField("userId", userID)
 	}
+
 	return l
 }
 

@@ -56,6 +56,7 @@ func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {
 		if err != nil {
 			err = errors.Wrapf(err, "failed to map AWS log event [%s] to a Datadog log", event.ID)
 			w.errs = append(w.errs, err)
+
 			continue
 		}
 
@@ -66,6 +67,7 @@ func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {
 		if err = w.client.PostLogEntry(logEntry); err != nil {
 			err = errors.Wrapf(err, "failed to send AWS log event [%s] to Datadog", event.ID)
 			w.errs = append(w.errs, err)
+
 			continue
 		}
 	}
@@ -136,6 +138,7 @@ func handleJSON(msg string, jsonDict map[string]interface{}) (err error) {
 	if err = json.Unmarshal(messageBytes, &tracing); err != nil {
 		return
 	}
+
 	if tracing.TraceID != nil {
 		jsonDict["dd.trace_id"] = *tracing.TraceID
 		jsonDict["dd.span_id"] = *tracing.SpanID

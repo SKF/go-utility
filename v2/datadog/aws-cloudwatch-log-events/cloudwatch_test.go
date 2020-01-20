@@ -30,6 +30,7 @@ func Test_Process_Valid_Request(t *testing.T) {
 
 	rawLog, err := encode(validLambdaLogEvent)
 	require.Nil(t, err)
+
 	request := events.CloudwatchLogsEvent{AWSLogs: rawLog}
 
 	p := aws_cloudwatch_log_events.NewProcessor(service, client).
@@ -83,8 +84,8 @@ var expectedDatadogLogs = []interface{}{
 		"message":          "msg",
 		"service":          "keckebarn",
 		"timestamp":        validLambdaLogEvent.LogEvents[1].Timestamp,
-		"dd.trace_id":      uint64(123),
-		"dd.span_id":       uint64(456),
+		"dd.trace_id":      uint64(123), // nolint: gomnd
+		"dd.span_id":       uint64(456), // nolint: gomnd
 	},
 	map[string]interface{}{
 		"application":      "backend",
@@ -126,5 +127,6 @@ func encode(d events.CloudwatchLogsData) (c events.CloudwatchLogsRawData, err er
 	}
 
 	c.Data = base64.StdEncoding.EncodeToString(buf.Bytes())
+
 	return
 }

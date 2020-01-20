@@ -45,6 +45,8 @@ type Logger interface {
 
 var baseLogger logger
 
+const skipsToOriginialCaller = 1
+
 func init() {
 	encoder := getEncoder()
 
@@ -55,7 +57,7 @@ func init() {
 			zap.NewAtomicLevelAt(getLogLevel()),
 		),
 		zap.AddCaller(),
-		zap.AddCallerSkip(1),
+		zap.AddCallerSkip(skipsToOriginialCaller),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
 	baseLogger = logger{origLogger.Sugar()}
@@ -90,9 +92,11 @@ func getEncoder() zapcore.Encoder {
 
 	useConsoleEncoder := strings.EqualFold(os.Getenv("CONSOLE_LOGGER"), "true")
 	encoder := zapcore.NewJSONEncoder(encoderConf)
+
 	if useConsoleEncoder {
 		encoder = zapcore.NewConsoleEncoder(encoderConf)
 	}
+
 	return encoder
 }
 

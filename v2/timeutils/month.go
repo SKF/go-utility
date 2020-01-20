@@ -13,11 +13,11 @@ func GetPeriodsStartAndEndUTC(firstyyyymm string, lastyyyymm string) (int64, int
 	}
 
 	end, err := toTime(lastyyyymm)
-	end = lastDayOfMonth(end)
 	if err != nil {
 		return 0, 0, err
 	}
 
+	end = lastDayOfMonth(end)
 	if start.After(end) {
 		err = fmt.Errorf("start %s may not be after end %s", firstyyyymm, lastyyyymm)
 		return 0, 0, err
