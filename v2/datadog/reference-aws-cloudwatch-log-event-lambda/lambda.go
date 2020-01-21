@@ -11,10 +11,11 @@ import (
 	"github.com/SKF/go-utility/v2/datadog/tags"
 	"github.com/SKF/go-utility/v2/env"
 	"github.com/SKF/go-utility/v2/log"
+	"github.com/SKF/go-utility/v2/stages"
 )
 
 var (
-	stage           = strings.ToLower(env.GetAsString("STAGE", "sandbox"))
+	stage           = strings.ToLower(env.GetAsString("STAGE", stages.StageSandbox))
 	entryTags       = strings.ToLower(env.GetAsString("TAGS", ""))
 	service         = env.GetAsString("SERVICE", "")
 	awsRegion       = env.GetAsString("AWS_REGION", "")

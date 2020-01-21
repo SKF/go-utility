@@ -9,9 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
-)
 
-const stageProd = "prod"
+	"github.com/SKF/go-utility/v2/stages"
+)
 
 var config *Config
 
@@ -28,7 +28,7 @@ func GetBaseURL() (string, error) {
 		return "", errors.New("auth is not configured")
 	}
 
-	if config.Stage == stageProd {
+	if config.Stage == stages.StageProd {
 		return "https://sso-api.users.enlight.skf.com", nil
 	}
 

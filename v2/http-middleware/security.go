@@ -38,6 +38,7 @@ func Configure(conf Config) {
 	config = conf
 
 	auth.Configure(auth.Config{Stage: conf.Stage})
+	jwk.Configure(jwk.Config{Stage: conf.Stage})
 
 	if conf.UseUserIDCache {
 		userIDCache = map[string]string{}
@@ -46,8 +47,15 @@ func Configure(conf Config) {
 
 // AuthenticateMiddleware retrieves the security configuration for the matched route
 // and handles Access Token validation and stores the token claims in the request context.
+// Deprecated: Use AuthenticateMiddlewareV3() instead
 func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 	jwk.KeySetURL = keySetURL
+	return AuthenticateMiddlewareV3()
+}
+
+// AuthenticateMiddlewareV3 retrieves the security configuration for the matched route
+// and handles Access Token validation and stores the token claims in the request context.
+func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 	if err := jwk.RefreshKeySets(); err != nil {
 		log.
 			WithError(err).
