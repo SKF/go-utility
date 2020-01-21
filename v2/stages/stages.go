@@ -6,4 +6,5 @@ const (
 	StageVerification = "verification"
 	StageTest         = "test"
 	StageSandbox      = "sandbox"
+	StageLocal        = "local"
 )

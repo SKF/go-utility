@@ -98,7 +98,13 @@ func GetKeySets() (_ JWKeySets, err error) {
 }
 
 func RefreshKeySets() (err error) {
-	resp, err := http.Get(getKeySetsURL())
+	url, err := getKeySetsURL()
+	if err != nil {
+		err = errors.Wrap(err, "failed to get key sets URL")
+		return
+	}
+
+	resp, err := http.Get(url) // nolint: gosec
 	if err != nil {
 		err = errors.Wrap(err, "failed to fetch key sets")
 		return
@@ -119,14 +125,18 @@ func RefreshKeySets() (err error) {
 	return
 }
 
-func getKeySetsURL() string {
+func getKeySetsURL() (string, error) {
+	if config == nil && KeySetURL == "" {
+		return "", errors.New("jwk is not configured")
+	}
+
 	if config == nil {
-		return KeySetURL
+		return KeySetURL, nil
 	}
 
 	if config.Stage == stages.StageProd {
-		return "https://sso-api.users.enlight.skf.com/jwks"
+		return "https://sso-api.users.enlight.skf.com/jwks", nil
 	}
 
-	return "https://sso-api." + config.Stage + ".users.enlight.skf.com/jwks"
+	return "https://sso-api." + config.Stage + ".users.enlight.skf.com/jwks", nil
 }
