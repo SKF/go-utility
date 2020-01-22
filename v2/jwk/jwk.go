@@ -146,9 +146,9 @@ func getKeySetsURL() (string, error) {
 }
 
 var allowedStages = map[string]bool{
-	StageProd:         true,
-	StageStaging:      true,
-	StageVerification: true,
-	StageTest:         true,
-	StageSandbox:      true,
+	stages.StageProd:         true,
+	stages.StageStaging:      true,
+	stages.StageVerification: true,
+	stages.StageTest:         true,
+	stages.StageSandbox:      true,
 }
