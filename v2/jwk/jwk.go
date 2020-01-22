@@ -134,9 +134,21 @@ func getKeySetsURL() (string, error) {
 		return KeySetURL, nil
 	}
 
+	if !allowedStages[config.Stage] {
+		return "", errors.Errorf("stage %s is not allowed", config.Stage)
+	}
+
 	if config.Stage == stages.StageProd {
 		return "https://sso-api.users.enlight.skf.com/jwks", nil
 	}
 
 	return "https://sso-api." + config.Stage + ".users.enlight.skf.com/jwks", nil
+}
+
+var allowedStages = map[string]bool{
+	StageProd:         true,
+	StageStaging:      true,
+	StageVerification: true,
+	StageTest:         true,
+	StageSandbox:      true,
 }
