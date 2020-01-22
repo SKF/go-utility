@@ -9,9 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
-)
 
-const stageProd = "prod"
+	"github.com/SKF/go-utility/v2/stages"
+)
 
 var config *Config
 
@@ -28,14 +28,15 @@ func GetBaseURL() (string, error) {
 		return "", errors.New("auth is not configured")
 	}
 
-	if config.Stage == stageProd {
+	if !allowedStages[config.Stage] {
+		return "", errors.Errorf("stage %s is not allowed", config.Stage)
+	}
+
+	if config.Stage == stages.StageProd {
 		return "https://sso-api.users.enlight.skf.com", nil
 	}
 
-	const ssoBaseURL = "https://sso-api.%s.users.enlight.skf.com"
-	url := fmt.Sprintf(ssoBaseURL, config.Stage)
-
-	return url, nil
+	return "https://sso-api." + config.Stage + ".users.enlight.skf.com", nil
 }
 
 // SignIn will sign in the user and if needed complete the change password challenge
@@ -144,4 +145,12 @@ type Tokens struct {
 type Challenge struct {
 	ID   string `json:"id"`
 	Type string `json:"type"`
+}
+
+var allowedStages = map[string]bool{
+	stages.StageProd:         true,
+	stages.StageStaging:      true,
+	stages.StageVerification: true,
+	stages.StageTest:         true,
+	stages.StageSandbox:      true,
 }

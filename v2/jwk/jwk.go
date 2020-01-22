@@ -9,8 +9,22 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+
+	"github.com/SKF/go-utility/v2/stages"
 )
 
+var config *Config
+
+type Config struct {
+	Stage string
+}
+
+func Configure(conf Config) {
+	config = &conf
+}
+
+// KeySetURL is used to configure which URL to fetch JWKs from.
+// Deprecated: Use Configure(Config{Stage: "..."}) instead.
 var KeySetURL string
 var keySets JWKeySets
 
@@ -57,7 +71,6 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 	if len(decodedE) < smallestExpLengthInBytes {
 		ndata := make([]byte, smallestExpLengthInBytes)
 		copy(ndata[smallestExpLengthInBytes-len(decodedE):], decodedE)
-		decodedE = ndata
 	}
 
 	pubKey := &rsa.PublicKey{
@@ -85,7 +98,13 @@ func GetKeySets() (_ JWKeySets, err error) {
 }
 
 func RefreshKeySets() (err error) {
-	resp, err := http.Get(KeySetURL) // nolint: gosec
+	url, err := getKeySetsURL()
+	if err != nil {
+		err = errors.Wrap(err, "failed to get key sets URL")
+		return
+	}
+
+	resp, err := http.Get(url) // nolint: gosec
 	if err != nil {
 		err = errors.Wrap(err, "failed to fetch key sets")
 		return
@@ -104,4 +123,32 @@ func RefreshKeySets() (err error) {
 	keySets = data.Keys
 
 	return
+}
+
+func getKeySetsURL() (string, error) {
+	if config == nil && KeySetURL == "" {
+		return "", errors.New("jwk is not configured")
+	}
+
+	if config == nil {
+		return KeySetURL, nil
+	}
+
+	if !allowedStages[config.Stage] {
+		return "", errors.Errorf("stage %s is not allowed", config.Stage)
+	}
+
+	if config.Stage == stages.StageProd {
+		return "https://sso-api.users.enlight.skf.com/jwks", nil
+	}
+
+	return "https://sso-api." + config.Stage + ".users.enlight.skf.com/jwks", nil
+}
+
+var allowedStages = map[string]bool{
+	stages.StageProd:         true,
+	stages.StageStaging:      true,
+	stages.StageVerification: true,
+	stages.StageTest:         true,
+	stages.StageSandbox:      true,
 }
