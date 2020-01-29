@@ -66,7 +66,6 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := trace.StartSpan(req.Context(), "Authenticator")
 			defer span.End()
-			*req = *req.WithContext(ctx)
 
 			logFields := log.
 				WithTracing(ctx).
@@ -75,7 +74,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessOrIDToken(req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessOrIDToken(ctx, req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
 					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
@@ -88,9 +87,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 	}
 }
 
-func handleAccessOrIDToken(req *http.Request, header string) error {
-	ctx := req.Context()
-
+func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string) error {
 	base64Token := req.Header.Get(header)
 	if base64Token == "" {
 		return errors.Errorf("auth header [%s] was empty", header)
@@ -204,7 +201,6 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := trace.StartSpan(req.Context(), "Authorizer")
 			defer span.End()
-			req = req.WithContext(ctx)
 
 			logFields := log.
 				WithTracing(ctx).
