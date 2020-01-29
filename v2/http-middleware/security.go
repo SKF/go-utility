@@ -74,7 +74,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessOrIDToken(req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessOrIDToken(ctx, req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
 					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
