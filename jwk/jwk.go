@@ -88,22 +88,15 @@ func RefreshKeySets() (err error) {
 	}
 	defer resp.Body.Close()
 
-	var data map[string]JWKeySets
+	var data struct {
+		Keys JWKeySets `json:"Keys"`
+	}
 
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		err = errors.Wrap(err, "failed to unmarshal key sets")
 		return
 	}
 
-	if keys, present := data["Keys"]; present {
-		// keys from Cognito
-		keySets = keys
-	} else if keys, present := data["data"]; present {
-		// keys from SSO-API
-		keySets = keys
-	} else {
-		return errors.New("failed to find key sets in response")
-	}
-
+	keySets = data.Keys
 	return
 }
