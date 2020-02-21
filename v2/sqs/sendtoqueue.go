@@ -8,6 +8,7 @@ import (
 	"github.com/SKF/go-utility/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"go.opencensus.io/trace"
 )
 
 var queueURL string
@@ -22,6 +23,9 @@ func ConfigureQueue(ctx context.Context, queue string, svc *sqs.SQS) {
 }
 
 func PutObjectOnQueue(ctx context.Context, object interface{}) error {
+	ctx, span := trace.StartSpan(ctx, "sqs/PutObjectOnQueue")
+	defer span.End()
+
 	if queueURL == "" {
 		err := errors.New(errQueueURLNotConfigured)
 		log.Warn(errQueueURLNotConfigured)
