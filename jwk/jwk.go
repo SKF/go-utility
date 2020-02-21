@@ -101,6 +101,8 @@ func RefreshKeySets() (err error) {
 	} else if keys, present := data["data"]; present {
 		// keys from SSO-API
 		keySets = keys
+	} else {
+		return errors.New("failed to find key sets in response")
 	}
 
 	return
