@@ -128,7 +128,7 @@ func RefreshKeySets() (err error) {
 		return errors.New("failed to find key sets in response")
 	}
 
-	return
+	return err
 }
 
 func getKeySetsURL() (string, error) {
