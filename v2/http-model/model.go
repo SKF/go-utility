@@ -17,6 +17,7 @@ var ErrResponseUnsupportedMediaType = []byte(`{"error": {"message": "unsupported
 var ErrResponseInternalServerError = []byte(`{"error": {"message": "internal server error"}}`)
 var ErrResponseUnauthorized = []byte(`{"error": {"message": "unauthorized"}}`)
 var ErrResponseNotFound = []byte(`{"error": {"message": "not found"}}`)
+var ErrResponseMethodNotAllowed = []byte(`{"error": {"message": "method not allowed"}}`)
 
 var ErrMessageInternalServerError = "internal server error"
 var ErrMessageUnauthorized = "unauthorized"
