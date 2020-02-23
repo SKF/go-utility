@@ -11,6 +11,7 @@ import (
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/trace"
 
+	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
@@ -107,7 +108,7 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 	case jwt.TokenUseAccess:
 		if config.UseUserIDCache {
 			var found bool
-			if userID, found = userIDCache[claims.Username]; found {
+			if userID, found = userIDCache[claims.Subject]; found {
 				break
 			}
 		}
@@ -117,13 +118,14 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		}
 
 		if config.UseUserIDCache {
-			userIDCache[claims.Username] = userID
+			userIDCache[claims.Subject] = userID
 		}
 
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
+	ctx = accesstokensubcontext.NewContext(ctx, claims.Subject)
 	ctx = useridcontext.NewContext(ctx, userID)
 	*req = *req.WithContext(ctx)
 
