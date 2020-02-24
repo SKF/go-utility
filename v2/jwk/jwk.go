@@ -71,6 +71,7 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 	if len(decodedE) < smallestExpLengthInBytes {
 		ndata := make([]byte, smallestExpLengthInBytes)
 		copy(ndata[smallestExpLengthInBytes-len(decodedE):], decodedE)
+		decodedE = ndata
 	}
 
 	pubKey := &rsa.PublicKey{
