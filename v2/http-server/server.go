@@ -67,7 +67,8 @@ func UnmarshalRequest(body io.ReadCloser, v interface{}) (err error) {
 	return
 }
 
-func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, code int, v interface{}) {
+// MarshalAndWriteJSONResponse will JSON marshal the incoming data and return the serialized version
+func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, code int, v interface{}) []byte {
 	response, err := json.Marshal(v)
 	if err != nil {
 		log.WithError(err).
@@ -75,10 +76,13 @@ func MarshalAndWriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *
 			WithField("type", fmt.Sprintf("%T", v)).
 			Error("Failed to marshal response body")
 
+		code = http.StatusInternalServerError
 		response = http_model.ErrResponseInternalServerError
 	}
 
 	WriteJSONResponse(ctx, w, r, code, response)
+
+	return response
 }
 
 // Don't gzip body if smaller than one packet, as it will be transmitted as a full packet anyway.
@@ -110,6 +114,16 @@ func WriteJSONResponse(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 func StatusNotFoundHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		WriteJSONResponse(r.Context(), w, r, http.StatusNotFound, http_model.ErrResponseNotFound)
+		code := http.StatusNotFound
+		resp := http_model.ErrResponseNotFound
+		WriteJSONResponse(r.Context(), w, r, code, resp)
+	})
+}
+
+func MethodNotAllowedHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		code := http.StatusMethodNotAllowed
+		resp := http_model.ErrResponseMethodNotAllowed
+		WriteJSONResponse(r.Context(), w, r, code, resp)
 	})
 }
