@@ -9,7 +9,7 @@ import (
 )
 
 func NewGeneralCacheKey(req *http.Request) string {
-	return req.Method + " :: " + req.URL.RawPath + " :: " + req.URL.RawQuery
+	return req.Method + " :: " + req.URL.Path + " :: " + req.URL.RawQuery
 }
 
 func NewUserSpecificCacheKey(ctx context.Context, req *http.Request) (_ string, err error) {
