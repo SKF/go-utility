@@ -110,6 +110,7 @@ func RefreshKeySets() (err error) {
 		err = errors.Wrap(err, "failed to fetch key sets")
 		return
 	}
+
 	defer resp.Body.Close()
 
 	var data map[string]JWKeySets

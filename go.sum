@@ -5,6 +5,8 @@ github.com/DataDog/datadog-go v2.2.0+incompatible h1:V5BKkxACZLjzHjSgBbr2gvLA2Ae
 github.com/DataDog/datadog-go v2.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616 h1:FN/pPPdhJ0O0mF6C7+PaNh0Nr8pmQBfxRUjOVyHz4O0=
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616/go.mod h1:gMGUEe16aZh0QN941HgDjwrdjU4iTthPoz2/AtDRADE=
+github.com/SKF/go-utility/v2 v2.2.1 h1:+GX1nwxjUoNiE3liO0Gvi4M9XLlKUdrmq9nJtWwc7vU=
+github.com/SKF/go-utility/v2 v2.2.1/go.mod h1:58mYgUJwysqzdcAploXrLQpyjJSsfTjD2C3kzk6pcuQ=
 github.com/SKF/proto v1.21.0-go h1:l4nbV3lqmcwHMJ4pn00/1KUtzgDdHEoK9fmCOsPj3oQ=
 github.com/SKF/proto v1.21.0-go/go.mod h1:fLZMzpComrKyD9V74fS1lT4ryHZX9LlYYjM1TmBZw+s=
 github.com/aws/aws-lambda-go v1.12.0 h1:CgKAMdFIWExd4U6c9DUE+ax8N0fsmkYirqcfmReRCeo=
