@@ -58,8 +58,7 @@ func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 // and handles Access Token validation and stores the token claims in the request context.
 func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 	if err := jwk.RefreshKeySets(); err != nil {
-		log.
-			WithError(err).
+		log.WithError(err).
 			Error("Couldn't refresh JWKeySets")
 	}
 
@@ -201,7 +200,7 @@ type Authorizer interface {
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "Authorizer")
+			ctx, span := trace.StartSpan(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
 
 			logFields := log.
@@ -211,7 +210,6 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if len(secConfig.authorizations) == 0 {
-				span.End()
 				next.ServeHTTP(w, req)
 				return
 			}
@@ -230,7 +228,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			for _, authorizeConfig := range secConfig.authorizations {
 				resource, err := authorizeConfig.resourceFunc(req)
 				if err != nil {
-					logFields.WithError(err).Error("ResourceFunc failed.")
+					logFields.WithError(err).Error("ResourceFunc failed")
 					http_server.WriteJSONResponse(
 						ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
 					)
@@ -243,18 +241,30 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 					authorizeConfig.action,
 					resource,
 				)
-				if !ok || err != nil {
+				if err != nil {
+					logFields.
+						WithError(err).
+						WithField("userId", userID).
+						WithField("action", authorizeConfig.action).
+						WithField("resource", resource).
+						Error("Error when calling IsAuthorized")
+
+					http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+					return
+				}
+
+				if !ok {
 					logFields.
 						WithField("userId", userID).
 						WithField("action", authorizeConfig.action).
 						WithField("resource", resource).
-						Warn("User is not Authorized")
+						Debug("User is not Authorized")
+
 					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
 				}
 			}
 
-			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}
