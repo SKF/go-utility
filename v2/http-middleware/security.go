@@ -64,7 +64,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "Authenticator")
+			ctx, span := trace.StartSpan(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
 
 			logFields := log.
@@ -81,7 +81,6 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 				}
 			}
 
-			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}
