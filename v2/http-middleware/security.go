@@ -81,6 +81,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 				}
 			}
 
+			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}
@@ -225,6 +226,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 
+			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}
