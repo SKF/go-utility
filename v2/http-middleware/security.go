@@ -58,14 +58,13 @@ func AuthenticateMiddleware(keySetURL string) mux.MiddlewareFunc {
 // and handles Access Token validation and stores the token claims in the request context.
 func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 	if err := jwk.RefreshKeySets(); err != nil {
-		log.
-			WithError(err).
+		log.WithError(err).
 			Error("Couldn't refresh JWKeySets")
 	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "Authenticator")
+			ctx, span := trace.StartSpan(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
 
 			logFields := log.
@@ -120,7 +119,6 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		if config.UseUserIDCache {
 			userIDCache[claims.Subject] = userID
 		}
-
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
@@ -201,63 +199,86 @@ type Authorizer interface {
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "Authorizer")
+			ctx, span := trace.StartSpan(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
-
-			logFields := log.
-				WithTracing(ctx).
-				WithField("method", req.Method).
-				WithField("url", req.URL.String())
-
-			secConfig := lookupSecurityConfig(req)
-			if len(secConfig.authorizations) == 0 {
-				span.End()
-				next.ServeHTTP(w, req)
-				return
-			}
 
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
-				logFields.Error("Couldn't extract User ID from context.")
+				log.WithTracing(ctx).
+					WithField("method", req.Method).
+					WithField("url", req.URL.String()).
+					Error("Couldn't extract User ID from context")
+
 				http_server.WriteJSONResponse(
 					ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
 				)
 				return
 			}
 
-			logFields = logFields.WithUserID(ctx)
+			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID)
+			if err != nil {
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+				return
+			}
 
-			for _, authorizeConfig := range secConfig.authorizations {
-				resource, err := authorizeConfig.resourceFunc(req)
-				if err != nil {
-					logFields.WithError(err).Error("ResourceFunc failed.")
-					http_server.WriteJSONResponse(
-						ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
-					)
-					return
-				}
-
-				ok, err := authorizer.IsAuthorizedWithContext(
-					ctx,
-					userID,
-					authorizeConfig.action,
-					resource,
-				)
-				if !ok || err != nil {
-					logFields.
-						WithField("userId", userID).
-						WithField("action", authorizeConfig.action).
-						WithField("resource", resource).
-						Warn("User is not Authorized")
-					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
-					return
-				}
+			if !isAuthorized {
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
+				return
 			}
 
 			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}
+}
+
+func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string) (bool, error) {
+	secConfig := lookupSecurityConfig(req)
+	if len(secConfig.authorizations) == 0 {
+		return true, nil
+	}
+
+	logFields := log.
+		WithTracing(ctx).
+		WithUserID(ctx).
+		WithField("method", req.Method).
+		WithField("url", req.URL.String())
+
+	for _, authorizeConfig := range secConfig.authorizations {
+		resource, err := authorizeConfig.resourceFunc(req)
+		if err != nil {
+			logFields.WithError(err).Error("ResourceFunc failed")
+			return false, err
+		}
+
+		ok, err := authorizer.IsAuthorizedWithContext(
+			ctx,
+			userID,
+			authorizeConfig.action,
+			resource,
+		)
+		if err != nil {
+			logFields.WithError(err).
+				WithField("userId", userID).
+				WithField("action", authorizeConfig.action).
+				WithField("resource", resource).
+				Error("Error when calling IsAuthorized")
+
+			return false, err
+		}
+
+		if !ok {
+			logFields.
+				WithField("userId", userID).
+				WithField("action", authorizeConfig.action).
+				WithField("resource", resource).
+				Debug("User is not Authorized")
+
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 var securityConfigurations []*SecurityConfig
