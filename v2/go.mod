@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tinylib/msgp v1.1.0 // indirect
 	go.opencensus.io v0.22.0
-	go.uber.org/zap v1.12.0
+	go.uber.org/zap v1.14.1
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
 	golang.org/x/tools v0.0.0-20191113232020-e2727e816f5a // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.16.1 // indirect
