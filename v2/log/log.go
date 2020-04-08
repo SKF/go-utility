@@ -63,6 +63,14 @@ func init() {
 	baseLogger = logger{origLogger.Sugar()}
 }
 
+func SetDefaultService(value string) {
+	SetDefaultField("service", value)
+}
+
+func SetDefaultField(key string, value interface{}) {
+	baseLogger.logger = baseLogger.logger.With(key, value)
+}
+
 func getLogLevel() zapcore.Level {
 	levelStr := env.GetAsString("LOG_LEVEL", "info")
 
