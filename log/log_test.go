@@ -10,6 +10,8 @@ import (
 )
 
 func TestLog(t *testing.T) {
+	log.SetDefaultService("test_service")
+
 	log.WithField("application", "backend").WithError(fmt.Errorf("A test error")).Info("A info msg")
 	log.WithField("application", "backend").Debug("This is a debug message")
 	log.WithField("token", "1234").Warning("A warning msg")
