@@ -81,6 +81,7 @@ func getEncoder() zapcore.Encoder {
 	encoderConf := zap.NewProductionEncoderConfig()
 
 	// Set RFC3339 timestamp encoding format
+	encoderConf.MessageKey = "message"
 	encoderConf.TimeKey = "timestamp"
 	encoderConf.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.Format(time.RFC3339))
