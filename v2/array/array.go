@@ -57,7 +57,7 @@ func DifferenceString(arrs ...[]string) (result []string) {
 	return
 }
 
-func StringArrayContains(arr []string, stringToCheck string) bool {
+func ContainsString(arr []string, stringToCheck string) bool {
 	for _, s := range slice {
 		if s == stringToCheck {
 			return true
