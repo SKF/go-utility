@@ -202,6 +202,13 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			ctx, span := trace.StartSpan(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
 
+			//If current route doesn't need to be authenicated
+			secConfig := lookupSecurityConfig(req)
+			if len(secConfig.authorizations) == 0 {
+				next.ServeHTTP(w, req)
+				return
+			}
+
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
 				log.WithTracing(ctx).
@@ -215,7 +222,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 
-			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID)
+			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
 			if err != nil {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
@@ -232,19 +239,14 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	}
 }
 
-func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string) (bool, error) {
-	secConfig := lookupSecurityConfig(req)
-	if len(secConfig.authorizations) == 0 {
-		return true, nil
-	}
-
+func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
 	logFields := log.
 		WithTracing(ctx).
 		WithUserID(ctx).
 		WithField("method", req.Method).
 		WithField("url", req.URL.String())
 
-	for _, authorizeConfig := range secConfig.authorizations {
+	for _, authorizeConfig := range configuredAuthorizations {
 		resource, err := authorizeConfig.resourceFunc(req)
 		if err != nil {
 			logFields.WithError(err).Error("ResourceFunc failed")
