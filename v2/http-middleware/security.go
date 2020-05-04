@@ -222,7 +222,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 
-			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID)
+			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
 			if err != nil {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
@@ -239,7 +239,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	}
 }
 
-func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string) (bool, error) {
+func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
 
 	logFields := log.
 		WithTracing(ctx).
@@ -247,7 +247,7 @@ func checkAuthorization(ctx context.Context, req *http.Request, authorizer Autho
 		WithField("method", req.Method).
 		WithField("url", req.URL.String())
 
-	for _, authorizeConfig := range secConfig.authorizations {
+	for _, authorizeConfig := range configuredAuthorizations {
 		resource, err := authorizeConfig.resourceFunc(req)
 		if err != nil {
 			logFields.WithError(err).Error("ResourceFunc failed")
