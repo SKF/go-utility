@@ -240,7 +240,6 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 }
 
 func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
-
 	logFields := log.
 		WithTracing(ctx).
 		WithUserID(ctx).
