@@ -205,7 +205,8 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			//If current route doesn't need to be authenicated
 			secConfig := lookupSecurityConfig(req)
 			if len(secConfig.authorizations) == 0 {
-				return true, nil
+				next.ServeHTTP(w, req)
+				return
 			}
 
 			userID, ok := useridcontext.FromContext(req.Context())
