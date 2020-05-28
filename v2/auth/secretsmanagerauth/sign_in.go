@@ -6,11 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SKF/go-utility/v2/auth"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+
+	"github.com/SKF/go-utility/v2/auth"
 )
 
 var tokensMutex = new(sync.RWMutex)
