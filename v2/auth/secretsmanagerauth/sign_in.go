@@ -81,7 +81,8 @@ func SignIn(ctx context.Context) (err error) {
 		}
 
 		var claims jwt.StandardClaims
-		_, _, err := parser.ParseUnverified(tokens.AccessToken, &claims)
+		_, _, err = parser.ParseUnverified(tokens.AccessToken, &claims)
+
 		if err == nil {
 			// Verify if token still valid within the current time diff
 			// no need to sign in once again
