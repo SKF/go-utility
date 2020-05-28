@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/pkg/errors"
+	"time"
 
 	"github.com/SKF/go-utility/v2/auth"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 )
 
 var tokensMutex = new(sync.RWMutex)
 var tokens auth.Tokens
+var tokenExpireDurationDiff = 5 * time.Minute
 
 var fetchingTokensMutex = new(sync.RWMutex)
 var fetchingTokens bool
@@ -72,9 +74,32 @@ func SignIn(ctx context.Context) (err error) {
 		fetchingTokensMutex.Unlock()
 	}()
 
-	tokens, err = signIn(ctx)
+	if tokens.AccessToken != "" {
+		parser := jwt.Parser{
+			SkipClaimsValidation: true,
+		}
 
-	return
+		var claims jwt.StandardClaims
+		_, _, err := parser.ParseUnverified(tokens.AccessToken, &claims)
+		if err != nil {
+			return err
+		}
+
+		ts := time.Now().Add(tokenExpireDurationDiff).Unix()
+		if claims.VerifyExpiresAt(ts, false) &&
+			claims.VerifyIssuedAt(ts, false) &&
+			claims.VerifyNotBefore(ts, false) {
+			return nil
+		}
+	}
+
+	tokens, err = signIn(ctx)
+	if err != nil {
+		tokens = auth.Tokens{}
+		return err
+	}
+
+	return nil
 }
 
 func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
