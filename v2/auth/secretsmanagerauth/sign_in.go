@@ -82,15 +82,15 @@ func SignIn(ctx context.Context) (err error) {
 
 		var claims jwt.StandardClaims
 		_, _, err := parser.ParseUnverified(tokens.AccessToken, &claims)
-		if err != nil {
-			return err
-		}
-
-		ts := time.Now().Add(tokenExpireDurationDiff).Unix()
-		if claims.VerifyExpiresAt(ts, false) &&
-			claims.VerifyIssuedAt(ts, false) &&
-			claims.VerifyNotBefore(ts, false) {
-			return nil
+		if err == nil {
+			// Verify if token still valid within the current time diff
+			// no need to sign in once again
+			ts := time.Now().Add(tokenExpireDurationDiff).Unix()
+			if claims.VerifyExpiresAt(ts, false) &&
+				claims.VerifyIssuedAt(ts, false) &&
+				claims.VerifyNotBefore(ts, false) {
+				return nil
+			}
 		}
 	}
 
