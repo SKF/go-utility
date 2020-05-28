@@ -24,7 +24,15 @@ type CognitoClaims struct {
 }
 
 type EnlightClaims struct {
-	EnlightUserID string `json:"enlightUserId"`
+	EnlightUserID         string `json:"enlightUserId"`
+	EnlightCompanyId      string `json:"enlightCompanyId"`
+	EnlightAccess         string `json:"enlightAccess"`
+	EnlightRoles          string `json:"enlightRoles"`
+	EnlightValidEula      string `json:"enlightValidEula"`
+	EnlightEulaAgreedDate string `json:"enlightEulaAgreedDate"`
+	EnlightEmail          string `json:"enlightEmail"`
+	EnlightName           string `json:"enlightName"`
+	EnlightStatus         string `json:"enlightStatus"`
 }
 
 type Claims struct {
