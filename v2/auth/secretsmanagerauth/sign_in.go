@@ -50,26 +50,27 @@ func GetTokens() auth.Tokens {
 // isTokenValid checks if the token is still valid
 func isTokenValid(token string) bool {
 	if token != "" {
-		parser := jwt.Parser{
-			SkipClaimsValidation: true,
-		}
-
-		var claims jwt.StandardClaims
-		_, _, err := parser.ParseUnverified(token, &claims)
-
-		if err == nil {
-			// Verify if token still valid within the current time diff
-			// no need to sign in once again
-			ts := time.Now().Add(tokenExpireDurationDiff).Unix()
-			if claims.VerifyExpiresAt(ts, false) &&
-				claims.VerifyIssuedAt(ts, false) &&
-				claims.VerifyNotBefore(ts, false) {
-				return true
-			}
-		}
+		return false
 	}
 
-	return false
+	parser := jwt.Parser{
+		SkipClaimsValidation: true,
+	}
+
+	var claims jwt.StandardClaims
+	_, _, err := parser.ParseUnverified(token, &claims)
+
+	if err != nil {
+		return false
+	}
+
+	// Verify if token still valid within the current time diff
+	// no need to sign in once again
+	ts := time.Now().Add(tokenExpireDurationDiff).Unix()
+
+	return claims.VerifyExpiresAt(ts, false) &&
+		claims.VerifyIssuedAt(ts, false) &&
+		claims.VerifyNotBefore(ts, false)
 }
 
 // SignIn will fetch credentials from the Secret Manager and Sign In using those credentials
