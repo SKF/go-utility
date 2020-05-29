@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 
 	"github.com/SKF/go-utility/v2/auth"
@@ -14,6 +16,7 @@ import (
 
 var tokensMutex = new(sync.RWMutex)
 var tokens auth.Tokens
+var tokenExpireDurationDiff = 5 * time.Minute
 
 var fetchingTokensMutex = new(sync.RWMutex)
 var fetchingTokens bool
@@ -44,6 +47,32 @@ func GetTokens() auth.Tokens {
 	return tokens
 }
 
+// isTokenValid checks if the token is still valid
+func isTokenValid(token string) bool {
+	if token == "" {
+		return false
+	}
+
+	parser := jwt.Parser{
+		SkipClaimsValidation: true,
+	}
+
+	var claims jwt.StandardClaims
+	_, _, err := parser.ParseUnverified(token, &claims)
+
+	if err != nil {
+		return false
+	}
+
+	// Verify if token still valid within the current time diff
+	// no need to sign in once again
+	ts := time.Now().Add(tokenExpireDurationDiff).Unix()
+
+	return claims.VerifyExpiresAt(ts, false) &&
+		claims.VerifyIssuedAt(ts, false) &&
+		claims.VerifyNotBefore(ts, false)
+}
+
 // SignIn will fetch credentials from the Secret Manager and Sign In using those credentials
 func SignIn(ctx context.Context) (err error) {
 	if config == nil {
@@ -72,9 +101,17 @@ func SignIn(ctx context.Context) (err error) {
 		fetchingTokensMutex.Unlock()
 	}()
 
-	tokens, err = signIn(ctx)
+	if isTokenValid(tokens.AccessToken) {
+		return nil
+	}
 
-	return
+	tokens, err = signIn(ctx)
+	if err != nil {
+		tokens = auth.Tokens{}
+		return err
+	}
+
+	return nil
 }
 
 func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
