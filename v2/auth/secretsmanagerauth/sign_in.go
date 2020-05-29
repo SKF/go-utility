@@ -47,6 +47,31 @@ func GetTokens() auth.Tokens {
 	return tokens
 }
 
+// isTokenValid checks if the token is still valid
+func isTokenValid(token string) bool {
+	if token != "" {
+		parser := jwt.Parser{
+			SkipClaimsValidation: true,
+		}
+
+		var claims jwt.StandardClaims
+		_, _, err := parser.ParseUnverified(token, &claims)
+
+		if err == nil {
+			// Verify if token still valid within the current time diff
+			// no need to sign in once again
+			ts := time.Now().Add(tokenExpireDurationDiff).Unix()
+			if claims.VerifyExpiresAt(ts, false) &&
+				claims.VerifyIssuedAt(ts, false) &&
+				claims.VerifyNotBefore(ts, false) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // SignIn will fetch credentials from the Secret Manager and Sign In using those credentials
 func SignIn(ctx context.Context) (err error) {
 	if config == nil {
@@ -75,24 +100,8 @@ func SignIn(ctx context.Context) (err error) {
 		fetchingTokensMutex.Unlock()
 	}()
 
-	if tokens.AccessToken != "" {
-		parser := jwt.Parser{
-			SkipClaimsValidation: true,
-		}
-
-		var claims jwt.StandardClaims
-		_, _, err = parser.ParseUnverified(tokens.AccessToken, &claims)
-
-		if err == nil {
-			// Verify if token still valid within the current time diff
-			// no need to sign in once again
-			ts := time.Now().Add(tokenExpireDurationDiff).Unix()
-			if claims.VerifyExpiresAt(ts, false) &&
-				claims.VerifyIssuedAt(ts, false) &&
-				claims.VerifyNotBefore(ts, false) {
-				return nil
-			}
-		}
+	if isTokenValid(tokens.AccessToken) {
+		return nil
 	}
 
 	tokens, err = signIn(ctx)
