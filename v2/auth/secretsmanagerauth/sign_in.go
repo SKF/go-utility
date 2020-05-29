@@ -49,7 +49,7 @@ func GetTokens() auth.Tokens {
 
 // isTokenValid checks if the token is still valid
 func isTokenValid(token string) bool {
-	if token != "" {
+	if token == "" {
 		return false
 	}
 
