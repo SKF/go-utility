@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SKF/go-utility/env"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/SKF/go-utility/v2/env"
 )
 
 type Field = zapcore.Field
@@ -21,7 +21,6 @@ type Logger interface {
 	WithFields(fields Fields) Logger
 	WithError(err error) Logger
 	WithTracing(ctx context.Context) Logger
-	WithUserID(ctx context.Context) Logger
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -43,24 +42,28 @@ type Logger interface {
 	Sync() error
 }
 
-var baseLogger logger
-
-const skipsToOriginialCaller = 1
+var (
+	baseLogger logger
+	fields     []zap.Field
+)
 
 func init() {
-	encoder := getEncoder()
+	origLogger := newLogger(zapcore.Lock(os.Stdout))
+	baseLogger = logger{origLogger.Sugar()}
+}
 
-	origLogger := zap.New(
+func newLogger(syncer zapcore.WriteSyncer) *zap.Logger {
+	encoder := getEncoder()
+	return zap.New(
 		zapcore.NewCore(
 			encoder,
-			zapcore.Lock(os.Stdout),
+			syncer,
 			zap.NewAtomicLevelAt(getLogLevel()),
 		),
 		zap.AddCaller(),
-		zap.AddCallerSkip(skipsToOriginialCaller),
+		zap.AddCallerSkip(1),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
-	baseLogger = logger{origLogger.Sugar()}
 }
 
 func SetDefaultService(value string) {
@@ -68,6 +71,7 @@ func SetDefaultService(value string) {
 }
 
 func SetDefaultField(key string, value interface{}) {
+	fields = append(fields, zap.Any(key, value))
 	baseLogger.logger = baseLogger.logger.With(key, value)
 }
 
@@ -101,11 +105,9 @@ func getEncoder() zapcore.Encoder {
 
 	useConsoleEncoder := strings.EqualFold(os.Getenv("CONSOLE_LOGGER"), "true")
 	encoder := zapcore.NewJSONEncoder(encoderConf)
-
 	if useConsoleEncoder {
 		encoder = zapcore.NewConsoleEncoder(encoderConf)
 	}
-
 	return encoder
 }
 
@@ -128,10 +130,6 @@ func WithError(err error) Logger {
 // WithTracing will take an OpenCensus trace and add log fields for Datadog.
 func WithTracing(ctx context.Context) Logger {
 	return baseLogger.WithTracing(ctx)
-}
-
-func WithUserID(ctx context.Context) Logger {
-	return baseLogger.WithUserID(ctx)
 }
 
 // We must directly call the bundled logger here (whenever a func instead of
