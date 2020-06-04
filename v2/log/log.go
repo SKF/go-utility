@@ -47,6 +47,8 @@ var (
 	fields     []zap.Field
 )
 
+const skipsToOriginialCaller = 1
+
 func init() {
 	origLogger := newLogger(zapcore.Lock(os.Stdout))
 	baseLogger = logger{origLogger.Sugar()}
@@ -61,7 +63,7 @@ func newLogger(syncer zapcore.WriteSyncer) *zap.Logger {
 			zap.NewAtomicLevelAt(getLogLevel()),
 		),
 		zap.AddCaller(),
-		zap.AddCallerSkip(1),
+		zap.AddCallerSkip(skipsToOriginialCaller),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
 }
@@ -108,6 +110,7 @@ func getEncoder() zapcore.Encoder {
 	if useConsoleEncoder {
 		encoder = zapcore.NewConsoleEncoder(encoderConf)
 	}
+
 	return encoder
 }
 
@@ -197,4 +200,8 @@ func Panic(args ...interface{}) {
 
 func CheckWrite(lvl Level, msg string, fields ...Field) {
 	baseLogger.CheckWrite(lvl, msg, fields...)
+}
+
+func WithUserID(ctx context.Context) Logger {
+	return baseLogger.WithUserID(ctx)
 }
