@@ -57,6 +57,7 @@ func init() {
 
 func newLogger(syncer zapcore.WriteSyncer) *zap.Logger {
 	encoder := getEncoder()
+
 	return zap.New(
 		zapcore.NewCore(
 			encoder,
@@ -107,6 +108,7 @@ func getEncoder() zapcore.Encoder {
 	encoderConf.CallerKey = "source"
 
 	useConsoleEncoder := strings.EqualFold(os.Getenv("CONSOLE_LOGGER"), "true")
+
 	encoder := zapcore.NewJSONEncoder(encoderConf)
 	if useConsoleEncoder {
 		encoder = zapcore.NewConsoleEncoder(encoderConf)

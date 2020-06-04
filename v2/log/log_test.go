@@ -15,6 +15,7 @@ func TestLog(t *testing.T) {
 	log.SetDefaultService("service")
 
 	sampler := log.NewSampleLogger(100*time.Millisecond, 10, 50)
+
 	for i := 0; i < 100; i++ {
 		sampler.Info(fmt.Sprintf("Called %d", i+1))
 		time.Sleep(10 * time.Millisecond)
