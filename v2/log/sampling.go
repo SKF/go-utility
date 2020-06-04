@@ -26,7 +26,6 @@ func newSampleSyncer(tick time.Duration, first, thereafter int) zapcore.WriteSyn
 	}
 }
 
-// Write implements io.Writer.
 func (s *sampleSyncer) Write(b []byte) (int, error) {
 	now := time.Now()
 	if now.Sub(s.lastTick) > s.tick {
