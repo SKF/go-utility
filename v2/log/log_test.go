@@ -18,7 +18,9 @@ func TestLog(t *testing.T) {
 	sampler := log.NewSampleLogger(100*time.Millisecond, 10, 50)
 
 	for i := 0; i < 100; i++ {
+		// nolint: gomnd
 		sampler.Info(fmt.Sprintf("Called %d", i+1))
+		// nolint: gomnd
 		time.Sleep(10 * time.Millisecond)
 	}
 
