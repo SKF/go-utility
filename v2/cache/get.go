@@ -59,10 +59,10 @@ func (c *Cache) Get(key ObjectKey) (obj interface{}, ok bool) {
 			if time.Now().Before(dataItem.expiration) {
 				c.perFuncMetrics[key.FuncName()].hits++
 				return dataItem.data, true
-			} else {
-				c.expired++
-				c.cache.Del(string(key))
 			}
+
+			c.expired++
+			c.cache.Del(string(key))
 		}
 	}
 

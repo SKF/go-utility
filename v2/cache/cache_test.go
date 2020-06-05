@@ -18,13 +18,13 @@ const (
 	NoTTL         = 0
 	cacheFuncKey  = "myFunc"
 	cacheFuncKey2 = "myFunc2"
-	userId        = "myUserId"
+	userID        = "myUserId"
 	actionName    = "myActionname"
 )
 
 var (
 	resource  = common.Origin{Id: "myId", Type: "myType"}
-	keyFields = []string{userId, actionName, resource.Id, resource.Type}
+	keyFields = []string{userID, actionName, resource.Id, resource.Type}
 	key       = Key(cacheFuncKey, keyFields...)
 	key2      = Key(cacheFuncKey2, keyFields...)
 )
@@ -35,11 +35,12 @@ func makeCache(t *testing.T, ttl time.Duration) *Cache {
 	require.NoError(t, err)
 	require.NotNil(t, cache)
 	cache.Clear()
+
 	return cache
 }
 
 func Test_MakeCacheKey(t *testing.T) {
-	assert.Equal(t, fmt.Sprintf("%s;%s;%s;%s;%s", cacheFuncKey, userId, actionName, resource.Id, resource.Type), string(key))
+	assert.Equal(t, fmt.Sprintf("%s;%s;%s;%s;%s", cacheFuncKey, userID, actionName, resource.Id, resource.Type), string(key))
 }
 
 func Test_CacheNew(t *testing.T) {
@@ -140,6 +141,7 @@ func Test_CacheExpire(t *testing.T) {
 	require.Equal(t, 1, val.(int))
 
 	time.Sleep(TTL)
+
 	_, ok = c.Get(key)
 	assert.False(t, ok)
 }
@@ -190,6 +192,7 @@ func Test_CacheMissVerifyCounters(t *testing.T) {
 	assert.Equal(t, 0, int(c.perFuncMetrics[cacheFuncKey].hits))
 }
 
+// nolint: gomnd
 func Test_CacheTestPerFuncKeyCounters(t *testing.T) {
 	c := makeCache(t, TTL)
 

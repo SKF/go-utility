@@ -47,6 +47,7 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 	if err != nil {
 		err = errors.Wrap(err, "Error creating cache")
 		log.WithError(err).Error("Error creating cache")
+
 		return nil, err
 	}
 

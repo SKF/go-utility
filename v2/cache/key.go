@@ -18,5 +18,6 @@ func (o ObjectKey) FuncName() string {
 func Key(funcName string, fields ...string) ObjectKey {
 	keyFields := append([]string{funcName}, fields...)
 	keyStr := strings.Join(keyFields, separator)
+
 	return ObjectKey(keyStr)
 }
