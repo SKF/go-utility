@@ -45,6 +45,11 @@ func (s *sampleSyncer) Sync() error {
 	return s.WriteSyncer.Sync()
 }
 
+// NewSampleLogger will create a new logger
+// which will sample logs and dropped if requested to often
+// Logs which is written within `tick` be applied by first and thereafter
+// `first` is amount of logs that will always will be outputted
+// `thereafter` is used for outputten every n after within the `tick`
 func NewSampleLogger(tick time.Duration, first, thereafter int) Logger {
 	syncer := newSampleSyncer(tick, first, thereafter)
 	return logger{newLogger(syncer).With(fields...).Sugar()}
