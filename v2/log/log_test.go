@@ -14,6 +14,7 @@ import (
 func TestLog(t *testing.T) {
 	log.SetDefaultService("service")
 
+	// nolint: gomnd
 	sampler := log.NewSampleLogger(100*time.Millisecond, 10, 50)
 
 	for i := 0; i < 100; i++ {
