@@ -30,7 +30,6 @@ func TestLog(t *testing.T) {
 	log.WithError(errors.New("A test error")).Error("A test error, should have stacktrace")
 
 	assert.Panics(t, panicLog)
-	assert.True(t, false)
 }
 
 func panicLog() {
