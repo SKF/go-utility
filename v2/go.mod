@@ -8,6 +8,7 @@ require (
 	github.com/SKF/proto/v2 v2.3.2-go
 	github.com/aws/aws-lambda-go v1.12.0
 	github.com/aws/aws-sdk-go v1.25.49
+	github.com/dgraph-io/ristretto v0.0.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.7.3
