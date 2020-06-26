@@ -3,6 +3,7 @@ package httpmodel
 const (
 	HeaderContentType   = "Content-Type"
 	HeaderAuthorization = "Authorization"
+	HeaderClientID      = "X-Client-ID"
 	MimeJSON            = "application/json"
 	MimeParameterUTF8   = "charset=utf-8"
 )
