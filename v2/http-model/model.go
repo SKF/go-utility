@@ -4,10 +4,9 @@ const (
 	HeaderAuthorization = "Authorization"
 	HeaderClientID      = "X-Client-ID"
 	HeaderContentType = "Content-Type"
-
 	HeaderCacheControl  = "Cache-Control"
-	CacheControlNoCache = "no-cache"
 
+	CacheControlNoCache = "no-cache"
 	MimeJSON          = "application/json"
 	MimeParameterUTF8 = "charset=utf-8"
 
