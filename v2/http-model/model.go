@@ -2,13 +2,15 @@ package httpmodel
 
 const (
 	HeaderAuthorization = "Authorization"
-
+	HeaderClientID      = "X-Client-ID"
 	HeaderContentType = "Content-Type"
-	MimeJSON          = "application/json"
-	MimeParameterUTF8 = "charset=utf-8"
 
 	HeaderCacheControl  = "Cache-Control"
 	CacheControlNoCache = "no-cache"
+
+	MimeJSON          = "application/json"
+	MimeParameterUTF8 = "charset=utf-8"
+
 )
 
 type ErrorResponse struct {
