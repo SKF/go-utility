@@ -2,8 +2,8 @@ package httpmodel
 
 const (
 	HeaderAuthorization = "Authorization"
-	HeaderClientID      = "X-Client-ID"
 	HeaderContentType   = "Content-Type"
+	HeaderClientID      = "X-Client-ID"
 	HeaderCacheControl  = "Cache-Control"
 
 	CacheControlNoCache = "no-cache"
