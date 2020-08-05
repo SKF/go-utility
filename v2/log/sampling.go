@@ -30,6 +30,7 @@ func newSampleSyncer(tick time.Duration, first, thereafter int) zapcore.WriteSyn
 
 func (s *sampleSyncer) Write(b []byte) (int, error) {
 	s.Lock()
+	defer s.Unlock()
 	now := time.Now()
 	if now.Sub(s.lastTick) > s.tick {
 		s.count = 0
@@ -38,10 +39,8 @@ func (s *sampleSyncer) Write(b []byte) (int, error) {
 	s.lastTick = now
 
 	if s.count > s.first && s.count%s.thereafter != 0 {
-		s.Unlock()
 		return ioutil.Discard.Write(b)
 	}
-	s.Unlock()
 
 	return s.WriteSyncer.Write(b)
 }
