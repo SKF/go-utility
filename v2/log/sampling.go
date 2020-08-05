@@ -3,6 +3,7 @@ package log
 import (
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 
 	"go.uber.org/zap/zapcore"
@@ -10,6 +11,7 @@ import (
 
 type sampleSyncer struct {
 	zapcore.WriteSyncer
+	sync.Mutex
 	count             int
 	tick              time.Duration
 	lastTick          time.Time
@@ -27,6 +29,9 @@ func newSampleSyncer(tick time.Duration, first, thereafter int) zapcore.WriteSyn
 }
 
 func (s *sampleSyncer) Write(b []byte) (int, error) {
+	s.Lock()
+	defer s.Unlock()
+
 	now := time.Now()
 	if now.Sub(s.lastTick) > s.tick {
 		s.count = 0
