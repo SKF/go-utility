@@ -38,6 +38,7 @@ func (s *sampleSyncer) Write(b []byte) (int, error) {
 	s.lastTick = now
 
 	if s.count > s.first && s.count%s.thereafter != 0 {
+		s.Unlock()
 		return ioutil.Discard.Write(b)
 	}
 	s.Unlock()
