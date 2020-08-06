@@ -22,6 +22,7 @@ type Logger interface {
 	WithError(err error) Logger
 	WithTracing(ctx context.Context) Logger
 	WithUserID(ctx context.Context) Logger
+	WithCallerSkip(skip int) Logger
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -39,7 +40,6 @@ type Logger interface {
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
 
-	AddCallerSkip(skip int)
 	CheckWrite(lvl Level, msg string, fields ...Field)
 	Sync() error
 }
