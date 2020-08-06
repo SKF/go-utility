@@ -39,6 +39,7 @@ type Logger interface {
 	Fatal(args ...interface{})
 	Panic(args ...interface{})
 
+	AddCallerSkip(skip int)
 	CheckWrite(lvl Level, msg string, fields ...Field)
 	Sync() error
 }

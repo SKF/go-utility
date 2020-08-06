@@ -14,6 +14,10 @@ type logger struct {
 	logger *zap.SugaredLogger
 }
 
+func (l logger) AddCallerSkip(skip int) {
+	l.logger = l.logger.Desugar().WithOptions(zap.AddCallerSkip(skip)).Sugar()
+}
+
 func (l logger) WithField(key string, value interface{}) Logger {
 	return logger{l.logger.With(zap.Any(key, value))}
 }
