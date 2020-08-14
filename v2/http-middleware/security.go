@@ -65,10 +65,8 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "AuthenticateMiddlewareV3/Handler")
+			ctx, span := startSpanNoRoot(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
-
-			req = req.WithContext(ctx)
 
 			logFields := log.
 				WithTracing(ctx).
@@ -83,6 +81,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 					return
 				}
 			}
+			span.End()
 
 			next.ServeHTTP(w, req)
 		})
@@ -201,10 +200,8 @@ type Authorizer interface {
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "AuthorizeMiddleware/Handler")
+			ctx, span := startSpanNoRoot(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
-
-			req = req.WithContext(ctx)
 
 			//If current route doesn't need to be authenicated
 			secConfig := lookupSecurityConfig(req)
@@ -236,6 +233,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 				return
 			}
+			span.End()
 
 			next.ServeHTTP(w, req)
 		})
@@ -363,4 +361,12 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 	)
 
 	return s
+}
+
+func startSpanNoRoot(ctx context.Context, name string, o ...trace.StartOption) (context.Context, *trace.Span) {
+	if trace.FromContext(ctx) == nil {
+		return ctx, nil
+	}
+
+	return trace.StartSpan(ctx, name, o...)
 }
