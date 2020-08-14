@@ -68,6 +68,8 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 			ctx, span := trace.StartSpan(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
 
+			req = req.WithContext(ctx)
+
 			logFields := log.
 				WithTracing(ctx).
 				WithField("method", req.Method).
@@ -82,7 +84,6 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 				}
 			}
 
-			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}
@@ -203,6 +204,8 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			ctx, span := trace.StartSpan(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
 
+			req = req.WithContext(ctx)
+
 			//If current route doesn't need to be authenicated
 			secConfig := lookupSecurityConfig(req)
 			if len(secConfig.authorizations) == 0 {
@@ -234,7 +237,6 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 
-			span.End()
 			next.ServeHTTP(w, req)
 		})
 	}

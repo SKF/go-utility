@@ -3,7 +3,7 @@ module github.com/SKF/go-utility/v2
 go 1.13
 
 require (
-	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616
+	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
 	github.com/SKF/go-utility v1.10.4
 	github.com/SKF/proto/v2 v2.3.2-go
 	github.com/aws/aws-lambda-go v1.12.0
@@ -14,6 +14,6 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
-	go.opencensus.io v0.22.0
+	go.opencensus.io v0.22.4
 	go.uber.org/zap v1.14.1
 )
