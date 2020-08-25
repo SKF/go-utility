@@ -224,7 +224,14 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			}
 
 			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
-			if err != nil {
+			switch {
+			case errors.Is(err, ErrResourceFuncInvalidInput):
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusBadRequest, http_model.ErrResponseBadRequest)
+				return
+			case errors.Is(err, ErrResourceFuncNotFound):
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusNotFound, http_model.ErrResponseNotFound)
+				return
+			case err != nil:
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
 			}
@@ -239,6 +246,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 		})
 	}
 }
+
+var ErrResourceFuncInvalidInput = errors.New("invalid input")
+var ErrResourceFuncNotFound = errors.New("not found")
 
 func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
 	logFields := log.

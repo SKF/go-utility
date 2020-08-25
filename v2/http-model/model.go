@@ -19,6 +19,7 @@ type ErrorResponse struct {
 
 var ErrResponseUnsupportedMediaType = []byte(`{"error": {"message": "unsupported media type"}}`)
 var ErrResponseInternalServerError = []byte(`{"error": {"message": "internal server error"}}`)
+var ErrResponseBadRequest = []byte(`{"error": {"message": "bad request"}}`)
 var ErrResponseUnauthorized = []byte(`{"error": {"message": "unauthorized"}}`)
 var ErrResponseNotFound = []byte(`{"error": {"message": "not found"}}`)
 var ErrResponseMethodNotAllowed = []byte(`{"error": {"message": "method not allowed"}}`)
