@@ -196,14 +196,19 @@ type Authorizer interface {
 }
 
 // AuthorizeMiddleware retrieves the security configuration for the matched route
-// and handles the configured authorizations.
+// and handles the configured authorizations. If any of the configured ResourceFuncs
+// returns ErrResourceFuncInvalidInput or ErrResourceFuncNotFound, a corresponding
+// http error response is written. Other errors from the ResourceFuncs results in
+// a http.StatusInternalServerError response being written.
+// If the request fails the authorization check, http.StatusUnauthorized is
+// returned to the client.
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := startSpanNoRoot(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
 
-			//If current route doesn't need to be authenicated
+			// If current route doesn't need to be authenicated
 			secConfig := lookupSecurityConfig(req)
 			if len(secConfig.authorizations) == 0 {
 				next.ServeHTTP(w, req)
@@ -356,6 +361,28 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 }
 
 // ResourceFunc takes a *http.Request and returns the resource to use for authorization.
+// If the ResourceFunc fails because of invalid input data or a missing resource,
+// return ErrResourceFuncInvalidInput or ErrResourceFuncNotFound, respectively. It is
+// probably a good idea to wrap these errors with more information about the error.
+// The following example ResourceFunc expects an input struct with a non-empty field
+//
+//     func fieldFromBodyFunc(r *http.Request) (*common.Origin, error) {
+//         var inputData struct {
+//             field string `json:"field,omitempty"`
+//         }
+//         body, err := ioutil.ReadAll(r.Body)
+//         if err != nil {
+//             return nil, err
+//         }
+//         r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+//         if err := json.Unmarshal(body, &inputData); err != nil {
+//             return nil, errors.WithMessagef(http_middleware.ErrResourceFuncInvalidInput, "Failed to unmarshal body")
+//         }
+//         if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
+//             return nil, errors.WithMessagef(http_middleware.ErrResourceFuncInvalidInput, "Required field 'field' is empty")
+//         }
+//         return &common.Origin{Id: inputData.field, Type: "example"}, nil
+//     }
 type ResourceFunc func(*http.Request) (*common.Origin, error)
 
 // NilResourceFunc represents the Zero Value ResourceFunc.
