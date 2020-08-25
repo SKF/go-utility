@@ -239,9 +239,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			case err != nil:
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
-			}
-
-			if !isAuthorized {
+			case !isAuthorized:
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 				return
 			}
