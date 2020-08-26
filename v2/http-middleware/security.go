@@ -229,17 +229,16 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			}
 
 			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
-			switch {
-			case errors.Is(err, ErrResourceFuncInvalidInput):
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusBadRequest, http_model.ErrResponseBadRequest)
+			var httpErr *ResourceFuncError
+			if errors.As(err, &httpErr) {
+				http_server.WriteJSONResponse(ctx, w, req, httpErr.HTTPStatusCode, httpErr.Message())
 				return
-			case errors.Is(err, ErrResourceFuncNotFound):
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusNotFound, http_model.ErrResponseNotFound)
-				return
-			case err != nil:
+			}
+			if err != nil {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
-			case !isAuthorized:
+			}
+			if !isAuthorized {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 				return
 			}
@@ -250,7 +249,25 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	}
 }
 
-var ErrResourceFuncInvalidInput = errors.New("invalid input")
+type ResourceFuncError struct {
+	Msg            string
+	HTTPStatusCode int
+}
+
+func (e *ResourceFuncError) Error() string {
+	return e.Msg
+}
+
+func (e *ResourceFuncError) Message() []byte {
+	errStruct := http_model.ErrorResponse{
+		Error: struct {
+			Message string `json:"message"`
+		}{Message: e.Msg}}
+	data, _ := json.Marshal(errStruct) // nolint:errcheck
+
+	return data
+}
+
 var ErrResourceFuncNotFound = errors.New("not found")
 
 func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
@@ -374,10 +391,16 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 //         }
 //         r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 //         if err := json.Unmarshal(body, &inputData); err != nil {
-//             return nil, errors.WithMessagef(http_middleware.ErrResourceFuncInvalidInput, "Failed to unmarshal body")
+//             return nil, &http_middleware.ResourceFuncError{
+//                 Msg:            "Failed to unmarshal body",
+//                 HTTPStatusCode: http.StatusBadRequest,
+//             }
 //         }
 //         if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
-//             return nil, errors.WithMessagef(http_middleware.ErrResourceFuncInvalidInput, "Required field 'field' is empty")
+//             return nil, &http_middleware.ResourceFuncError{
+//                 Msg:            "Required field 'field' is empty",
+//                 HTTPStatusCode: http.StatusBadRequest,
+//             }
 //         }
 //         return &common.Origin{Id: inputData.field, Type: "example"}, nil
 //     }
