@@ -1,5 +1,7 @@
 package httpmodel
 
+import "encoding/json"
+
 const (
 	HeaderAuthorization = "Authorization"
 	HeaderContentType   = "Content-Type"
@@ -15,6 +17,25 @@ type ErrorResponse struct {
 	Error struct {
 		Message string `json:"message"`
 	} `json:"error"`
+}
+
+type HTTPError struct {
+	Msg        string
+	StatusCode int
+}
+
+func (e *HTTPError) Error() string {
+	return e.Msg
+}
+
+func (e *HTTPError) Message() []byte {
+	errStruct := ErrorResponse{
+		Error: struct {
+			Message string `json:"message"`
+		}{Message: e.Msg}}
+	data, _ := json.Marshal(errStruct) // nolint:errcheck
+
+	return data
 }
 
 var ErrResponseUnsupportedMediaType = []byte(`{"error": {"message": "unsupported media type"}}`)

@@ -229,9 +229,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			}
 
 			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
-			var httpErr *ResourceFuncError
+			var httpErr *http_model.HTTPError
 			if errors.As(err, &httpErr) {
-				http_server.WriteJSONResponse(ctx, w, req, httpErr.HTTPStatusCode, httpErr.Message())
+				http_server.WriteJSONResponse(ctx, w, req, httpErr.StatusCode, httpErr.Message())
 				return
 			}
 			if err != nil {
@@ -248,27 +248,6 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 		})
 	}
 }
-
-type ResourceFuncError struct {
-	Msg            string
-	HTTPStatusCode int
-}
-
-func (e *ResourceFuncError) Error() string {
-	return e.Msg
-}
-
-func (e *ResourceFuncError) Message() []byte {
-	errStruct := http_model.ErrorResponse{
-		Error: struct {
-			Message string `json:"message"`
-		}{Message: e.Msg}}
-	data, _ := json.Marshal(errStruct) // nolint:errcheck
-
-	return data
-}
-
-var ErrResourceFuncNotFound = errors.New("not found")
 
 func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
 	logFields := log.
@@ -377,8 +356,7 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 
 // ResourceFunc takes a *http.Request and returns the resource to use for authorization.
 // If the ResourceFunc fails because of invalid input data or a missing resource,
-// return ErrResourceFuncInvalidInput or ErrResourceFuncNotFound, respectively. It is
-// probably a good idea to wrap these errors with more information about the error.
+// return a HttpError, or an error wrapping a HTTPError.
 // The following example ResourceFunc expects an input struct with a non-empty field
 //
 //     func fieldFromBodyFunc(r *http.Request) (*common.Origin, error) {
@@ -391,15 +369,15 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 //         }
 //         r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 //         if err := json.Unmarshal(body, &inputData); err != nil {
-//             return nil, &http_middleware.ResourceFuncError{
-//                 Msg:            "Failed to unmarshal body",
-//                 HTTPStatusCode: http.StatusBadRequest,
+//             return nil, &http_model.HTTPError{
+//                 Msg:        "Failed to unmarshal body",
+//                 StatusCode: http.StatusBadRequest,
 //             }
 //         }
 //         if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
-//             return nil, &http_middleware.ResourceFuncError{
-//                 Msg:            "Required field 'field' is empty",
-//                 HTTPStatusCode: http.StatusBadRequest,
+//             return nil, &http_model.HTTPError{
+//                 Msg:        "Required field 'field' is empty",
+//                 StatusCode: http.StatusBadRequest,
 //             }
 //         }
 //         return &common.Origin{Id: inputData.field, Type: "example"}, nil
