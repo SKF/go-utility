@@ -195,13 +195,13 @@ type Authorizer interface {
 	IsAuthorizedWithContext(ctx context.Context, userID, action string, resource *common.Origin) (bool, error)
 }
 
-// AuthorizeMiddleware retrieves the security configuration for the matched route
-// and handles the configured authorizations. If any of the configured ResourceFuncs
-// returns ErrResourceFuncInvalidInput or ErrResourceFuncNotFound, a corresponding
-// http error response is written. Other errors from the ResourceFuncs results in
-// a http.StatusInternalServerError response being written.
-// If the request fails the authorization check, http.StatusUnauthorized is
-// returned to the client.
+// AuthorizeMiddleware retrieves the security configuration for the matched
+// route and handles the configured authorizations. If any of the configured
+// ResourceFuncs returns a HTTPError or an error wrapping a HTTPError, the error
+// code and message from that error is written. Other errors from the
+// ResourceFuncs results in a http.StatusInternalServerError response being
+// written. If the request fails the authorization check,
+// http.StatusUnauthorized is returned to the client.
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
