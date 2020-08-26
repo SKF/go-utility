@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -14,37 +13,6 @@ func (c *Cache) Get(key ObjectKey) (obj interface{}, ok bool) {
 	if c.ttl <= 0 {
 		return nil, false
 	}
-
-	defer func() {
-		statsLogger := c.log.WithField("getsCalled", c.gets).
-			WithField("setsCalled", c.sets).
-			WithField("expired", c.expired).
-			WithField("expiredPercentage", (c.expired*100)/c.gets).
-			WithField("misses", c.cache.Metrics.Misses()).
-			WithField("missesPercentage", (c.cache.Metrics.Misses()*100)/c.gets).
-			WithField("hits", c.cache.Metrics.Hits()).
-			WithField("hitsPercentage", (c.cache.Metrics.Hits()*100)/c.gets).
-			WithField("ratio", c.cache.Metrics.Ratio()).
-			WithField("keysAdded", c.cache.Metrics.KeysAdded()).
-			WithField("keysUpdated", c.cache.Metrics.KeysUpdated()).
-			WithField("getsEvicted", c.cache.Metrics.KeysEvicted()).
-			WithField("getsDropped", c.cache.Metrics.GetsDropped()).
-			WithField("getsKept", c.cache.Metrics.GetsKept()).
-			WithField("setsDropped", c.cache.Metrics.SetsDropped()).
-			WithField("setsRejected", c.cache.Metrics.SetsRejected()).
-			WithField("ttl", c.ttl)
-
-		for funcName, metric := range c.perFuncMetrics {
-			getsPercentage := (metric.gets * 100) / c.gets
-			hitsPercentage := (metric.hits * 100) / metric.gets
-			statsLogger = statsLogger.
-				WithField(fmt.Sprintf("gets.%s", funcName), metric.gets).
-				WithField(fmt.Sprintf("getsPercentage.%s", funcName), getsPercentage).
-				WithField(fmt.Sprintf("hitsPercentage.%s", funcName), hitsPercentage)
-		}
-
-		statsLogger.Info("Cache stats")
-	}()
 
 	if _, ok := c.perFuncMetrics[key.FuncName()]; !ok {
 		c.perFuncMetrics[key.FuncName()] = &perFuncMetric{}
