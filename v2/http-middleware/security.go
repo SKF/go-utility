@@ -195,15 +195,20 @@ type Authorizer interface {
 	IsAuthorizedWithContext(ctx context.Context, userID, action string, resource *common.Origin) (bool, error)
 }
 
-// AuthorizeMiddleware retrieves the security configuration for the matched route
-// and handles the configured authorizations.
+// AuthorizeMiddleware retrieves the security configuration for the matched
+// route and handles the configured authorizations. If any of the configured
+// ResourceFuncs returns a HTTPError or an error wrapping a HTTPError, the error
+// code and message from that error is written. Other errors from the
+// ResourceFuncs results in a http.StatusInternalServerError response being
+// written. If the request fails the authorization check,
+// http.StatusUnauthorized is returned to the client.
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctx, span := startSpanNoRoot(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
 
-			//If current route doesn't need to be authenicated
+			// If current route doesn't need to be authenicated
 			secConfig := lookupSecurityConfig(req)
 			if len(secConfig.authorizations) == 0 {
 				next.ServeHTTP(w, req)
@@ -224,11 +229,15 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			}
 
 			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
+			var httpErr *http_model.HTTPError
+			if errors.As(err, &httpErr) {
+				http_server.WriteJSONResponse(ctx, w, req, httpErr.StatusCode, httpErr.Message())
+				return
+			}
 			if err != nil {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
 				return
 			}
-
 			if !isAuthorized {
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 				return
@@ -346,6 +355,33 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 }
 
 // ResourceFunc takes a *http.Request and returns the resource to use for authorization.
+// If the ResourceFunc fails because of invalid input data or a missing resource,
+// return a HttpError, or an error wrapping a HTTPError.
+// The following example ResourceFunc expects an input struct with a non-empty field
+//
+//     func fieldFromBodyFunc(r *http.Request) (*common.Origin, error) {
+//         var inputData struct {
+//             field string `json:"field,omitempty"`
+//         }
+//         body, err := ioutil.ReadAll(r.Body)
+//         if err != nil {
+//             return nil, err
+//         }
+//         r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+//         if err := json.Unmarshal(body, &inputData); err != nil {
+//             return nil, &http_model.HTTPError{
+//                 Msg:        "Failed to unmarshal body",
+//                 StatusCode: http.StatusBadRequest,
+//             }
+//         }
+//         if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
+//             return nil, &http_model.HTTPError{
+//                 Msg:        "Required field 'field' is empty",
+//                 StatusCode: http.StatusBadRequest,
+//             }
+//         }
+//         return &common.Origin{Id: inputData.field, Type: "example"}, nil
+//     }
 type ResourceFunc func(*http.Request) (*common.Origin, error)
 
 // NilResourceFunc represents the Zero Value ResourceFunc.
