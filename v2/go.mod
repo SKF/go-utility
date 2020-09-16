@@ -10,10 +10,11 @@ require (
 	github.com/aws/aws-sdk-go v1.25.49
 	github.com/dgraph-io/ristretto v0.0.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/gomodule/redigo v1.8.2
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.7.3
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	go.opencensus.io v0.22.0
 	go.uber.org/zap v1.14.1
 )

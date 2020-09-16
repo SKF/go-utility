@@ -3,12 +3,12 @@ package httpmiddleware
 import (
 	"context"
 	"encoding/json"
+	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/trace"
 
 	"github.com/SKF/proto/v2/common"
 
@@ -65,7 +65,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := startSpanNoRoot(req.Context(), "AuthenticateMiddlewareV3/Handler")
+			ctx, span := util.StartSpanNoRoot(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
 
 			logFields := log.
@@ -205,7 +205,7 @@ type Authorizer interface {
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := startSpanNoRoot(req.Context(), "AuthorizeMiddleware/Handler")
+			ctx, span := util.StartSpanNoRoot(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
 
 			// If current route doesn't need to be authenicated
@@ -399,10 +399,3 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 	return s
 }
 
-func startSpanNoRoot(ctx context.Context, name string, o ...trace.StartOption) (context.Context, *trace.Span) {
-	if trace.FromContext(ctx) == nil {
-		return ctx, nil
-	}
-
-	return trace.StartSpan(ctx, name, o...)
-}
