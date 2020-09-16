@@ -52,7 +52,7 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 		return
 	}
 
-	if len(decodedE) < 4 {
+	if len(decodedE) < 4 { // nolint:gomnd
 		ndata := make([]byte, 4)
 		copy(ndata[4-len(decodedE):], decodedE)
 		decodedE = ndata

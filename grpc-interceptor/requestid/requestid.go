@@ -98,7 +98,7 @@ func outgoingContextWithRequestID(ctx context.Context, serviceName string) conte
 	}
 
 	incomingMD, ok := metadata.FromOutgoingContext(ctx)
-	if ok {
+	if ok { //nolint:nestif
 		ids := incomingMD.Get(RequestIDKey)
 		if len(ids) > 0 {
 			id := uuid.UUID(ids[0])

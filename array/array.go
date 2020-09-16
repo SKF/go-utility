@@ -5,11 +5,7 @@ func countMap(arrs ...[]string) (result map[string]int) {
 	for _, arr := range arrs {
 		distinctArr := DistinctString(arr)
 		for _, value := range distinctArr {
-			if _, ok := result[value]; ok {
-				result[value]++
-			} else {
-				result[value] = 1
-			}
+			result[value]++
 		}
 	}
 
