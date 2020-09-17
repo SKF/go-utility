@@ -18,11 +18,11 @@ type Store interface {
 }
 
 type EndpointConfig struct {
-	Path            Request
-	ConfigGenerator func(req *http.Request) ([]Config, error)
+	Path           Request
+	LimitGenerator func(req *http.Request) ([]Limit, error)
 }
 
-type Config struct {
+type Limit struct {
 	RequestPerMinute int
 	key              string
 }
@@ -34,13 +34,13 @@ type Request struct {
 
 type Limiter struct {
 	store   Store
-	configs map[Request]func(r *http.Request) ([]Config, error)
+	configs map[Request]func(r *http.Request) ([]Limit, error)
 }
 
 func CreateLimiter(s Store) Limiter {
 	return Limiter{
 		store:   s,
-		configs: map[Request]func(*http.Request) ([]Config, error){},
+		configs: map[Request]func(*http.Request) ([]Limit, error){},
 	}
 }
 
@@ -51,7 +51,7 @@ func CreateLimiter(s Store) Limiter {
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
 // The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
 func (s *Limiter) Configure(config EndpointConfig) {
-	s.configs[config.Path] = config.ConfigGenerator
+	s.configs[config.Path] = config.LimitGenerator
 }
 
 func (s *Limiter) Middleware() mux.MiddlewareFunc {
@@ -72,7 +72,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 			if ok {
 				cfgs, err := configGenerator(req)
 				if err != nil {
-					log.Fatalf("Failed to get key: %v", err)
+					log.Fatalf("Failed to generate limits: %v", err)
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte("Internal Server error"))
 					return

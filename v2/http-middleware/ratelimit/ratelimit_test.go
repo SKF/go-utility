@@ -27,12 +27,11 @@ func TestRateLimitOk(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		ConfigGenerator: func(req *http.Request) ([]Config, error) {
-			c := Config{
+		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
 				RequestPerMinute: 10,
 				key:              req.URL.Path,
-			}
-			return []Config{c}, nil
+			}}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
@@ -57,12 +56,11 @@ func TestRateLimitTooMany(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		ConfigGenerator: func(req *http.Request) ([]Config, error) {
-			c := Config{
+		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
 				RequestPerMinute: 5,
 				key:              req.URL.Path,
-			}
-			return []Config{c}, nil
+			}}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
@@ -88,23 +86,22 @@ func TestUseCorrectLimit(t *testing.T) {
 	// config GET
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		ConfigGenerator: func(req *http.Request) ([]Config, error) {
-			c := Config{
+		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+			c := Limit{
 				RequestPerMinute: 15,
 				key:              req.URL.Path,
 			}
-			return []Config{c}, nil
+			return []Limit{c}, nil
 		},
 	})
 	// config POST
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		ConfigGenerator: func(req *http.Request) ([]Config, error) {
-			c := Config{
+		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
 				RequestPerMinute: 5,
 				key:              req.URL.Path,
-			}
-			return []Config{c}, nil
+			}}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
@@ -163,21 +160,20 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		ConfigGenerator: func(req *http.Request) ([]Config, error) {
+		LimitGenerator: func(req *http.Request) ([]Limit, error) {
 			a := testRequest{}
 			err := util.ParseBody(req, &a)
 			if err != nil {
-				return []Config{{
+				return []Limit{{
 					RequestPerMinute: 10,
 					key:              req.URL.Path,
 				}}, err
 			}
 
-			c := Config{
+			return []Limit{{
 				RequestPerMinute: 15,
 				key:              a.SuperKey,
-			}
-			return []Config{c}, nil
+			}}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
