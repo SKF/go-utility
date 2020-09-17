@@ -27,11 +27,12 @@ func TestRateLimitOk(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 10,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-			}},
+		ConfigGenerator: func(req *http.Request) ([]Config, error) {
+			c := Config{
+				RequestPerMinute: 10,
+				key:              req.URL.Path,
+			}
+			return []Config{c}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
@@ -56,12 +57,12 @@ func TestRateLimitTooMany(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 5,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-
-			}},
+		ConfigGenerator: func(req *http.Request) ([]Config, error) {
+			c := Config{
+				RequestPerMinute: 5,
+				key:              req.URL.Path,
+			}
+			return []Config{c}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
@@ -87,23 +88,23 @@ func TestUseCorrectLimit(t *testing.T) {
 	// config GET
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 15,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-
-			}},
+		ConfigGenerator: func(req *http.Request) ([]Config, error) {
+			c := Config{
+				RequestPerMinute: 15,
+				key:              req.URL.Path,
+			}
+			return []Config{c}, nil
 		},
 	})
 	// config POST
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 5,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-
-			}},
+		ConfigGenerator: func(req *http.Request) ([]Config, error) {
+			c := Config{
+				RequestPerMinute: 5,
+				key:              req.URL.Path,
+			}
+			return []Config{c}, nil
 		},
 	})
 	r.Use(limiter.Middleware())
@@ -162,14 +163,21 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(EndpointConfig{
 		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 15,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				a := testRequest{}
+		ConfigGenerator: func(req *http.Request) ([]Config, error) {
+			a := testRequest{}
+			err := util.ParseBody(req, &a)
+			if err != nil {
+				return []Config{{
+					RequestPerMinute: 10,
+					key:              req.URL.Path,
+				}}, err
+			}
 
-				err = util.ParseBody(req, &a)
-				return a.SuperKey, err
-			}},
+			c := Config{
+				RequestPerMinute: 15,
+				key:              a.SuperKey,
+			}
+			return []Config{c}, nil
 		},
 	})
 	r.Use(limiter.Middleware())

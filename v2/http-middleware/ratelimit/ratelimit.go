@@ -3,10 +3,9 @@ package ratelimit
 import (
 	"crypto/sha256"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
-
-	"github.com/SKF/go-utility/log"
 
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"github.com/gorilla/mux"
@@ -19,13 +18,13 @@ type Store interface {
 }
 
 type EndpointConfig struct {
-	Path    Request
-	Configs []Config
+	Path            Request
+	ConfigGenerator func(req *http.Request) ([]Config, error)
 }
 
 type Config struct {
 	RequestPerMinute int
-	GetKeyFunc       func(req *http.Request) (string, error)
+	key              string
 }
 
 type Request struct {
@@ -35,13 +34,13 @@ type Request struct {
 
 type Limiter struct {
 	store   Store
-	configs map[Request][]Config
+	configs map[Request]func(r *http.Request) ([]Config, error)
 }
 
 func CreateLimiter(s Store) Limiter {
 	return Limiter{
 		store:   s,
-		configs: map[Request][]Config{},
+		configs: map[Request]func(*http.Request) ([]Config, error){},
 	}
 }
 
@@ -52,7 +51,7 @@ func CreateLimiter(s Store) Limiter {
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
 // The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
 func (s *Limiter) Configure(config EndpointConfig) {
-	s.configs[config.Path] = config.Configs
+	s.configs[config.Path] = config.ConfigGenerator
 }
 
 func (s *Limiter) Middleware() mux.MiddlewareFunc {
@@ -69,8 +68,15 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 			now := time.Now()
 
 			// TODO: handle errors maybe allow access if we get error here?
-			cfgs, ok := s.configs[Request{Method: req.Method, Path: req.URL.Path}]
+			configGenerator, ok := s.configs[Request{Method: req.Method, Path: req.URL.Path}]
 			if ok {
+				cfgs, err := configGenerator(req)
+				if err != nil {
+					log.Fatalf("Failed to get key: %v", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte("Internal Server error"))
+					return
+				}
 				if err := s.store.Connect(); err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte("Internal Server error"))
@@ -79,14 +85,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 
 				defer s.store.Disconnect()
 				for _, config := range cfgs {
-					key, err := config.GetKeyFunc(req)
-					key = fmt.Sprintf("%x:%d", hasher.Sum([]byte(key)), now.Minute())
-					if err != nil {
-						log.Fatalf("Failed to get key: %v", err)
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte("Internal Server error"))
-						return
-					}
+					key := fmt.Sprintf("%x:%d", hasher.Sum([]byte(config.key)), now.Minute())
 
 					resp, err := s.store.Incr(key)
 					if err != nil {
