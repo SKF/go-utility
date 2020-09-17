@@ -1,12 +1,14 @@
 package ratelimit
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
-	"net/http"
-	"time"
 )
 
 type Store interface {
@@ -78,6 +80,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 	}
 
 	return func(next http.Handler) http.Handler {
+		hasher := sha256.New()
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			_, span := util.StartSpanNoRoot(req.Context(), "RateLimitMiddleware/Handler")
 			defer span.End()
@@ -88,6 +91,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 			if ok {
 				for _, config := range cfgs {
 					key, err := config.getKeyFunc(req)
+					key = string(hasher.Sum([]byte(key)))
 					key = fmt.Sprintf("%s:%d", key, now.Minute())
 					if err != nil {
 						w.WriteHeader(http.StatusInternalServerError)

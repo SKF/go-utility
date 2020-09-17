@@ -10,13 +10,14 @@ require (
 	github.com/aws/aws-sdk-go v1.25.49
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.0 // indirect
+	github.com/gomodule/redigo v1.8.2 // indirect
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.7.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/tinylib/msgp v1.1.0 // indirect
 	go.opencensus.io v0.22.0
 	go.uber.org/zap v1.14.1
