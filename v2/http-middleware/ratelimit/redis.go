@@ -8,12 +8,13 @@ type redisStore struct {
 }
 
 func (s *redisStore) Incr(key string) (int, error) {
+	const secondsToExpire = 59
 	cnt, err := redis.Int(s.connection.Do("INCR", key))
 	if err != nil {
 		return -1, err
 	}
 
-	_, err = s.connection.Do("EXPIRE", key, 59)
+	_, err = s.connection.Do("EXPIRE", key, secondsToExpire)
 	if err != nil {
 		return -1, err
 	}

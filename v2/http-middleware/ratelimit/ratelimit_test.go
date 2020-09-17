@@ -1,13 +1,13 @@
 package ratelimit
 
 import (
-	"bytes"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/SKF/go-utility/v2/http-middleware/ratelimit/util"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
@@ -31,7 +31,6 @@ func TestRateLimitOk(t *testing.T) {
 			RequestPerMinute: 10,
 			GetKeyFunc: func(req *http.Request) (string, error) {
 				return req.URL.Path, nil
-
 			}},
 		},
 	})
@@ -134,9 +133,9 @@ func TestUnconfiguredIsOk(t *testing.T) {
 func TestReadBodyInMiddleware(t *testing.T) {
 	// ARRANGE
 	type testRequest struct {
-		Apa string
+		SuperKey string
 	}
-	testBody := `{"Apa":"bepa"}`
+	testBody := `{"SuperKey":"apa"}`
 	req, err := http.NewRequest(http.MethodPost, "/apa", strings.NewReader(testBody))
 	if err != nil {
 		t.Fatal(err)
@@ -166,20 +165,10 @@ func TestReadBodyInMiddleware(t *testing.T) {
 		Configs: []Config{{
 			RequestPerMinute: 15,
 			GetKeyFunc: func(req *http.Request) (string, error) {
-				bodybytes, err := ioutil.ReadAll(req.Body)
-				if err != nil {
-					return "", err
-				}
-
 				a := testRequest{}
-				err = json.Unmarshal(bodybytes, &a)
-				if err != nil {
-					return "", err
-				}
 
-				req.Body = ioutil.NopCloser(bytes.NewReader(bodybytes))
-
-				return a.Apa, nil
+				err = util.ParseBody(req, &a)
+				return a.SuperKey, err
 			}},
 		},
 	})

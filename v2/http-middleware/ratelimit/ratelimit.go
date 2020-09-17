@@ -50,6 +50,7 @@ func CreateLimiter(s Store) Limiter {
 // request using that key.
 //
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
+// The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
 func (s *Limiter) Configure(config EndpointConfig) {
 	s.configs[config.Path] = config.Configs
 }
