@@ -1,6 +1,6 @@
 module github.com/SKF/go-utility
 
-go 1.13
+go 1.14
 
 require (
 	github.com/DataDog/datadog-go v2.2.0+incompatible // indirect

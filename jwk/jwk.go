@@ -52,9 +52,10 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 		return
 	}
 
-	if len(decodedE) < 4 {
-		ndata := make([]byte, 4)
-		copy(ndata[4-len(decodedE):], decodedE)
+	const smallestExpectedLengthInBytes = 4
+	if len(decodedE) < smallestExpectedLengthInBytes {
+		ndata := make([]byte, smallestExpectedLengthInBytes)
+		copy(ndata[smallestExpectedLengthInBytes-len(decodedE):], decodedE)
 		decodedE = ndata
 	}
 
