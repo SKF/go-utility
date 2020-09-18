@@ -17,11 +17,6 @@ type Store interface {
 	Disconnect() error
 }
 
-type EndpointConfig struct {
-	Path           Request
-	LimitGenerator func(req *http.Request) ([]Limit, error)
-}
-
 type Limit struct {
 	RequestPerMinute int
 	key              string
@@ -34,13 +29,15 @@ type Request struct {
 
 type Limiter struct {
 	store   Store
-	configs map[Request]func(r *http.Request) ([]Limit, error)
+	configs map[Request]limitGenerator
 }
+
+type limitGenerator func(*http.Request) ([]Limit, error)
 
 func CreateLimiter(s Store) Limiter {
 	return Limiter{
 		store:   s,
-		configs: map[Request]func(*http.Request) ([]Limit, error){},
+		configs: map[Request]limitGenerator{},
 	}
 }
 
@@ -49,11 +46,12 @@ func CreateLimiter(s Store) Limiter {
 // request using that key.
 //
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
-// The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
-func (s *Limiter) Configure(config EndpointConfig) {
-	s.configs[config.Path] = config.LimitGenerator
+func (s *Limiter) Configure(path Request, gen limitGenerator) {
+	s.configs[path] = gen
 }
 
+// Rate limiting middleware, you can configure 1 or many limits for each endpoint using a limitGenerator
+// The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
 func (s *Limiter) Middleware() mux.MiddlewareFunc {
 	if s.store == nil {
 		panic("store is not configured")

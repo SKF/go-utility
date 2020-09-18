@@ -25,15 +25,15 @@ func TestRateLimitOk(t *testing.T) {
 
 	// ACT
 	limiter := CreateLimiter(&storeMock)
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+	limiter.Configure(
+		Request{Method: http.MethodGet, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 10,
 				key:              req.URL.Path,
 			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -54,15 +54,15 @@ func TestRateLimitTooMany(t *testing.T) {
 
 	// ACT
 	limiter := CreateLimiter(&storeMock)
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+	limiter.Configure(
+		Request{Method: http.MethodGet, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 5,
 				key:              req.URL.Path,
 			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -84,26 +84,25 @@ func TestUseCorrectLimit(t *testing.T) {
 	// ACT
 	limiter := CreateLimiter(&storeMock)
 	// config GET
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		LimitGenerator: func(req *http.Request) ([]Limit, error) {
-			c := Limit{
+	limiter.Configure(
+		Request{Method: http.MethodGet, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
 				RequestPerMinute: 15,
 				key:              req.URL.Path,
-			}
-			return []Limit{c}, nil
+			}}, nil
 		},
-	})
+	)
 	// config POST
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+	limiter.Configure(
+		Request{Method: http.MethodPost, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 5,
 				key:              req.URL.Path,
 			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -158,24 +157,27 @@ func TestReadBodyInMiddleware(t *testing.T) {
 
 	// ACT
 	limiter := CreateLimiter(&storeMock)
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		LimitGenerator: func(req *http.Request) ([]Limit, error) {
+	limiter.Configure(
+		Request{Method: http.MethodPost, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
 			a := testRequest{}
 			err := util.ParseBody(req, &a)
 			if err != nil {
+				// limit for invalidJSON
 				return []Limit{{
 					RequestPerMinute: 10,
 					key:              req.URL.Path,
 				}}, err
 			}
 
+			// Normal limit
 			return []Limit{{
 				RequestPerMinute: 15,
 				key:              a.SuperKey,
 			}}, nil
+
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
