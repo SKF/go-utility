@@ -23,8 +23,8 @@ type Limit struct {
 }
 
 type Request struct {
-	Method string
-	Path   string
+	Method       string
+	PathTemplate string
 }
 
 type Limiter struct {
@@ -41,16 +41,16 @@ func CreateLimiter(s Store) Limiter {
 	}
 }
 
-//TOOD: fix
-// The GetKeyFunc should return a key that will be stored
-// request using that key.
+// The LimitGenerator function should return the rate limit with corresponding key
+// that should be used for the given path template
+// path.pathTemplate should be the pathtemplate used to route the request
 //
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
 func (s *Limiter) Configure(path Request, gen limitGenerator) {
 	s.configs[path] = gen
 }
 
-// Rate limiting middleware, you can configure 1 or many limits for each endpoint using a limitGenerator
+// Rate limiting middleware, you can configure 1 or many limits for each path template using a limitGenerator
 // The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
 //
 // The key will be stored in clear text in the cache. If the key contains personal data please consider hashing the key
@@ -65,7 +65,15 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 
 			now := time.Now()
 
-			configGenerator, ok := s.configs[Request{Method: req.Method, Path: req.URL.Path}]
+			pathTemplate, err := mux.CurrentRoute(req).GetPathTemplate()
+			if err != nil {
+				log.WithTracing(ctx).WithError(err).Error("failed to get route template")
+				span.End()
+				next.ServeHTTP(w, req)
+				return
+			}
+
+			configGenerator, ok := s.configs[Request{Method: req.Method, PathTemplate: pathTemplate}]
 			if ok {
 				cfgs, err := configGenerator(req)
 				if err != nil {

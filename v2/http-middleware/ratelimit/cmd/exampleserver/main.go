@@ -16,7 +16,7 @@ func main() {
 
 	limiter := ratelimit.CreateLimiter(ratelimit.GetRedisStore("localhost:6379"))
 	limiter.Configure(
-		ratelimit.Request{Method: http.MethodGet, Path: "/"},
+		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/"},
 		func(request *http.Request) ([]ratelimit.Limit, error) {
 			return []ratelimit.Limit{{
 				RequestPerMinute: 2,

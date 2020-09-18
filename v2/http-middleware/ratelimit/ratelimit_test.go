@@ -26,7 +26,7 @@ func TestRateLimitOk(t *testing.T) {
 	// ACT
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodGet, Path: "/apa"},
+		Request{Method: http.MethodGet, PathTemplate: "/apa"},
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 10,
@@ -55,7 +55,7 @@ func TestRateLimitTooMany(t *testing.T) {
 	// ACT
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodGet, Path: "/apa"},
+		Request{Method: http.MethodGet, PathTemplate: "/apa"},
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 5,
@@ -85,7 +85,7 @@ func TestUseCorrectLimit(t *testing.T) {
 	limiter := CreateLimiter(&storeMock)
 	// config GET
 	limiter.Configure(
-		Request{Method: http.MethodGet, Path: "/apa"},
+		Request{Method: http.MethodGet, PathTemplate: "/apa"},
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 15,
@@ -95,7 +95,7 @@ func TestUseCorrectLimit(t *testing.T) {
 	)
 	// config POST
 	limiter.Configure(
-		Request{Method: http.MethodPost, Path: "/apa"},
+		Request{Method: http.MethodPost, PathTemplate: "/apa"},
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 5,
@@ -160,7 +160,7 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	// ACT
 	limiter := CreateLimiter(&storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodPost, Path: "/apa"},
+		Request{Method: http.MethodPost, PathTemplate: "/apa"},
 		func(req *http.Request) ([]Limit, error) {
 			a := testRequest{}
 			parseErr := util.ParseBody(req, &a)
@@ -190,6 +190,58 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	require.NoError(t, readErr)
 
 	require.Equal(t, string(res), testBody)
+}
+
+func TestUseDynamicRoute(t *testing.T) {
+	// ARRANGE
+	req, _ := http.NewRequest(http.MethodGet, "/apa/1", nil)
+	req2, _ := http.NewRequest(http.MethodGet, "/apa/2", nil)
+	req3, _ := http.NewRequest(http.MethodGet, "/bepa", nil)
+
+	const pathTemplate = "/apa/{id:[0-9]}"
+	r := mux.NewRouter()
+	r.HandleFunc(pathTemplate, func(writer http.ResponseWriter, request *http.Request) {
+		args := mux.Vars(request)
+		writer.Write([]byte(args["id"])) //nolint:errcheck
+	})
+	r.HandleFunc("/bepa", handler)
+
+	storeMock := StoreMock{}
+	storeMock.On("Incr", mock.Anything).Return(10, nil)
+	storeMock.On("Connect").Return(nil)
+	storeMock.On("Disconnect").Return(nil)
+
+	// ACT
+	limiter := CreateLimiter(&storeMock)
+	limiter.Configure(
+		Request{Method: http.MethodGet, PathTemplate: pathTemplate},
+		func(req *http.Request) ([]Limit, error) {
+			template, err := mux.CurrentRoute(req).GetPathTemplate()
+			if err != nil {
+				return nil, err
+			}
+
+			return []Limit{{
+				RequestPerMinute: 5,
+				Key:              template,
+			}}, nil
+		},
+	)
+	r.Use(limiter.Middleware())
+
+	resp := httptest.NewRecorder()
+	r.ServeHTTP(resp, req)
+
+	resp2 := httptest.NewRecorder()
+	r.ServeHTTP(resp2, req2)
+
+	resp3 := httptest.NewRecorder()
+	r.ServeHTTP(resp3, req3)
+
+	// ASSERT
+	require.Equal(t, http.StatusTooManyRequests, resp.Code)
+	require.Equal(t, http.StatusTooManyRequests, resp2.Code)
+	require.Equal(t, http.StatusOK, resp3.Code)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
