@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.25.49
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.0 // indirect
-	github.com/golang/protobuf v1.4.0 // indirect
+	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.7.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
@@ -21,9 +21,9 @@ require (
 	github.com/tinylib/msgp v1.1.0 // indirect
 	go.opencensus.io v0.22.0
 	go.uber.org/zap v1.14.1
-	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd // indirect
+	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	golang.org/x/tools v0.0.0-20191113232020-e2727e816f5a // indirect
-	google.golang.org/grpc v1.29.1
+	google.golang.org/grpc v1.31.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.16.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/yaml.v2 v2.2.7 // indirect

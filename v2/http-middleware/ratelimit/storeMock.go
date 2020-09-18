@@ -2,21 +2,21 @@ package ratelimit
 
 import "github.com/stretchr/testify/mock"
 
-type storeMock struct {
+type StoreMock struct {
 	mock.Mock
 }
 
-func (m *storeMock) Incr(key string) (int, error) {
+func (m *StoreMock) Incr(key string) (int, error) {
 	args := m.Called(key)
 	return args.Int(0), args.Error(1)
 }
 
-func (m *storeMock) Connect() error {
+func (m *StoreMock) Connect() error {
 	args := m.Called()
 	return args.Error(0)
 }
 
-func (m *storeMock) Disconnect() error {
+func (m *StoreMock) Disconnect() error {
 	args := m.Called()
 	return args.Error(0)
 }

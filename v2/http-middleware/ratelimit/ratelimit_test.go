@@ -18,22 +18,22 @@ func TestRateLimitOk(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := storeMock{}
+	storeMock := StoreMock{}
 	storeMock.On("Incr", mock.Anything).Return(0, nil)
 	storeMock.On("Connect").Return(nil).Once()
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
 	limiter := CreateLimiter(&storeMock)
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 10,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-			}},
+	limiter.Configure(
+		Request{Method: http.MethodGet, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
+				RequestPerMinute: 10,
+				key:              req.URL.Path,
+			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -47,23 +47,22 @@ func TestRateLimitTooMany(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := storeMock{}
+	storeMock := StoreMock{}
 	storeMock.On("Incr", mock.Anything).Return(10, nil)
 	storeMock.On("Connect").Return(nil).Once()
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
 	limiter := CreateLimiter(&storeMock)
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 5,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-
-			}},
+	limiter.Configure(
+		Request{Method: http.MethodGet, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
+				RequestPerMinute: 5,
+				key:              req.URL.Path,
+			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -77,7 +76,7 @@ func TestUseCorrectLimit(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := storeMock{}
+	storeMock := StoreMock{}
 	storeMock.On("Incr", mock.Anything).Return(10, nil)
 	storeMock.On("Connect").Return(nil).Once()
 	storeMock.On("Disconnect").Return(nil).Once()
@@ -85,27 +84,25 @@ func TestUseCorrectLimit(t *testing.T) {
 	// ACT
 	limiter := CreateLimiter(&storeMock)
 	// config GET
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodGet, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 15,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-
-			}},
+	limiter.Configure(
+		Request{Method: http.MethodGet, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
+				RequestPerMinute: 15,
+				key:              req.URL.Path,
+			}}, nil
 		},
-	})
+	)
 	// config POST
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 5,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				return req.URL.Path, nil
-
-			}},
+	limiter.Configure(
+		Request{Method: http.MethodPost, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
+			return []Limit{{
+				RequestPerMinute: 5,
+				key:              req.URL.Path,
+			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -120,7 +117,7 @@ func TestUnconfiguredIsOk(t *testing.T) {
 	req, r := getRouterAndRequest(t)
 
 	// ACT
-	limiter := CreateLimiter(&storeMock{})
+	limiter := CreateLimiter(&StoreMock{})
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -135,43 +132,53 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	type testRequest struct {
 		SuperKey string
 	}
+
 	testBody := `{"SuperKey":"apa"}`
-	req, err := http.NewRequest(http.MethodPost, "/apa", strings.NewReader(testBody))
-	if err != nil {
-		t.Fatal(err)
+
+	req, readErr := http.NewRequest(http.MethodPost, "/apa", strings.NewReader(testBody))
+	if readErr != nil {
+		t.Fatal(readErr)
 	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/apa", func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
+		b, readBodyErr := ioutil.ReadAll(r.Body)
+		if readBodyErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error"))
+			w.Write([]byte("Error")) //nolint: errcheck
 			return
 		}
 
-		w.Write(b)
+		w.Write(b) //nolint: errcheck
 	})
 
-	storeMock := storeMock{}
+	storeMock := StoreMock{}
 	storeMock.On("Incr", mock.Anything).Return(10, nil)
 	storeMock.On("Connect").Return(nil).Once()
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
 	limiter := CreateLimiter(&storeMock)
-	limiter.Configure(EndpointConfig{
-		Path: Request{Method: http.MethodPost, Path: "/apa"},
-		Configs: []Config{{
-			RequestPerMinute: 15,
-			GetKeyFunc: func(req *http.Request) (string, error) {
-				a := testRequest{}
+	limiter.Configure(
+		Request{Method: http.MethodPost, Path: "/apa"},
+		func(req *http.Request) ([]Limit, error) {
+			a := testRequest{}
+			parseErr := util.ParseBody(req, &a)
+			if parseErr != nil {
+				// limit for invalidJSON
+				return []Limit{{
+					RequestPerMinute: 10,
+					key:              req.URL.Path,
+				}}, parseErr
+			}
 
-				err = util.ParseBody(req, &a)
-				return a.SuperKey, err
-			}},
+			// Normal limit
+			return []Limit{{
+				RequestPerMinute: 15,
+				key:              a.SuperKey,
+			}}, nil
 		},
-	})
+	)
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -179,13 +186,15 @@ func TestReadBodyInMiddleware(t *testing.T) {
 
 	// ASSERT
 	require.Equal(t, http.StatusOK, resp.Code)
-	res, err := ioutil.ReadAll(resp.Body)
+	res, readErr := ioutil.ReadAll(resp.Body)
+	require.NoError(t, readErr)
+
 	require.Equal(t, string(res), testBody)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("apa"))
+	w.Write([]byte("apa")) //nolint: errcheck
 }
 
 func getRouterAndRequest(t *testing.T) (*http.Request, *mux.Router) {
@@ -196,5 +205,6 @@ func getRouterAndRequest(t *testing.T) (*http.Request, *mux.Router) {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/apa", handler)
+
 	return req, r
 }
