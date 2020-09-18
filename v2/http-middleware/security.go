@@ -3,23 +3,23 @@ package httpmiddleware
 import (
 	"context"
 	"encoding/json"
-	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"net/http"
-
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"go.opencensus.io/plugin/ochttp"
-
-	"github.com/SKF/proto/v2/common"
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
+	"github.com/SKF/go-utility/v2/http-middleware/util"
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
 	"github.com/SKF/go-utility/v2/jwk"
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
+
+	"github.com/SKF/proto/v2/common"
+
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"go.opencensus.io/plugin/ochttp"
 )
 
 const (
@@ -398,4 +398,3 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 
 	return s
 }
-

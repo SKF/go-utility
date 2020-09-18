@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+
 	"go.opencensus.io/trace"
 )
 

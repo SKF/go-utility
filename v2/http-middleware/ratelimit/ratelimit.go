@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SKF/go-utility/v2/http-middleware/util"
+
 	"github.com/gorilla/mux"
 )
 
@@ -56,6 +57,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 	if s.store == nil {
 		panic("store is not configured")
 	}
+
 	hasher := sha256.New()
 
 	return func(next http.Handler) http.Handler {
@@ -71,29 +73,30 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 				cfgs, err := configGenerator(req)
 				if err != nil {
 					log.Fatalf("Failed to generate limits: %v", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte("Internal Server error"))
+					w.WriteHeader(http.StatusInternalServerError) //nolint:errcheck
+					w.Write([]byte("Internal Server error"))      // nolint:errcheck
 					return
 				}
 				if err := s.store.Connect(); err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte("Internal Server error"))
+					w.WriteHeader(http.StatusInternalServerError) // nolint:errcheck
+					w.Write([]byte("Internal Server error"))      // nolint:errcheck
 					return
 				}
 
-				defer s.store.Disconnect()
+				defer s.store.Disconnect() //nolint: errcheck
 				for _, config := range cfgs {
 					key := fmt.Sprintf("%x:%d", hasher.Sum([]byte(config.key)), now.Minute())
 
 					resp, err := s.store.Incr(key)
 					if err != nil {
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte("Internal Server error"))
+						w.WriteHeader(http.StatusInternalServerError) // nolint:errcheck
+						w.Write([]byte("Internal Server error"))      // nolint:errcheck
 						return
 					}
 
 					if resp > config.RequestPerMinute {
-						w.WriteHeader(http.StatusTooManyRequests)
+						w.WriteHeader(http.StatusTooManyRequests) // nolint:errcheck
+						w.Write([]byte("Too many requests"))      //nolint:errcheck
 						return
 					}
 				}
