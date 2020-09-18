@@ -19,7 +19,7 @@ type Store interface {
 
 type Limit struct {
 	RequestPerMinute int
-	key              string
+	Key              string
 }
 
 type Request struct {
@@ -41,8 +41,8 @@ func CreateLimiter(s Store) Limiter {
 	}
 }
 
+//TOOD: fix
 // The GetKeyFunc should return a key that will be stored
-// as sha256(key) + <current minute in the cache to limit the number of
 // request using that key.
 //
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
@@ -107,7 +107,7 @@ func (s *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequest
 	defer s.store.Disconnect() //nolint: errcheck
 
 	for _, config := range cfgs {
-		key := fmt.Sprintf("%s:%d", config.key, now.Minute())
+		key := fmt.Sprintf("%s:%d", config.Key, now.Minute())
 
 		resp, err := s.store.Incr(key)
 		if err != nil {

@@ -30,7 +30,7 @@ func TestRateLimitOk(t *testing.T) {
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 10,
-				key:              req.URL.Path,
+				Key:              req.URL.Path,
 			}}, nil
 		},
 	)
@@ -59,7 +59,7 @@ func TestRateLimitTooMany(t *testing.T) {
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 5,
-				key:              req.URL.Path,
+				Key:              req.URL.Path,
 			}}, nil
 		},
 	)
@@ -89,7 +89,7 @@ func TestUseCorrectLimit(t *testing.T) {
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 15,
-				key:              req.URL.Path,
+				Key:              req.URL.Path,
 			}}, nil
 		},
 	)
@@ -99,7 +99,7 @@ func TestUseCorrectLimit(t *testing.T) {
 		func(req *http.Request) ([]Limit, error) {
 			return []Limit{{
 				RequestPerMinute: 5,
-				key:              req.URL.Path,
+				Key:              req.URL.Path,
 			}}, nil
 		},
 	)
@@ -168,14 +168,14 @@ func TestReadBodyInMiddleware(t *testing.T) {
 				// limit for invalidJSON
 				return []Limit{{
 					RequestPerMinute: 10,
-					key:              req.URL.Path,
+					Key:              req.URL.Path,
 				}}, parseErr
 			}
 
 			// Normal limit
 			return []Limit{{
 				RequestPerMinute: 15,
-				key:              a.SuperKey,
+				Key:              a.SuperKey,
 			}}, nil
 		},
 	)
