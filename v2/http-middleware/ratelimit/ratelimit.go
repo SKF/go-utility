@@ -1,13 +1,12 @@
 package ratelimit
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/SKF/go-utility/v2/http-middleware/util"
+	"github.com/SKF/go-utility/v2/log"
 
 	"github.com/gorilla/mux"
 )
@@ -53,52 +52,45 @@ func (s *Limiter) Configure(path Request, gen limitGenerator) {
 
 // Rate limiting middleware, you can configure 1 or many limits for each endpoint using a limitGenerator
 // The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
+//
+// The key will be stored in clear text in the cache. If the key contains personal data please consider hashing the key
 func (s *Limiter) Middleware() mux.MiddlewareFunc {
 	if s.store == nil {
 		panic("store is not configured")
 	}
 
-	hasher := sha256.New()
-
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			_, span := util.StartSpanNoRoot(req.Context(), "RateLimitMiddleware/Handler")
-			defer span.End()
+			ctx, span := util.StartSpanNoRoot(req.Context(), "RateLimitMiddleware/Handler")
 
 			now := time.Now()
 
-			// TODO: handle errors maybe allow access if we get error here?
 			configGenerator, ok := s.configs[Request{Method: req.Method, Path: req.URL.Path}]
 			if ok {
 				cfgs, err := configGenerator(req)
 				if err != nil {
-					log.Fatalf("Failed to generate limits: %v", err)
-					w.WriteHeader(http.StatusInternalServerError) //nolint:errcheck
-					w.Write([]byte("Internal Server error"))      // nolint:errcheck
-					return
-				}
-				if err := s.store.Connect(); err != nil {
-					w.WriteHeader(http.StatusInternalServerError) // nolint:errcheck
-					w.Write([]byte("Internal Server error"))      // nolint:errcheck
+					log.WithTracing(ctx).WithError(err).Error("Failed to generate limits")
+					span.End()
+					next.ServeHTTP(w, req)
+
 					return
 				}
 
-				defer s.store.Disconnect() //nolint: errcheck
-				for _, config := range cfgs {
-					key := fmt.Sprintf("%x:%d", hasher.Sum([]byte(config.key)), now.Minute())
+				tooManyRequest, err := s.checkAccessCounts(cfgs, now)
+				if err != nil {
+					log.WithTracing(ctx).WithError(err).Errorf("failed to check limit")
+					span.End()
+					next.ServeHTTP(w, req)
 
-					resp, err := s.store.Incr(key)
-					if err != nil {
-						w.WriteHeader(http.StatusInternalServerError) // nolint:errcheck
-						w.Write([]byte("Internal Server error"))      // nolint:errcheck
-						return
-					}
+					return
+				}
 
-					if resp > config.RequestPerMinute {
-						w.WriteHeader(http.StatusTooManyRequests) // nolint:errcheck
-						w.Write([]byte("Too many requests"))      //nolint:errcheck
-						return
-					}
+				if tooManyRequest {
+					w.WriteHeader(http.StatusTooManyRequests) //nolint:errcheck
+					w.Write([]byte("Too many requests"))      //nolint:errcheck
+					span.End()
+
+					return
 				}
 			}
 
@@ -106,4 +98,26 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 			next.ServeHTTP(w, req)
 		})
 	}
+}
+
+func (s *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
+	if err := s.store.Connect(); err != nil {
+		return false, err
+	}
+	defer s.store.Disconnect() //nolint: errcheck
+
+	for _, config := range cfgs {
+		key := fmt.Sprintf("%s:%d", config.key, now.Minute())
+
+		resp, err := s.store.Incr(key)
+		if err != nil {
+			return false, err
+		}
+
+		if resp > config.RequestPerMinute {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
