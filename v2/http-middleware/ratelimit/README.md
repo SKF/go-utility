@@ -2,7 +2,7 @@
 
 ## Example usage
 
-Create a webserver that limits the number of requests to / to 2 requests per minute
+Create a webserver that limits the number of requests to 2 requests per minute on  "GET /"
 Complete example can be found [here](cmd/exampleserver/main.go)
 ``` go
    func main() {

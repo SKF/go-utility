@@ -9,7 +9,7 @@ import (
 func main() {
 	for i := 0; true; i++ {
 		now := time.Now()
-		if now.Second() == 0 && now.Nanosecond() < 500*1000*1000 || now.Second() == 59 && now.Nanosecond() > 500*1000*1000 {
+		if now.Second() == 0 && now.Nanosecond() < int(500*time.Millisecond) || now.Second() == 59 && now.Nanosecond() > int(500*time.Millisecond) {
 
 			start := time.Now()
 			resp, err := http.Get("http://localhost:8080/")

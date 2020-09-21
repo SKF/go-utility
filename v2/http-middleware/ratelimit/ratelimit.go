@@ -69,7 +69,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 
 			pathTemplate, err := mux.CurrentRoute(req).GetPathTemplate()
 			if err != nil {
-				log.WithTracing(ctx).WithError(err).Error("failed to get route template")
+				log.WithTracing(ctx).WithError(err).Errorf("failed to parse mux path template from request: %s", req.URL.Path)
 				span.End()
 				next.ServeHTTP(w, req)
 				return
