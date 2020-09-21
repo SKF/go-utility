@@ -11,18 +11,20 @@ import (
 )
 
 func main() {
+	const requestsPerMinute = 2
+
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 
-	limiter := ratelimit.SetStore(ratelimit.GetRedisStore("localhost:6379"))
+	limiter := ratelimit.Limiter{}
+	limiter.SetStore(ratelimit.GetRedisStore("localhost:6379"))
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/"},
 		func(request *http.Request) ([]ratelimit.Limit, error) {
 			return []ratelimit.Limit{{
-				RequestPerMinute: 2,
+				RequestPerMinute: requestsPerMinute,
 				Key:              "/",
 			}}, nil
-
 		})
 	r.Use(limiter.Middleware())
 
@@ -31,5 +33,5 @@ func main() {
 }
 
 func HomeHandler(writer http.ResponseWriter, request *http.Request) {
-	writer.Write([]byte("foo\n"))
+	writer.Write([]byte("foo\n")) //nolint:errcheck
 }

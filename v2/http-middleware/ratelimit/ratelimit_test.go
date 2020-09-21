@@ -201,11 +201,12 @@ func TestReadBodyInMiddleware(t *testing.T) {
 
 func TestUseDynamicRoute(t *testing.T) {
 	// ARRANGE
-	req, _ := http.NewRequest(http.MethodGet, "/apa/1", nil)
-	req2, _ := http.NewRequest(http.MethodGet, "/apa/2", nil)
-	req3, _ := http.NewRequest(http.MethodGet, "/bepa", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/apa/1", nil)  //nolint:errcheck
+	req2, _ := http.NewRequest(http.MethodGet, "/apa/2", nil) //nolint:errcheck
+	req3, _ := http.NewRequest(http.MethodGet, "/bepa", nil)  //nolint:errcheck
 
 	const pathTemplate = "/apa/{id:[0-9]}"
+
 	r := mux.NewRouter()
 	r.HandleFunc(pathTemplate, func(writer http.ResponseWriter, request *http.Request) {
 		args := mux.Vars(request)

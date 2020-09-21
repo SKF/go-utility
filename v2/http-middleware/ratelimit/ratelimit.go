@@ -44,20 +44,20 @@ func (l *Limiter) SetStore(s Store) *Limiter {
 // path.pathTemplate should be the pathtemplate used to route the request
 //
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
-func (s *Limiter) Configure(path Request, gen limitGenerator) {
-	if s.configs == nil {
-		s.configs = map[Request]limitGenerator{}
+func (l *Limiter) Configure(path Request, gen limitGenerator) {
+	if l.configs == nil {
+		l.configs = map[Request]limitGenerator{}
 	}
 
-	s.configs[path] = gen
+	l.configs[path] = gen
 }
 
 // Rate limiting middleware, you can configure 1 or many limits for each path template using a limitGenerator
 // The algorithm is inspired from: https://redislabs.com/redis-best-practices/basic-rate-limiting/
 //
 // The key will be stored in clear text in the cache. If the key contains personal data please consider hashing the key
-func (s *Limiter) Middleware() mux.MiddlewareFunc {
-	if s.store == nil {
+func (l *Limiter) Middleware() mux.MiddlewareFunc {
+	if l.store == nil {
 		panic("store is not configured")
 	}
 
@@ -75,7 +75,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 				return
 			}
 
-			configGenerator, ok := s.configs[Request{Method: req.Method, PathTemplate: pathTemplate}]
+			configGenerator, ok := l.configs[Request{Method: req.Method, PathTemplate: pathTemplate}]
 			if ok {
 				cfgs, err := configGenerator(req)
 				if err != nil {
@@ -86,7 +86,7 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 					return
 				}
 
-				tooManyRequest, err := s.checkAccessCounts(cfgs, now)
+				tooManyRequest, err := l.checkAccessCounts(cfgs, now)
 				if err != nil {
 					log.WithTracing(ctx).WithError(err).Errorf("failed to check limit")
 					span.End()
@@ -110,16 +110,16 @@ func (s *Limiter) Middleware() mux.MiddlewareFunc {
 	}
 }
 
-func (s *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
-	if err := s.store.Connect(); err != nil {
+func (l *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
+	if err := l.store.Connect(); err != nil {
 		return false, err
 	}
-	defer s.store.Disconnect() //nolint: errcheck
+	defer l.store.Disconnect() //nolint: errcheck
 
 	for _, config := range cfgs {
 		key := fmt.Sprintf("%s:%d", config.Key, now.Minute())
 
-		resp, err := s.store.Incr(key)
+		resp, err := l.store.Incr(key)
 		if err != nil {
 			return false, err
 		}
