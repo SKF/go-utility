@@ -34,11 +34,9 @@ type Limiter struct {
 
 type limitGenerator func(*http.Request) ([]Limit, error)
 
-func CreateLimiter(s Store) Limiter {
-	return Limiter{
-		store:   s,
-		configs: map[Request]limitGenerator{},
-	}
+func (l *Limiter) SetStore(s Store) *Limiter {
+	l.store = s
+	return l
 }
 
 // The LimitGenerator function should return the rate limit with corresponding key
@@ -47,6 +45,10 @@ func CreateLimiter(s Store) Limiter {
 //
 // If you give multiple configs for 1 endpoint. The most restrictive one will apply
 func (s *Limiter) Configure(path Request, gen limitGenerator) {
+	if s.configs == nil {
+		s.configs = map[Request]limitGenerator{}
+	}
+
 	s.configs[path] = gen
 }
 

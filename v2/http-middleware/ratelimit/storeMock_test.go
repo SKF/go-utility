@@ -1,4 +1,4 @@
-package ratelimit
+package ratelimit_test
 
 import "github.com/stretchr/testify/mock"
 

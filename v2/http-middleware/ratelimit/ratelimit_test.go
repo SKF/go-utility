@@ -1,4 +1,4 @@
-package ratelimit
+package ratelimit_test
 
 import (
 	"io/ioutil"
@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/SKF/go-utility/v2/http-middleware/ratelimit"
 
 	"github.com/SKF/go-utility/v2/http-middleware/ratelimit/util"
 
@@ -18,17 +20,18 @@ func TestRateLimitOk(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := StoreMock{}
+	storeMock := &StoreMock{}
 	storeMock.On("Incr", mock.Anything).Return(0, nil)
 	storeMock.On("Connect").Return(nil).Once()
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
-	limiter := CreateLimiter(&storeMock)
+	limiter := ratelimit.Limiter{}
+	limiter.SetStore(storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodGet, PathTemplate: "/apa"},
-		func(req *http.Request) ([]Limit, error) {
-			return []Limit{{
+		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/apa"},
+		func(req *http.Request) ([]ratelimit.Limit, error) {
+			return []ratelimit.Limit{{
 				RequestPerMinute: 10,
 				Key:              req.URL.Path,
 			}}, nil
@@ -53,11 +56,12 @@ func TestRateLimitTooMany(t *testing.T) {
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
-	limiter := CreateLimiter(&storeMock)
+	limiter := &ratelimit.Limiter{}
+	limiter.SetStore(&storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodGet, PathTemplate: "/apa"},
-		func(req *http.Request) ([]Limit, error) {
-			return []Limit{{
+		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/apa"},
+		func(req *http.Request) ([]ratelimit.Limit, error) {
+			return []ratelimit.Limit{{
 				RequestPerMinute: 5,
 				Key:              req.URL.Path,
 			}}, nil
@@ -82,12 +86,13 @@ func TestUseCorrectLimit(t *testing.T) {
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
-	limiter := CreateLimiter(&storeMock)
+	limiter := &ratelimit.Limiter{}
+	limiter.SetStore(&storeMock)
 	// config GET
 	limiter.Configure(
-		Request{Method: http.MethodGet, PathTemplate: "/apa"},
-		func(req *http.Request) ([]Limit, error) {
-			return []Limit{{
+		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/apa"},
+		func(req *http.Request) ([]ratelimit.Limit, error) {
+			return []ratelimit.Limit{{
 				RequestPerMinute: 15,
 				Key:              req.URL.Path,
 			}}, nil
@@ -95,9 +100,9 @@ func TestUseCorrectLimit(t *testing.T) {
 	)
 	// config POST
 	limiter.Configure(
-		Request{Method: http.MethodPost, PathTemplate: "/apa"},
-		func(req *http.Request) ([]Limit, error) {
-			return []Limit{{
+		ratelimit.Request{Method: http.MethodPost, PathTemplate: "/apa"},
+		func(req *http.Request) ([]ratelimit.Limit, error) {
+			return []ratelimit.Limit{{
 				RequestPerMinute: 5,
 				Key:              req.URL.Path,
 			}}, nil
@@ -117,7 +122,8 @@ func TestUnconfiguredIsOk(t *testing.T) {
 	req, r := getRouterAndRequest(t)
 
 	// ACT
-	limiter := CreateLimiter(&StoreMock{})
+	limiter := &ratelimit.Limiter{}
+	limiter.SetStore(&StoreMock{})
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -158,22 +164,23 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	storeMock.On("Disconnect").Return(nil).Once()
 
 	// ACT
-	limiter := CreateLimiter(&storeMock)
+	limiter := &ratelimit.Limiter{}
+	limiter.SetStore(&storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodPost, PathTemplate: "/apa"},
-		func(req *http.Request) ([]Limit, error) {
+		ratelimit.Request{Method: http.MethodPost, PathTemplate: "/apa"},
+		func(req *http.Request) ([]ratelimit.Limit, error) {
 			a := testRequest{}
 			parseErr := util.ParseBody(req, &a)
 			if parseErr != nil {
 				// limit for invalidJSON
-				return []Limit{{
+				return []ratelimit.Limit{{
 					RequestPerMinute: 10,
 					Key:              req.URL.Path,
 				}}, parseErr
 			}
 
 			// Normal limit
-			return []Limit{{
+			return []ratelimit.Limit{{
 				RequestPerMinute: 15,
 				Key:              a.SuperKey,
 			}}, nil
@@ -212,16 +219,17 @@ func TestUseDynamicRoute(t *testing.T) {
 	storeMock.On("Disconnect").Return(nil)
 
 	// ACT
-	limiter := CreateLimiter(&storeMock)
+	limiter := &ratelimit.Limiter{}
+	limiter.SetStore(&storeMock)
 	limiter.Configure(
-		Request{Method: http.MethodGet, PathTemplate: pathTemplate},
-		func(req *http.Request) ([]Limit, error) {
+		ratelimit.Request{Method: http.MethodGet, PathTemplate: pathTemplate},
+		func(req *http.Request) ([]ratelimit.Limit, error) {
 			template, err := mux.CurrentRoute(req).GetPathTemplate()
 			if err != nil {
 				return nil, err
 			}
 
-			return []Limit{{
+			return []ratelimit.Limit{{
 				RequestPerMinute: 5,
 				Key:              template,
 			}}, nil

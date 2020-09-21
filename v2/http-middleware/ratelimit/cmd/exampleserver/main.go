@@ -14,7 +14,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 
-	limiter := ratelimit.CreateLimiter(ratelimit.GetRedisStore("localhost:6379"))
+	limiter := ratelimit.SetStore(ratelimit.GetRedisStore("localhost:6379"))
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/"},
 		func(request *http.Request) ([]ratelimit.Limit, error) {
