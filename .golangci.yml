@@ -54,7 +54,7 @@ linters:
     - prealloc #- Finds slice declarations that could potentially be preallocated
     - godox #- Tool for detection of FIXME, TODO and other comment keywords
     - whitespace #- Tool for detection of leading and trailing whitespace
-    #    - wsl #- Whitespace Linter - Forces you to use empty lines!
+#    - wsl #- Whitespace Linter - Forces you to use empty lines!
     - goprintffuncname #- Checks that printf-like functions are named with f at the end
     - gomnd #- An analyzer to detect magic numbers.
     - gomodguard #- Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.

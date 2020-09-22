@@ -45,6 +45,7 @@ func main() {
 		panic(fmt.Errorf("failed to parse config: %w", err))
 	}
 
+	fmt.Printf("config: %+v\n", config)
 	sso := ssoClient.Client{}
 	tokens, err := sso.SignInInitiate(config)
 	if err != nil {

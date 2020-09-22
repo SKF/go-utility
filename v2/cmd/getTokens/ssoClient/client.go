@@ -31,8 +31,8 @@ func (sso Client) SignInInitiate(config model.Config) (model.Tokens, error) {
 		Username:     config.Username,
 		RefreshToken: config.RefreshToken,
 	}
-	bodyBytes, err := json.Marshal(body)
 
+	bodyBytes, err := json.Marshal(body)
 	if err != nil {
 		return model.Tokens{}, fmt.Errorf("failed to marshal initiate request: %w", err)
 	}
