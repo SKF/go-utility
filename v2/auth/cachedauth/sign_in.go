@@ -9,7 +9,7 @@ import (
 	"github.com/SKF/go-utility/v2/auth"
 )
 
-var lock sync.Mutex
+var lock sync.RWMutex
 var tokens auth.Tokens
 
 var config *Config
@@ -31,8 +31,8 @@ func Configure(conf Config) {
 
 // GetTokens will return the cached tokens
 func GetTokens() auth.Tokens {
-	lock.Lock()
-	defer lock.Unlock()
+	lock.RLock()
+	defer lock.RUnlock()
 
 	return tokens
 }
