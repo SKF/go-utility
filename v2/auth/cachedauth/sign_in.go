@@ -20,6 +20,7 @@ type Config struct {
 }
 
 // Configure will configure the package
+// please do not use go-utility/v2/auth together with this package
 func Configure(conf Config) {
 	lock.Lock()
 	defer lock.Unlock()
@@ -30,6 +31,8 @@ func Configure(conf Config) {
 }
 
 // GetTokens will return the cached tokens
+//
+// note: Does not refresh the tokens
 func GetTokens() auth.Tokens {
 	lock.RLock()
 	defer lock.RUnlock()
