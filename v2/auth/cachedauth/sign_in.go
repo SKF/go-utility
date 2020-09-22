@@ -3,6 +3,7 @@ package cachedauth
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -49,7 +50,7 @@ func SignIn(ctx context.Context, username, password string) (err error) {
 		return errors.New("cachedauth is not configured")
 	}
 
-	const tokenExpireDurationDiff = 5
+	const tokenExpireDurationDiff = 5 * time.Minute
 	if auth.IsTokenValid(tokens.AccessToken, tokenExpireDurationDiff) {
 		return nil
 	}
