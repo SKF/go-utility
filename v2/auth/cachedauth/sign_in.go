@@ -11,9 +11,11 @@ import (
 )
 
 var lock sync.RWMutex
-var tokens auth.Tokens
 
 var config *Config
+var tokens map[string]auth.Tokens
+
+const latest = "latest"
 
 // Config is the configuration of the package
 type Config struct {
@@ -27,6 +29,9 @@ func Configure(conf Config) {
 	defer lock.Unlock()
 
 	config = &conf
+	if tokens == nil {
+		tokens = map[string]auth.Tokens{}
+	}
 
 	auth.Configure(auth.Config{Stage: conf.Stage})
 }
@@ -35,10 +40,17 @@ func Configure(conf Config) {
 //
 // note: Does not refresh the tokens
 func GetTokens() auth.Tokens {
+	return GetTokensByUser(latest)
+}
+
+// GetTokens will return the cached tokens
+//
+// note: Does not refresh the tokens
+func GetTokensByUser(username string) auth.Tokens {
 	lock.RLock()
 	defer lock.RUnlock()
 
-	return tokens
+	return tokens[username]
 }
 
 // SignIn is thread safe and only returns new tokens if the old tokens are about to expire
@@ -50,16 +62,16 @@ func SignIn(ctx context.Context, username, password string) (err error) {
 		return errors.New("cachedauth is not configured")
 	}
 
+	oldTokens := tokens[username]
 	const tokenExpireDurationDiff = 5 * time.Minute
-	if auth.IsTokenValid(tokens.AccessToken, tokenExpireDurationDiff) {
+
+	if auth.IsTokenValid(oldTokens.AccessToken, tokenExpireDurationDiff) {
 		return nil
 	}
 
-	tokens, err = auth.SignIn(ctx, username, password)
-	if err != nil {
-		tokens = auth.Tokens{}
-		return err
-	}
+	newtokens, err := auth.SignIn(ctx, username, password)
+	tokens[username] = newtokens
+	tokens[latest] = newtokens
 
-	return nil
+	return err
 }
