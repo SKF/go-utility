@@ -29,6 +29,7 @@ func Configure(conf Config) {
 	defer lock.Unlock()
 
 	config = &conf
+
 	if tokens == nil {
 		tokens = map[string]auth.Tokens{}
 	}
@@ -62,9 +63,9 @@ func SignIn(ctx context.Context, username, password string) (err error) {
 		return errors.New("cachedauth is not configured")
 	}
 
-	oldTokens := tokens[username]
 	const tokenExpireDurationDiff = 5 * time.Minute
 
+	oldTokens := tokens[username]
 	if auth.IsTokenValid(oldTokens.AccessToken, tokenExpireDurationDiff) {
 		return nil
 	}
