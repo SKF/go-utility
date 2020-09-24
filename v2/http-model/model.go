@@ -41,6 +41,7 @@ func (e *HTTPError) Message() []byte {
 var ErrResponseUnsupportedMediaType = []byte(`{"error": {"message": "unsupported media type"}}`)
 var ErrResponseInternalServerError = []byte(`{"error": {"message": "internal server error"}}`)
 var ErrResponseBadRequest = []byte(`{"error": {"message": "bad request"}}`)
+var ErrResponseTooManyRequests = []byte(`{"error": {"message": "Too many requests"}}`)
 var ErrResponseUnauthorized = []byte(`{"error": {"message": "unauthorized"}}`)
 var ErrResponseNotFound = []byte(`{"error": {"message": "not found"}}`)
 var ErrResponseMethodNotAllowed = []byte(`{"error": {"message": "method not allowed"}}`)
