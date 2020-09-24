@@ -1,4 +1,4 @@
-name: Gov2
+name: GoV2
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
 
 
     - name: Build
-      run: go build -v v2/...
+      run: cd v2 && go build -v ./...
 
     - name: Test
-      run: go test -v v2/...
+      run: cd v2 && go test -v ./...
