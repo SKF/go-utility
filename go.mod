@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/DataDog/datadog-go v2.2.0+incompatible // indirect
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616
-	github.com/SKF/go-utility/v2 v2.7.0 // indirect
+	github.com/SKF/go-utility/v2 v2.9.0 // indirect
 	github.com/SKF/proto v1.21.0-go
 	github.com/aws/aws-lambda-go v1.12.0
 	github.com/aws/aws-sdk-go v1.25.49

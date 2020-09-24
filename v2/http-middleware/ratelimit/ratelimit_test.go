@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	http_model "github.com/SKF/go-utility/v2/http-model"
+
 	"github.com/SKF/go-utility/v2/http-middleware/ratelimit"
 
 	"github.com/SKF/go-utility/v2/http-middleware/ratelimit/util"
@@ -74,6 +76,7 @@ func TestRateLimitTooMany(t *testing.T) {
 
 	// ASSERT
 	require.Equal(t, http.StatusTooManyRequests, resp.Code)
+	require.Equal(t, http_model.ErrResponseTooManyRequests, resp.Body.Bytes())
 }
 
 func TestUseCorrectLimit(t *testing.T) {

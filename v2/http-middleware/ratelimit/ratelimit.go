@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	http_model "github.com/SKF/go-utility/v2/http-model"
+	http_server "github.com/SKF/go-utility/v2/http-server"
+
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"github.com/SKF/go-utility/v2/log"
 
@@ -96,8 +99,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 				}
 
 				if tooManyRequest {
-					w.WriteHeader(http.StatusTooManyRequests) //nolint:errcheck
-					w.Write([]byte("Too many requests"))      //nolint:errcheck
+					http_server.WriteJSONResponse(ctx, w, req, http.StatusTooManyRequests, http_model.ErrResponseTooManyRequests)
 					span.End()
 
 					return
