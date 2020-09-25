@@ -1,20 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path"
+
+	"github.com/SKF/go-utility/v2/cmd/getTokens/config"
 
 	"github.com/SKF/go-utility/v2/cmd/getTokens/show"
 
 	"github.com/SKF/go-utility/v2/stages"
 
 	"github.com/SKF/go-utility/v2/cmd/getTokens/ssoClient"
-
-	"github.com/SKF/go-utility/v2/cmd/getTokens/model"
 )
 
 func main() {
@@ -29,35 +27,29 @@ func main() {
 		fmt.Printf("invalid environment: %s", environ)
 		return
 	}
+	fmt.Printf("using environment: %s\n", environ)
 
-	usr, err := user.Current()
+	configDir, err := config.GetConfigDir()
 	if err != nil {
-		panic(fmt.Errorf("failed to get current user: %w", err))
-	}
-
-	file, err := ioutil.ReadFile(path.Join(usr.HomeDir, fmt.Sprintf(".skf/%s.json", environ)))
-	if err != nil {
-		err = fmt.Errorf("Failed to get credentials: %w", err)
 		panic(err)
 	}
 
-	var config model.Config
-	err = json.Unmarshal(file, &config)
+	cfg, err := config.Read(environ)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse config: %w", err))
+		panic(err)
 	}
 
 	sso := ssoClient.Client{}
 
-	tokens, err := sso.SignInInitiate(config)
+	tokens, err := sso.SignInInitiate(cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	accessTokenPath := path.Join(usr.HomeDir, ".skf/accesstoken")
+	accessTokenPath := path.Join(configDir, "accesstoken")
 	writeFile(accessTokenPath, tokens.AccessToken)
 
-	identityTokenPath := path.Join(usr.HomeDir, ".skf/identitytoken")
+	identityTokenPath := path.Join(configDir, "identitytoken")
 	writeFile(identityTokenPath, tokens.IdentityToken)
 
 	show.Show(fmt.Sprintf("accesstoken: %s\n\nidentityToken: %s", tokens.AccessToken, tokens.IdentityToken))
