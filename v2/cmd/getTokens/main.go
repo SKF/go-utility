@@ -48,6 +48,7 @@ func main() {
 	}
 
 	sso := ssoClient.Client{}
+
 	tokens, err := sso.SignInInitiate(config)
 	if err != nil {
 		panic(err)
