@@ -11,6 +11,7 @@ github.com/SKF/go-utility/v2 v2.2.2/go.mod h1:58mYgUJwysqzdcAploXrLQpyjJSsfTjD2C
 github.com/SKF/go-utility/v2 v2.7.0 h1:kuWgTmPTDaZrvG2xarGLSgCrfPyOiwzjJIC7wqSoZd8=
 github.com/SKF/go-utility/v2 v2.7.0/go.mod h1:s2MhOBeBuODmk/bDhzQ8EEo2IaggL6ige+0WKZSrPxk=
 github.com/SKF/go-utility/v2 v2.8.0 h1:+qYRtdHuFT1voNg2ga0FtFhWlF8PR2YiVzB/S4SkIn4=
+github.com/SKF/go-utility/v2 v2.9.1 h1:/B40EiXlDgWMRgl8IXvOXN73Ub5zXsRRQowqVH7iI5g=
 github.com/SKF/proto v1.21.0-go h1:l4nbV3lqmcwHMJ4pn00/1KUtzgDdHEoK9fmCOsPj3oQ=
 github.com/SKF/proto v1.21.0-go/go.mod h1:fLZMzpComrKyD9V74fS1lT4ryHZX9LlYYjM1TmBZw+s=
 github.com/SKF/proto/v2 v2.3.2-go/go.mod h1:hg4uBS90Ej70p0vCEcHpxlBDEaHNLcr7wUahl2l8jfo=

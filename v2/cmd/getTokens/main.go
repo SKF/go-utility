@@ -8,6 +8,8 @@ import (
 	"os/user"
 	"path"
 
+	"github.com/SKF/go-utility/v2/cmd/getTokens/show"
+
 	"github.com/SKF/go-utility/v2/stages"
 
 	"github.com/SKF/go-utility/v2/cmd/getTokens/ssoClient"
@@ -45,7 +47,6 @@ func main() {
 		panic(fmt.Errorf("failed to parse config: %w", err))
 	}
 
-	fmt.Printf("config: %+v\n", config)
 	sso := ssoClient.Client{}
 	tokens, err := sso.SignInInitiate(config)
 	if err != nil {
@@ -57,6 +58,8 @@ func main() {
 
 	identityTokenPath := path.Join(usr.HomeDir, ".skf/identitytoken")
 	writeFile(identityTokenPath, tokens.IdentityToken)
+
+	show.Show(fmt.Sprintf("accesstoken: %s\n\nidentityToken: %s", tokens.AccessToken, tokens.IdentityToken))
 }
 
 func writeFile(accessTokenPath, token string) {
