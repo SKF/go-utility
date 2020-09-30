@@ -89,3 +89,36 @@ func Test_Difference(t *testing.T) {
 		assert.EqualValues(t, data.expected, output, fmt.Sprintf("Difference input: %+v", data.input))
 	}
 }
+
+func Test_ContainsEmpty(t *testing.T) {
+	var testData = []struct {
+		input    []string
+		expected bool
+	}{
+		{
+			[]string{"1", "1", "2 ", "3"},
+			false,
+		},
+		{
+			[]string{"a", "b", " ", "B", "A", "b"},
+			true,
+		},
+		{
+			[]string{"a", "b", "", "B", "A", "b"},
+			true,
+		},
+		{
+			[]string{"a", "b", "      ", "B", "A", "b"},
+			true,
+		},
+		{
+			[]string{},
+			false,
+		},
+	}
+
+	for _, data := range testData {
+		output := ContainsEmpty(data.input...)
+		assert.EqualValues(t, data.expected, output, fmt.Sprintf("ContainsEmpty input: %+v", data.input))
+	}
+}
