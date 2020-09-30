@@ -1,5 +1,7 @@
 package array
 
+import "strings"
+
 func countMap(arrs ...[]string) (result map[string]int) {
 	result = make(map[string]int)
 
@@ -56,6 +58,16 @@ func DifferenceString(arrs ...[]string) (result []string) {
 func ContainsString(arr []string, stringToCheck string) bool {
 	for _, s := range arr {
 		if s == stringToCheck {
+			return true
+		}
+	}
+
+	return false
+}
+
+func ContainsEmpty(arr ...string) bool {
+	for _, s := range arr {
+		if strings.TrimSpace(s) == "" {
 			return true
 		}
 	}
