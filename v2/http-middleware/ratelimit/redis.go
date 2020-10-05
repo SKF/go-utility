@@ -28,7 +28,8 @@ func (s *redisStore) Incr(key string) (int, error) {
 }
 
 func (s *redisStore) Connect() error {
-	t := redis.DialConnectTimeout(2 * time.Second)
+	const dialTimeout = 2 * time.Second
+	t := redis.DialConnectTimeout(dialTimeout)
 
 	con, err := redis.Dial("tcp", s.url, t)
 

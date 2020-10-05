@@ -8,12 +8,12 @@ import (
 
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
-	"go.opencensus.io/trace"
 
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"github.com/SKF/go-utility/v2/log"
 
 	"github.com/gorilla/mux"
+	"go.opencensus.io/trace"
 )
 
 type Store interface {
@@ -115,7 +115,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 }
 
 func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
-	ctx, span := trace.StartSpan(ctx, "ratelimit/checkAccessCount")
+	_, span := trace.StartSpan(ctx, "ratelimit/checkAccessCount")
 	defer span.End()
 
 	if err := l.store.Connect(); err != nil {
