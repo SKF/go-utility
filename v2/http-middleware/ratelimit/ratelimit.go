@@ -1,6 +1,7 @@
 package ratelimit
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/SKF/go-utility/v2/log"
 
 	"github.com/gorilla/mux"
+	"go.opencensus.io/trace"
 )
 
 type Store interface {
@@ -89,7 +91,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 					return
 				}
 
-				tooManyRequest, err := l.checkAccessCounts(cfgs, now)
+				tooManyRequest, err := l.checkAccessCounts(ctx, cfgs, now)
 				if err != nil {
 					log.WithTracing(ctx).WithError(err).Errorf("failed to check limit")
 					span.End()
@@ -112,7 +114,10 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 	}
 }
 
-func (l *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
+func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
+	_, span := trace.StartSpan(ctx, "RateLimitMiddleware/checkAccessCounts")
+	defer span.End()
+
 	if err := l.store.Connect(); err != nil {
 		return false, err
 	}

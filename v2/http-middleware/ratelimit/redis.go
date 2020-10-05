@@ -1,6 +1,10 @@
 package ratelimit
 
-import "github.com/gomodule/redigo/redis"
+import (
+	"time"
+
+	"github.com/gomodule/redigo/redis"
+)
 
 type redisStore struct {
 	url        string
@@ -24,7 +28,11 @@ func (s *redisStore) Incr(key string) (int, error) {
 }
 
 func (s *redisStore) Connect() error {
-	con, err := redis.Dial("tcp", s.url)
+	const dialTimeout = 2 * time.Second
+	t := redis.DialConnectTimeout(dialTimeout)
+
+	con, err := redis.Dial("tcp", s.url, t)
+
 	s.connection = con
 
 	return err
