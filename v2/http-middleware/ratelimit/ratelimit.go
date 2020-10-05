@@ -115,7 +115,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 }
 
 func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
-	_, span := trace.StartSpan(ctx, "ratelimit/checkAccessCount")
+	_, span := trace.StartSpan(ctx, "RateLimitMiddleware/checkAccessCount")
 	defer span.End()
 
 	if err := l.store.Connect(); err != nil {
