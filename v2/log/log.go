@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SKF/go-utility/env"
+	"github.com/SKF/go-utility/v2/env"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
