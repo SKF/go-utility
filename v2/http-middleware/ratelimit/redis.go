@@ -45,6 +45,7 @@ func (s *redisStore) Disconnect() error {
 	if s == nil {
 		return fmt.Errorf("redis store is nil")
 	}
+
 	if s.connection == nil {
 		return fmt.Errorf("redis connection is nil")
 	}
