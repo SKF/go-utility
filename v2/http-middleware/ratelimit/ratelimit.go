@@ -9,7 +9,6 @@ import (
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
 
-	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"github.com/SKF/go-utility/v2/log"
 
 	"github.com/gorilla/mux"
@@ -68,7 +67,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := util.StartSpanNoRoot(req.Context(), "RateLimitMiddleware/Handler")
+			ctx, span := trace.StartSpan(req.Context(), "RateLimitMiddleware/Handler")
 
 			now := time.Now()
 
@@ -119,7 +118,7 @@ func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.
 	defer span.End()
 
 	if err := l.store.Connect(); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to connect: %w", err)
 	}
 	defer l.store.Disconnect() //nolint: errcheck
 
@@ -128,7 +127,7 @@ func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.
 
 		resp, err := l.store.Incr(key)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("incr failed: %w", err)
 		}
 
 		if resp > config.RequestPerMinute {
