@@ -1,6 +1,7 @@
 package ratelimit
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -8,10 +9,10 @@ import (
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
 
-	"github.com/SKF/go-utility/v2/http-middleware/util"
 	"github.com/SKF/go-utility/v2/log"
 
 	"github.com/gorilla/mux"
+	"go.opencensus.io/trace"
 )
 
 type Store interface {
@@ -66,7 +67,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := util.StartSpanNoRoot(req.Context(), "RateLimitMiddleware/Handler")
+			ctx, span := trace.StartSpan(req.Context(), "RateLimitMiddleware/Handler")
 
 			now := time.Now()
 
@@ -89,7 +90,7 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 					return
 				}
 
-				tooManyRequest, err := l.checkAccessCounts(cfgs, now)
+				tooManyRequest, err := l.checkAccessCounts(ctx, cfgs, now)
 				if err != nil {
 					log.WithTracing(ctx).WithError(err).Errorf("failed to check limit")
 					span.End()
@@ -112,9 +113,12 @@ func (l *Limiter) Middleware() mux.MiddlewareFunc {
 	}
 }
 
-func (l *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
+func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.Time) (tooManyRequests bool, err error) {
+	_, span := trace.StartSpan(ctx, "RateLimitMiddleware/checkAccessCounts")
+	defer span.End()
+
 	if err := l.store.Connect(); err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to connect: %w", err)
 	}
 	defer l.store.Disconnect() //nolint: errcheck
 
@@ -123,7 +127,7 @@ func (l *Limiter) checkAccessCounts(cfgs []Limit, now time.Time) (tooManyRequest
 
 		resp, err := l.store.Incr(key)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("incr failed: %w", err)
 		}
 
 		if resp > config.RequestPerMinute {
