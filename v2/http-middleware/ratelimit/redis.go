@@ -1,26 +1,43 @@
 package ratelimit
 
 import (
-	"fmt"
+	"context"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
 )
 
-type redisStore struct {
-	url        string
-	connection redis.Conn
+type Store interface {
+	NewConnection() Connection
 }
 
-func (s *redisStore) Incr(key string) (int, error) {
+type Connection interface {
+	redis.Conn
+
+	Incr(key string) (int, error)
+}
+
+type redisStore struct {
+	pool *redis.Pool
+}
+
+type redisConnection struct {
+	redis.Conn
+}
+
+func (s *redisStore) NewConnection() Connection {
+	return &redisConnection{s.pool.Get()}
+}
+
+func (c *redisConnection) Incr(key string) (int, error) {
 	const secondsToExpire = 60
 
-	cnt, err := redis.Int(s.connection.Do("INCR", key))
+	cnt, err := redis.Int(c.Do("INCR", key))
 	if err != nil {
 		return -1, err
 	}
 
-	_, err = s.connection.Do("EXPIRE", key, secondsToExpire)
+	_, err = c.Do("EXPIRE", key, secondsToExpire)
 	if err != nil {
 		return -1, err
 	}
@@ -28,31 +45,30 @@ func (s *redisStore) Incr(key string) (int, error) {
 	return cnt, nil
 }
 
-func (s *redisStore) Connect() error {
-	const timeout = 2 * time.Second
-	dialConnectTimeout := redis.DialConnectTimeout(timeout)
-	readTimeout := redis.DialReadTimeout(timeout)
-	writeTimeout := redis.DialWriteTimeout(timeout)
+func GetRedisStore(address string) Store {
+	var (
+		waitingConnections = 10
 
-	con, err := redis.Dial("tcp", s.url, dialConnectTimeout, readTimeout, writeTimeout)
+		dialTimeout  = 1 * time.Second
+		idleTimeout  = 4 * time.Minute
+		readTimeout  = 1 * time.Second
+		writeTimeout = 1 * time.Second
+	)
 
-	s.connection = con
-
-	return err
-}
-
-func (s *redisStore) Disconnect() error {
-	if s == nil {
-		return fmt.Errorf("redis store is nil")
+	pool := &redis.Pool{
+		MaxIdle:     waitingConnections,
+		IdleTimeout: idleTimeout,
+		DialContext: func(ctx context.Context) (redis.Conn, error) {
+			return redis.DialContext(
+				ctx,
+				"tcp",
+				address,
+				redis.DialConnectTimeout(dialTimeout),
+				redis.DialReadTimeout(readTimeout),
+				redis.DialWriteTimeout(writeTimeout),
+			)
+		},
 	}
 
-	if s.connection == nil {
-		return fmt.Errorf("redis connection is nil")
-	}
-
-	return s.connection.Close()
-}
-
-func GetRedisStore(url string) Store {
-	return &redisStore{url: url}
+	return &redisStore{pool}
 }

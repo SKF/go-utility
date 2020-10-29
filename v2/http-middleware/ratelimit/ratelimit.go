@@ -15,12 +15,6 @@ import (
 	"go.opencensus.io/trace"
 )
 
-type Store interface {
-	Incr(string) (int, error)
-	Connect() error
-	Disconnect() error
-}
-
 type Limit struct {
 	RequestPerMinute int
 	Key              string
@@ -117,15 +111,13 @@ func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.
 	_, span := trace.StartSpan(ctx, "RateLimitMiddleware/checkAccessCounts")
 	defer span.End()
 
-	if err := l.store.Connect(); err != nil {
-		return false, fmt.Errorf("failed to connect: %w", err)
-	}
-	defer l.store.Disconnect() //nolint: errcheck
+	store := l.store.NewConnection()
+	defer store.Close()
 
 	for _, config := range cfgs {
 		key := fmt.Sprintf("%s:%d", config.Key, now.Minute())
 
-		resp, err := l.store.Incr(key)
+		resp, err := store.Incr(key)
 		if err != nil {
 			return false, fmt.Errorf("incr failed: %w", err)
 		}
