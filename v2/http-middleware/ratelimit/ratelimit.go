@@ -3,6 +3,7 @@ package ratelimit
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -15,6 +16,16 @@ import (
 	"go.opencensus.io/trace"
 )
 
+type ConnectionPool interface {
+	Connect() Connection
+}
+
+type Connection interface {
+	io.Closer
+
+	Incr(key string) (int, error)
+}
+
 type Limit struct {
 	RequestPerMinute int
 	Key              string
@@ -26,14 +37,14 @@ type Request struct {
 }
 
 type Limiter struct {
-	store   Store
-	configs map[Request]limitGenerator
+	connectionPool ConnectionPool
+	configs        map[Request]limitGenerator
 }
 
 type limitGenerator func(*http.Request) ([]Limit, error)
 
-func (l *Limiter) SetStore(s Store) *Limiter {
-	l.store = s
+func (l *Limiter) SetConnectionPool(p ConnectionPool) *Limiter {
+	l.connectionPool = p
 	return l
 }
 
@@ -55,8 +66,8 @@ func (l *Limiter) Configure(path Request, gen limitGenerator) {
 //
 // The key will be stored in clear text in the cache. If the key contains personal data please consider hashing the key
 func (l *Limiter) Middleware() mux.MiddlewareFunc {
-	if l.store == nil {
-		panic("store is not configured")
+	if l.connectionPool == nil {
+		panic("connectionPool is not configured")
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -111,13 +122,13 @@ func (l *Limiter) checkAccessCounts(ctx context.Context, cfgs []Limit, now time.
 	_, span := trace.StartSpan(ctx, "RateLimitMiddleware/checkAccessCounts")
 	defer span.End()
 
-	store := l.store.NewConnection()
-	defer store.Close()
+	db := l.connectionPool.Connect()
+	defer db.Close()
 
 	for _, config := range cfgs {
 		key := fmt.Sprintf("%s:%d", config.Key, now.Minute())
 
-		resp, err := store.Incr(key)
+		resp, err := db.Incr(key)
 		if err != nil {
 			return false, fmt.Errorf("incr failed: %w", err)
 		}

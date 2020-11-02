@@ -17,7 +17,7 @@ func main() {
 	r.HandleFunc("/", HomeHandler)
 
 	limiter := ratelimit.Limiter{}
-	limiter.SetStore(ratelimit.GetRedisStore("localhost:6379"))
+	limiter.SetConnectionPool(ratelimit.GetRedisPool("localhost:6379"))
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/"},
 		func(request *http.Request) ([]ratelimit.Limit, error) {
