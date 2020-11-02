@@ -18,7 +18,7 @@ func main() {
 			continue
 		}
 
-		defer resp.Body.Close()
+		resp.Body.Close()
 
 		if resp.StatusCode == http.StatusOK {
 			fmt.Printf("%v: time: %v, code: %d\n", time.Now(), time.Since(start), resp.StatusCode)

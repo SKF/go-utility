@@ -22,14 +22,16 @@ func TestRateLimitOk(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := &StoreMock{}
-	storeMock.On("Incr", mock.Anything).Return(0, nil)
-	storeMock.On("Connect").Return(nil).Once()
-	storeMock.On("Disconnect").Return(nil).Once()
+	poolMock := &ConnectionPoolMock{}
+	connMock := &ConnectionMock{}
+	poolMock.On("Connect").Return(connMock).Once()
+
+	connMock.On("Incr", mock.Anything).Return(0, nil)
+	connMock.On("Close").Return(nil).Once()
 
 	// ACT
 	limiter := ratelimit.Limiter{}
-	limiter.SetStore(storeMock)
+	limiter.SetConnectionPool(poolMock)
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/apa"},
 		func(req *http.Request) ([]ratelimit.Limit, error) {
@@ -45,6 +47,9 @@ func TestRateLimitOk(t *testing.T) {
 	r.ServeHTTP(resp, req)
 
 	// ASSERT
+	poolMock.AssertExpectations(t)
+	connMock.AssertExpectations(t)
+
 	require.Equal(t, http.StatusOK, resp.Code)
 }
 
@@ -52,14 +57,16 @@ func TestRateLimitTooMany(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := StoreMock{}
-	storeMock.On("Incr", mock.Anything).Return(10, nil)
-	storeMock.On("Connect").Return(nil).Once()
-	storeMock.On("Disconnect").Return(nil).Once()
+	poolMock := &ConnectionPoolMock{}
+	connMock := &ConnectionMock{}
+	poolMock.On("Connect").Return(connMock).Once()
+
+	connMock.On("Incr", mock.Anything).Return(10, nil)
+	connMock.On("Close").Return(nil).Once()
 
 	// ACT
 	limiter := &ratelimit.Limiter{}
-	limiter.SetStore(&storeMock)
+	limiter.SetConnectionPool(poolMock)
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/apa"},
 		func(req *http.Request) ([]ratelimit.Limit, error) {
@@ -75,6 +82,9 @@ func TestRateLimitTooMany(t *testing.T) {
 	r.ServeHTTP(resp, req)
 
 	// ASSERT
+	poolMock.AssertExpectations(t)
+	connMock.AssertExpectations(t)
+
 	require.Equal(t, http.StatusTooManyRequests, resp.Code)
 	require.Equal(t, http_model.ErrResponseTooManyRequests, resp.Body.Bytes())
 }
@@ -83,14 +93,16 @@ func TestUseCorrectLimit(t *testing.T) {
 	// ARRANGE
 	req, r := getRouterAndRequest(t)
 
-	storeMock := StoreMock{}
-	storeMock.On("Incr", mock.Anything).Return(10, nil)
-	storeMock.On("Connect").Return(nil).Once()
-	storeMock.On("Disconnect").Return(nil).Once()
+	poolMock := &ConnectionPoolMock{}
+	connMock := &ConnectionMock{}
+	poolMock.On("Connect").Return(connMock).Once()
+
+	connMock.On("Incr", mock.Anything).Return(10, nil)
+	connMock.On("Close").Return(nil).Once()
 
 	// ACT
 	limiter := &ratelimit.Limiter{}
-	limiter.SetStore(&storeMock)
+	limiter.SetConnectionPool(poolMock)
 	// config GET
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: "/apa"},
@@ -117,6 +129,9 @@ func TestUseCorrectLimit(t *testing.T) {
 	r.ServeHTTP(resp, req)
 
 	// ASSERT
+	poolMock.AssertExpectations(t)
+	connMock.AssertExpectations(t)
+
 	require.Equal(t, http.StatusOK, resp.Code)
 }
 
@@ -126,7 +141,7 @@ func TestUnconfiguredIsOk(t *testing.T) {
 
 	// ACT
 	limiter := &ratelimit.Limiter{}
-	limiter.SetStore(&StoreMock{})
+	limiter.SetConnectionPool(&ConnectionPoolMock{})
 	r.Use(limiter.Middleware())
 
 	resp := httptest.NewRecorder()
@@ -161,14 +176,16 @@ func TestReadBodyInMiddleware(t *testing.T) {
 		w.Write(b) //nolint: errcheck
 	})
 
-	storeMock := StoreMock{}
-	storeMock.On("Incr", mock.Anything).Return(10, nil)
-	storeMock.On("Connect").Return(nil).Once()
-	storeMock.On("Disconnect").Return(nil).Once()
+	poolMock := &ConnectionPoolMock{}
+	connMock := &ConnectionMock{}
+	poolMock.On("Connect").Return(connMock).Once()
+
+	connMock.On("Incr", mock.Anything).Return(10, nil)
+	connMock.On("Close").Return(nil).Once()
 
 	// ACT
 	limiter := &ratelimit.Limiter{}
-	limiter.SetStore(&storeMock)
+	limiter.SetConnectionPool(poolMock)
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodPost, PathTemplate: "/apa"},
 		func(req *http.Request) ([]ratelimit.Limit, error) {
@@ -195,6 +212,9 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	r.ServeHTTP(resp, req)
 
 	// ASSERT
+	poolMock.AssertExpectations(t)
+	connMock.AssertExpectations(t)
+
 	require.Equal(t, http.StatusOK, resp.Code)
 	res, readErr := ioutil.ReadAll(resp.Body)
 	require.NoError(t, readErr)
@@ -217,14 +237,16 @@ func TestUseDynamicRoute(t *testing.T) {
 	})
 	r.HandleFunc("/bepa", handler)
 
-	storeMock := StoreMock{}
-	storeMock.On("Incr", mock.Anything).Return(10, nil)
-	storeMock.On("Connect").Return(nil)
-	storeMock.On("Disconnect").Return(nil)
+	poolMock := &ConnectionPoolMock{}
+	connMock := &ConnectionMock{}
+	poolMock.On("Connect").Return(connMock)
+
+	connMock.On("Incr", mock.Anything).Return(10, nil)
+	connMock.On("Close").Return(nil)
 
 	// ACT
 	limiter := &ratelimit.Limiter{}
-	limiter.SetStore(&storeMock)
+	limiter.SetConnectionPool(poolMock)
 	limiter.Configure(
 		ratelimit.Request{Method: http.MethodGet, PathTemplate: pathTemplate},
 		func(req *http.Request) ([]ratelimit.Limit, error) {
@@ -251,6 +273,9 @@ func TestUseDynamicRoute(t *testing.T) {
 	r.ServeHTTP(resp3, req3)
 
 	// ASSERT
+	poolMock.AssertExpectations(t)
+	connMock.AssertExpectations(t)
+
 	require.Equal(t, http.StatusTooManyRequests, resp.Code)
 	require.Equal(t, http.StatusTooManyRequests, resp2.Code)
 	require.Equal(t, http.StatusOK, resp3.Code)
