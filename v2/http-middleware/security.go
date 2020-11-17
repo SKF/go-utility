@@ -14,6 +14,7 @@ import (
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
+
 	"github.com/SKF/proto/v2/common"
 
 	"github.com/gorilla/mux"
