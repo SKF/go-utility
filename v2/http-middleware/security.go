@@ -14,7 +14,6 @@ import (
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
-
 	"github.com/SKF/proto/v2/common"
 
 	"github.com/gorilla/mux"
@@ -33,8 +32,10 @@ type Config struct {
 	UseUserIDCache bool
 }
 
-var config Config
-var userIDCache map[string]string
+var (
+	config      Config
+	userIDCache map[string]string
+)
 
 func Configure(conf Config) {
 	config = conf
@@ -75,9 +76,9 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessOrIDToken(ctx, req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessOrIDToken(req.Context(), req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
-					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
+					http_server.WriteJSONResponse(req.Context(), w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
 					return
 				}
 			}
