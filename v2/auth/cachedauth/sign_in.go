@@ -19,7 +19,10 @@ const latest = "latest"
 
 // Config is the configuration of the package
 type Config struct {
-	Stage string
+	WithDatadogTracing    bool
+	WithOpenCensusTracing bool   // default
+	ServiceName           string // needed when using lambda and Datadog for tracing
+	Stage                 string
 }
 
 // Configure will configure the package
@@ -28,13 +31,19 @@ func Configure(conf Config) {
 	lock.Lock()
 	defer lock.Unlock()
 
+	conf.WithOpenCensusTracing = !conf.WithDatadogTracing
 	config = &conf
 
 	if tokens == nil {
 		tokens = map[string]auth.Tokens{}
 	}
 
-	auth.Configure(auth.Config{Stage: conf.Stage})
+	auth.Configure(auth.Config{
+		WithDatadogTracing:    conf.WithDatadogTracing,
+		WithOpenCensusTracing: conf.WithOpenCensusTracing,
+		ServiceName:           conf.ServiceName,
+		Stage:                 conf.Stage,
+	})
 }
 
 // GetTokens will return the cached tokens

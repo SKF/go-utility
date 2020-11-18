@@ -24,18 +24,27 @@ var config *Config
 
 // Config is the configuration of the package
 type Config struct {
+	WithDatadogTracing       bool
+	WithOpenCensusTracing    bool // default
 	AWSSession               *session.Session
 	AWSSecretsManagerAccount string
 	AWSSecretsManagerRegion  string
 	SecretKey                string
+	ServiceName              string // needed when using lambda and Datadog for tracing
 	Stage                    string
 }
 
 // Configure will configure the package
 func Configure(conf Config) {
+	conf.WithOpenCensusTracing = !conf.WithDatadogTracing
 	config = &conf
 
-	auth.Configure(auth.Config{Stage: conf.Stage})
+	auth.Configure(auth.Config{
+		WithDatadogTracing:    conf.WithDatadogTracing,
+		WithOpenCensusTracing: conf.WithOpenCensusTracing,
+		ServiceName:           conf.ServiceName,
+		Stage:                 conf.Stage,
+	})
 }
 
 // GetTokens will return the cached tokens
@@ -92,7 +101,7 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 
 	secretKey := "arn:aws:secretsmanager:" + config.AWSSecretsManagerRegion + ":" + config.AWSSecretsManagerAccount + ":secret:" + config.SecretKey
 
-	output, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{SecretId: &secretKey})
+	output, err := svc.GetSecretValueWithContext(ctx, &secretsmanager.GetSecretValueInput{SecretId: &secretKey})
 	if err != nil {
 		err = errors.Wrap(err, "failed to get secret value")
 		return

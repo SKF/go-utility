@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/binary"
 
-	"go.opencensus.io/trace"
+	oc_trace "go.opencensus.io/trace"
 	"go.uber.org/zap"
+	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/SKF/go-utility/v2/useridcontext"
 )
@@ -32,17 +33,23 @@ func (l logger) WithError(err error) Logger {
 	return logger{l.logger.With(zap.Error(err))}
 }
 
-// WithTracing will take an OpenCensus trace and add log fields for Datadog.
-// based on convertSpan in https://github.com/DataDog/opencensus-go-exporter-datadog/blob/master/span.go
-// and https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/?tab=go
+// WithTracing will take either an OpenCensus or Datadog trace and add log fields for Datadog.
+// The OpenCensus conversion is based:
+// https://github.com/DataDog/opencensus-go-exporter-datadog/blob/master/span.go
+// https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/?tab=go
 func (l logger) WithTracing(ctx context.Context) Logger {
-	if span := trace.FromContext(ctx); span != nil {
+	if span := oc_trace.FromContext(ctx); span != nil {
 		traceID := span.SpanContext().TraceID
 		spanID := span.SpanContext().SpanID
-
 		return l.
 			WithField("dd.trace_id", binary.BigEndian.Uint64(traceID[8:])).
 			WithField("dd.span_id", binary.BigEndian.Uint64(spanID[:]))
+	}
+
+	if span, exists := dd_tracer.SpanFromContext(ctx); exists {
+		return l.
+			WithField("dd.trace_id", span.Context().TraceID()).
+			WithField("dd.span_id", span.Context().SpanID())
 	}
 
 	return l
