@@ -17,8 +17,8 @@ import (
 var config *Config
 
 type Config struct {
-	WithDatadogTracing    bool
-	WithOpenCensusTracing bool   // default
+	WithDatadogTracing    bool   // used when you trace your application with Datadog
+	WithOpenCensusTracing bool   // default and used when you trace your application with Open Census
 	ServiceName           string // needed when using lambda and Datadog for tracing
 	Stage                 string
 }

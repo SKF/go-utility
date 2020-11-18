@@ -11,6 +11,9 @@
 //         ctx := context.Background()
 //
 //         conf := auth.Config{
+//             WithDatadogTracing        bool // used when you trace your application with Datadog
+//             WithOpenCensusTracing     bool // default and used when you trace your application with Open Census
+//             ServiceName               string // needed when using lambda and Datadog for tracing
 //             AWSSession:               sess,
 //             AWSSecretsManagerAccount: "...",
 //             AWSSecretsManagerRegion:  "eu-west-1",

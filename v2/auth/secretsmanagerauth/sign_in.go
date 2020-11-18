@@ -24,13 +24,13 @@ var config *Config
 
 // Config is the configuration of the package
 type Config struct {
-	WithDatadogTracing       bool
-	WithOpenCensusTracing    bool // default
+	WithDatadogTracing       bool   // used when you trace your application with Datadog
+	WithOpenCensusTracing    bool   // default and used when you trace your application with Open Census
+	ServiceName              string // needed when using lambda and Datadog for tracing
 	AWSSession               *session.Session
 	AWSSecretsManagerAccount string
 	AWSSecretsManagerRegion  string
 	SecretKey                string
-	ServiceName              string // needed when using lambda and Datadog for tracing
 	Stage                    string
 }
 
