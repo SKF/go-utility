@@ -103,6 +103,7 @@ func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInRe
 	if config.WithOpenCensusTracing {
 		client.Transport = new(oc_http.Transport)
 	}
+
 	if config.WithDatadogTracing {
 		client = withDatadogTracing(config.ServiceName, client)
 	}
