@@ -32,7 +32,7 @@ type Config struct {
 	UseUserIDCache bool
 }
 
-type ReponseConfig interface {
+type ResponseConfig interface {
 	InternalErrorResponse() []byte
 	UnauthenticateResponse() []byte
 	UnauthorizedResponse() []byte
@@ -84,7 +84,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 			if secConfig.accessTokenHeader != "" {
 				if err := handleAccessOrIDToken(req.Context(), req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
-					responseBody := GetUnauthenticedErrorReponseBody(http_model.ErrResponseUnauthorized, secConfig)
+					responseBody := GetUnauthenticedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
 					http_server.WriteJSONResponse(req.Context(), w, req, http.StatusUnauthorized, responseBody)
 					return
 				}
@@ -230,7 +230,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 					WithField("url", req.URL.String()).
 					Error("Couldn't extract User ID from context")
 
-				responseBody := GetInternalServerErrorReponseBody(http_model.ErrResponseInternalServerError, secConfig)
+				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
 
 				http_server.WriteJSONResponse(
 					ctx, w, req, http.StatusInternalServerError, responseBody,
@@ -249,12 +249,12 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 			if err != nil {
-				responseBody := GetInternalServerErrorReponseBody(http_model.ErrResponseInternalServerError, secConfig)
+				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
 				return
 			}
 			if !isAuthorized {
-				responseBody := GetUnauthorizedErrorReponseBody(http_model.ErrResponseUnauthorized, secConfig)
+				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
 				return
 			}
@@ -338,7 +338,7 @@ type SecurityConfig struct {
 	methods           []string
 	accessTokenHeader string
 	authorizations    []authorizationConfig
-	responses         ReponseConfig
+	responses         ResponseConfig
 }
 
 type authorizationConfig struct {
@@ -354,7 +354,7 @@ func HandleSecureEndpoint(endpoint string) *SecurityConfig {
 	return s
 }
 
-func HandleSecureEndpointCustomErrorResponse(endpoint string, responses ReponseConfig) *SecurityConfig {
+func HandleSecureEndpointCustomErrorResponse(endpoint string, responses ResponseConfig) *SecurityConfig {
 	s := &SecurityConfig{
 		endpoint:  endpoint,
 		responses: responses,
@@ -426,7 +426,7 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 	return s
 }
 
-func GetInternalServerErrorReponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
+func GetInternalServerErrorResponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
 	responsebody := defaultResponse
 
 	if secConfig.responses != nil && len(secConfig.responses.InternalErrorResponse()) > 0 {
@@ -436,7 +436,7 @@ func GetInternalServerErrorReponseBody(defaultResponse []byte, secConfig Securit
 	return responsebody
 }
 
-func GetUnauthenticedErrorReponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
+func GetUnauthenticedErrorResponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
 	responsebody := defaultResponse
 
 	if secConfig.responses != nil && len(secConfig.responses.UnauthenticateResponse()) > 0 {
@@ -446,7 +446,7 @@ func GetUnauthenticedErrorReponseBody(defaultResponse []byte, secConfig Security
 	return responsebody
 }
 
-func GetUnauthorizedErrorReponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
+func GetUnauthorizedErrorResponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
 	responsebody := defaultResponse
 
 	if secConfig.responses != nil && len(secConfig.responses.UnauthorizedResponse()) > 0 {
