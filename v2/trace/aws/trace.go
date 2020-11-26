@@ -1,4 +1,4 @@
-package aws_trace
+package awstrace
 
 var (
 	b3TraceHeader = "x-b3-traceid"

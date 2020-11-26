@@ -1,9 +1,8 @@
-package aws_trace
+package awstrace
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -15,22 +14,24 @@ import (
 	"github.com/SKF/go-utility/v2/log"
 )
 
-type MessageAttribute struct {
+type messageAttribute struct {
 	Type  string `json:"Type"`
 	Value string `json:"Value"`
 }
 
-type SNSEntityBody struct {
-	MessageAttributes map[string]MessageAttribute `json:"MessageAttributes"`
+type snsEntityBody struct {
+	MessageAttributes map[string]messageAttribute `json:"MessageAttributes"`
 }
 
 var propagator = dd_tracer.NewPropagator(nil)
 
+// StartDatadogSpanFromMessage will start a Datadog span based on message attributes found in sqs message.
+// It will extract trace and span id either depending on the extraction style.
+// Configure the extraction style by using the environment variable: DD_PROPAGATION_STYLE_EXTRACT=Datadog,B3
+// Default extraction style is set to Datadog
 func StartDatadogSpanFromMessage(ctx context.Context, serviceName string, msg events.SQSMessage) (dd_tracer.Span, context.Context) {
 	traceHeaders := getTraceHeadersFromAttributes(ctx, msg)
 	if len(traceHeaders) == 0 {
-
-		fmt.Println("HEJ 1")
 		return startSpan(ctx, serviceName, nil)
 	}
 
@@ -40,11 +41,8 @@ func StartDatadogSpanFromMessage(ctx context.Context, serviceName string, msg ev
 			WithError(err).
 			Debug("couldnt create span from headers, using incomming span as parent")
 
-		fmt.Println("HEJ 2")
 		return startSpan(ctx, serviceName, nil)
 	}
-
-	fmt.Println("HEJ 3")
 
 	return startSpan(ctx, serviceName, recordSpanContext)
 }
@@ -61,7 +59,7 @@ func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) m
 	}
 
 	// Get SNS message attributes
-	var snsEvent SNSEntityBody
+	var snsEvent snsEntityBody
 	if err := json.Unmarshal([]byte(msg.Body), &snsEvent); err != nil {
 		log.WithTracing(ctx).WithError(err).Debug("failed to unmarshal sns body")
 		return traceAttributes
@@ -79,12 +77,13 @@ func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) m
 }
 
 func startSpan(ctx context.Context, serviceName string, parentSpanContext dd_trace.SpanContext) (dd_tracer.Span, context.Context) {
-	operationName := "sns.handler"
+	operationName := "record.handler"
 	spanOpts := []dd_trace.StartSpanOption{
 		dd_tracer.SpanType("serverless"),
 		dd_tracer.ServiceName(serviceName),
 	}
 
+	// Populate span with lambda information
 	lambdaCtx, ok := lambdacontext.FromContext(ctx)
 	if ok {
 		functionArn := lambdaCtx.InvokedFunctionArn
@@ -108,15 +107,21 @@ func startSpan(ctx context.Context, serviceName string, parentSpanContext dd_tra
 	spanOpts = append(spanOpts, dd_tracer.ChildOf(parentSpanContext))
 
 	recordSpan := dd_tracer.StartSpan(operationName, spanOpts...)
-	return recordSpan, dd_tracer.ContextWithSpan(ctx, recordSpan)
+	recordCtx := dd_tracer.ContextWithSpan(ctx, recordSpan)
+
+	return recordSpan, recordCtx
 }
 
 func separateVersionFromFunctionArn(functionArn string) (arnWithoutVersion string, functionVersion string) {
+	// Example arn: arn:aws:lambda:us-east-2:123456789012:function:my-function:1
 	arnSegments := strings.Split(functionArn, ":")
 	functionVersion = "$LATEST"
 	arnWithoutVersion = strings.Join(arnSegments[0:7], ":")
-	if len(arnSegments) > 7 {
-		functionVersion = arnSegments[7]
+
+	const lastPartOfArn = 7
+	if len(arnSegments) > lastPartOfArn {
+		functionVersion = arnSegments[lastPartOfArn]
 	}
+
 	return arnWithoutVersion, functionVersion
 }

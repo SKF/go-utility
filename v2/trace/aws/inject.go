@@ -1,4 +1,4 @@
-package aws_trace
+package awstrace
 
 import (
 	"context"
@@ -37,6 +37,7 @@ func injectSQSSendMessage(ctx context.Context, input *sqs.SendMessageInput) *sqs
 	}
 
 	input.MessageAttributes = extendMessageAttributes(input.MessageAttributes, getTraceAttributesFromContext(ctx))
+
 	return input
 }
 
@@ -69,6 +70,7 @@ func extendMessageAttributes(attributes map[string]*sqs.MessageAttributeValue, d
 
 func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 	attributes := map[string]string{}
+
 	if span := oc_trace.FromContext(ctx); span != nil {
 		spanCtx := span.SpanContext()
 		traceID := hex.EncodeToString(spanCtx.TraceID[:])

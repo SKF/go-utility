@@ -1,4 +1,4 @@
-package aws_trace
+package awstrace
 
 import (
 	"context"
@@ -43,6 +43,7 @@ func Test_InjectDatadog_HappyCase(t *testing.T) {
 
 	tracer, ctx := startDatadogSpan()
 	defer tracer.Stop()
+
 	input := injectSNSPublish(ctx, &sns.PublishInput{
 		Message: aws.String(message),
 	})
@@ -50,9 +51,10 @@ func Test_InjectDatadog_HappyCase(t *testing.T) {
 	assert.Len(t, input.MessageAttributes, 2)
 
 	attributesKeys := []string{}
-	for key, _ := range input.MessageAttributes {
+	for key := range input.MessageAttributes {
 		attributesKeys = append(attributesKeys, key)
 	}
+
 	assert.True(t, array.ContainsString(attributesKeys, datadogTraceHeader))
 	assert.True(t, array.ContainsString(attributesKeys, datadogParentHeader))
 }
@@ -68,9 +70,10 @@ func Test_InjectOC_HappyCase(t *testing.T) {
 	assert.Len(t, input.MessageAttributes, 2)
 
 	attributesKeys := []string{}
-	for key, _ := range input.MessageAttributes {
+	for key := range input.MessageAttributes {
 		attributesKeys = append(attributesKeys, key)
 	}
+
 	assert.True(t, array.ContainsString(attributesKeys, b3TraceHeader))
 	assert.True(t, array.ContainsString(attributesKeys, b3SpanHeader))
 }
@@ -78,6 +81,7 @@ func Test_InjectOC_HappyCase(t *testing.T) {
 func startOCSpan() context.Context {
 	ctx := context.Background()
 	ctx, _ = oc_trace.StartSpan(ctx, "test")
+
 	return ctx
 }
 
@@ -85,7 +89,8 @@ func Test_getTraceAttributesFromContextB3_HappyCase(t *testing.T) {
 	ctx := startOCSpan()
 	attributes := getTraceAttributesFromContext(ctx)
 	attributesKeys := []string{}
-	for key, _ := range attributes {
+
+	for key := range attributes {
 		attributesKeys = append(attributesKeys, key)
 	}
 
@@ -100,15 +105,18 @@ func startDatadogSpan() (dd_mocktracer.Tracer, context.Context) {
 	mt := dd_mocktracer.Start()
 	ctx := context.Background()
 	_, ctx = dd_tracer.StartSpanFromContext(ctx, "test")
+
 	return mt, ctx
 }
 
 func Test_getTraceAttributesFromContextDatadog_HappyCase(t *testing.T) {
 	tracer, ctx := startDatadogSpan()
 	defer tracer.Stop()
+
 	attributes := getTraceAttributesFromContext(ctx)
 	attributesKeys := []string{}
-	for key, _ := range attributes {
+
+	for key := range attributes {
 		attributesKeys = append(attributesKeys, key)
 	}
 

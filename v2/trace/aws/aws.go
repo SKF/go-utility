@@ -1,4 +1,4 @@
-package aws_trace
+package awstrace
 
 import (
 	"fmt"
@@ -9,10 +9,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
+// WrapSession will wrap the AWS session and
+// injecting tracing headers into the outgoing requests for these operations:
+// - sns.Publish
+// - sqs.SendMessage
+// - sqs.SendMessageBatch
+// the wrapper support B3 and Datadog
 func WrapSession(sess *session.Session) *session.Session {
 	sess.Handlers.Build.PushFront(matchingHandler("sns/Publish", snsPublishHandler))
 	sess.Handlers.Build.PushFront(matchingHandler("sqs/SendMessage", sqsSendMessageHandler))
 	sess.Handlers.Build.PushFront(matchingHandler("sqs/SendMessageBatch", sqsSendMessageBatchHandler))
+
 	return sess
 }
 
