@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SKF/go-utility/v2/array"
-	"github.com/SKF/go-utility/v2/log"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	dd_trace "gopkg.in/DataDog/dd-trace-go.v1/ddtrace"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+
+	"github.com/SKF/go-utility/v2/array"
+	"github.com/SKF/go-utility/v2/log"
 )
 
 type MessageAttribute struct {

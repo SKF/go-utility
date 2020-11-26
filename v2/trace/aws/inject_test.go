@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SKF/go-utility/v2/array"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -13,6 +12,8 @@ import (
 	oc_trace "go.opencensus.io/trace"
 	dd_mocktracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/mocktracer"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+
+	"github.com/SKF/go-utility/v2/array"
 )
 
 func Test_Inject_Basic(t *testing.T) {
