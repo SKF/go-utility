@@ -5,12 +5,13 @@ package main
 import (
 	"context"
 
-	"github.com/SKF/go-utility/v2/log"
-	awstrace "github.com/SKF/go-utility/v2/trace/aws"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	oc_trace "go.opencensus.io/trace"
+
+	"github.com/SKF/go-utility/v2/log"
+	aws_skf_trace "github.com/SKF/go-utility/v2/trace/aws"
 )
 
 func sendMessage(ctx context.Context, sess *session.Session, msg string) error {
@@ -30,7 +31,7 @@ func main() {
 	sess := session.Must(session.NewSession())
 
 	// Pass trace headers by wrapping the session with WrapSession
-	sess = awstrace.WrapSession(sess)
+	sess = aws_skf_trace.WrapSession(sess)
 
 	ctx := context.Background()
 	if err := sendMessage(ctx, sess, "Hello SKF!"); err != nil {

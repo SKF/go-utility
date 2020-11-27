@@ -5,14 +5,15 @@ package main
 import (
 	"context"
 
-	"github.com/SKF/go-utility/v2/env"
-	"github.com/SKF/go-utility/v2/log"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	skf_trace "skfdc.visualstudio.com/rep-sw/tracing-poc/backend/trace"
+
+	"github.com/SKF/go-utility/v2/env"
+	"github.com/SKF/go-utility/v2/log"
+	aws_skf_trace "github.com/SKF/go-utility/v2/trace/aws"
 )
 
 type handler struct {
@@ -35,7 +36,7 @@ func (h *handler) handler(ctx context.Context, event events.SQSEvent) {
 
 func (h *handler) handleRecord(ctx context.Context, record events.SQSMessage) error {
 	// Start a new span, using the incomming trace as parent (if any)
-	span, ctx := skf_trace.StartDatadogSpanFromMessage(ctx, h.serviceName, record)
+	span, ctx := aws_skf_trace.StartDatadogSpanFromMessage(ctx, h.serviceName, record)
 	defer span.Finish()
 
 	// Logging that the record has been handled,

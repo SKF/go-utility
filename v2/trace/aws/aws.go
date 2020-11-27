@@ -1,8 +1,6 @@
 package awstrace
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -25,7 +23,7 @@ func WrapSession(sess *session.Session) *session.Session {
 
 func matchingHandler(service, operation string, handler func(*request.Request)) func(*request.Request) {
 	return func(r *request.Request) {
-		if service == r.ClientInfo.ServiceName && operation = r.Operation.Name {
+		if service == r.ClientInfo.ServiceName && operation == r.Operation.Name {
 			handler(r)
 		}
 	}
