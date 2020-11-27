@@ -10,10 +10,10 @@ import (
 )
 
 // WrapSession will wrap the AWS session and
-// injecting tracing headers into the outgoing requests for these operations:
-// - sns.Publish
-// - sqs.SendMessage
-// - sqs.SendMessageBatch
+// injecting tracing headers into the outgoing requests for these functions:
+// - sns.PublishWithContext(...)
+// - sqs.SendMessageWithContext(...)
+// - sqs.SendMessageBatchWithContext(...)
 // the wrapper support B3 and Datadog
 func WrapSession(sess *session.Session) *session.Session {
 	sess.Handlers.Build.PushFront(matchingHandler("sns", "Publish", snsPublishHandler))
