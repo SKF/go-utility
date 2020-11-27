@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	oc_trace "go.opencensus.io/trace"
@@ -14,9 +15,9 @@ import (
 	aws_skf_trace "github.com/SKF/go-utility/v2/trace/aws"
 )
 
-func sendMessage(ctx context.Context, sess *session.Session, msg string) error {
+func sendMessage(ctx context.Context, sess client.ConfigProvider, msg string) error {
 	// Context need to containing Datadog or B3 trace for this to work
-	span, ctx := oc_trace.StartSpan(ctx, "sendMessage")
+	ctx, span := oc_trace.StartSpan(ctx, "sendMessage")
 	defer span.End()
 
 	// Sending message and injecting tracing headers
@@ -24,6 +25,7 @@ func sendMessage(ctx context.Context, sess *session.Session, msg string) error {
 	_, err := client.SendMessageWithContext(ctx, &sqs.SendMessageInput{
 		MessageBody: aws.String(msg),
 	})
+
 	return err
 }
 

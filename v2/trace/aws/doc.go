@@ -13,7 +13,7 @@
 //			sess = awstrace.WrapSession(sess)
 //
 //			// Context need to containing Datadog or B3 trace for this to work
-//			span, ctx := oc_trace.StartSpan(ctx, "example")
+//			ctx, span := oc_trace.StartSpan(ctx, "example")
 //			defer span.End()
 //
 //			// Sending message and injecting tracing headers
