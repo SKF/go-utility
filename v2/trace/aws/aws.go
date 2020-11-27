@@ -16,17 +16,16 @@ import (
 // - sqs.SendMessageBatch
 // the wrapper support B3 and Datadog
 func WrapSession(sess *session.Session) *session.Session {
-	sess.Handlers.Build.PushFront(matchingHandler("sns/Publish", snsPublishHandler))
-	sess.Handlers.Build.PushFront(matchingHandler("sqs/SendMessage", sqsSendMessageHandler))
-	sess.Handlers.Build.PushFront(matchingHandler("sqs/SendMessageBatch", sqsSendMessageBatchHandler))
+	sess.Handlers.Build.PushFront(matchingHandler("sns", "Publish", snsPublishHandler))
+	sess.Handlers.Build.PushFront(matchingHandler("sqs", "SendMessage", sqsSendMessageHandler))
+	sess.Handlers.Build.PushFront(matchingHandler("sqs", "SendMessageBatch", sqsSendMessageBatchHandler))
 
 	return sess
 }
 
-func matchingHandler(operationName string, handler func(*request.Request)) func(*request.Request) {
+func matchingHandler(service, operation string, handler func(*request.Request)) func(*request.Request) {
 	return func(r *request.Request) {
-		reqOperationName := fmt.Sprintf("%s/%s", r.ClientInfo.ServiceName, r.Operation.Name)
-		if reqOperationName == operationName {
+		if service == r.ClientInfo.ServiceName && operation = r.Operation.Name {
 			handler(r)
 		}
 	}
