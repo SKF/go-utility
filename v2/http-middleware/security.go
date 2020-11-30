@@ -19,6 +19,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -286,11 +288,18 @@ func checkAuthorization(ctx context.Context, req *http.Request, authorizer Autho
 			resource,
 		)
 		if err != nil {
-			logFields.WithError(err).
+			logFields = logFields.WithError(err).
 				WithField("userId", userID).
 				WithField("action", authorizeConfig.action).
-				WithField("resource", resource).
-				Error("Error when calling IsAuthorized")
+				WithField("resource", resource)
+
+			if grpcStatus := status.Code(err); grpcStatus == codes.Canceled {
+				logFields.Debug("Cancelled context when calling IsAuthorized")
+
+				return false, nil
+			}
+
+			logFields.Error("Error when calling IsAuthorized")
 
 			return false, err
 		}
