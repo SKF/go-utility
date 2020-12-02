@@ -79,6 +79,9 @@ func (f *HTTPFormat) spanContextFromRequest(req *http.Request, headers headers) 
 	}, true
 }
 
+const eightBytes = 8
+const sixteenBytes = 16
+
 func parseTraceID(tid string) (trace.TraceID, bool) {
 	if tid == "" {
 		return trace.TraceID{}, false
@@ -90,12 +93,13 @@ func parseTraceID(tid string) (trace.TraceID, bool) {
 	}
 
 	var traceID trace.TraceID
-	if len(b) <= 8 {
+
+	if len(b) <= eightBytes {
 		// The lower 64-bits.
-		start := 8 + (8 - len(b))
+		start := eightBytes + (eightBytes - len(b))
 		copy(traceID[start:], b)
 	} else {
-		start := 16 - len(b)
+		start := sixteenBytes - len(b)
 		copy(traceID[start:], b)
 	}
 
@@ -112,7 +116,7 @@ func parseSpanID(sid string) (spanID trace.SpanID, ok bool) {
 		return trace.SpanID{}, false
 	}
 
-	start := 8 - len(b)
+	start := eightBytes - len(b)
 	copy(spanID[start:], b)
 
 	return spanID, true
