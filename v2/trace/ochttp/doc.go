@@ -1,5 +1,5 @@
 // Package ochttp contains:
-// 
+//
 // - a propagation.HTTPFormat implementation for B3 and Datadog propagation
 //
 // The HTTPFormat is based on ochttp and ddtrace.
