@@ -18,7 +18,7 @@ func TestHTTPFormat_B3_FromRequest(t *testing.T) {
 		sampledHeader = "X-B3-Sampled"
 	)
 
-	testHTTPFormat_FromRequest(t, traceIDHeader, spanIDHeader, sampledHeader)
+	testHTTPFormatFromRequest(t, traceIDHeader, spanIDHeader, sampledHeader)
 }
 
 func TestHTTPFormat_DD_FromRequest(t *testing.T) {
@@ -29,10 +29,10 @@ func TestHTTPFormat_DD_FromRequest(t *testing.T) {
 		sampledHeader = "x-datadog-sampling-priority"
 	)
 
-	testHTTPFormat_FromRequest(t, traceIDHeader, spanIDHeader, sampledHeader)
+	testHTTPFormatFromRequest(t, traceIDHeader, spanIDHeader, sampledHeader)
 }
 
-func testHTTPFormat_FromRequest(t *testing.T, traceIDHeader, spanIDHeader, sampledHeader string) {
+func testHTTPFormatFromRequest(t *testing.T, traceIDHeader, spanIDHeader, sampledHeader string) {
 	tests := []struct {
 		name    string
 		makeReq func() *http.Request
@@ -90,7 +90,7 @@ func testHTTPFormat_FromRequest(t *testing.T, traceIDHeader, spanIDHeader, sampl
 		{
 			name: "128-bit trace ID + 64-bit span ID; no sampling header",
 			makeReq: func() *http.Request {
-				req, _ := http.NewRequest("GET", "http://example.com", nil)
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
 				req.Header.Set(traceIDHeader, "463ac35c9f6413ad48485a3953bb6124")
 				req.Header.Set(spanIDHeader, "0020000000000001")
 				return req
