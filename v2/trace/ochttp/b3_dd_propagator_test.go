@@ -18,21 +18,6 @@ func TestHTTPFormat_B3_FromRequest(t *testing.T) {
 		sampledHeader = "X-B3-Sampled"
 	)
 
-	testHTTPFormatFromRequest(t, traceIDHeader, spanIDHeader, sampledHeader)
-}
-
-func TestHTTPFormat_DD_FromRequest(t *testing.T) {
-	const (
-		// Datadog headers that OpenCensus understands.
-		traceIDHeader = "x-datadog-trace-id"
-		spanIDHeader  = "x-datadog-parent-id"
-		sampledHeader = "x-datadog-sampling-priority"
-	)
-
-	testHTTPFormatFromRequest(t, traceIDHeader, spanIDHeader, sampledHeader)
-}
-
-func testHTTPFormatFromRequest(t *testing.T, traceIDHeader, spanIDHeader, sampledHeader string) {
 	tests := []struct {
 		name    string
 		makeReq func() *http.Request
@@ -194,7 +179,176 @@ func testHTTPFormatFromRequest(t *testing.T, traceIDHeader, spanIDHeader, sample
 	}
 }
 
-func TestHTTPFormat_B3_ToRequest(t *testing.T) {
+func TestHTTPFormat_DD_FromRequest(t *testing.T) {
+	const (
+		// Datadog headers that OpenCensus understands.
+		traceIDHeader = "x-datadog-trace-id"
+		spanIDHeader  = "x-datadog-parent-id"
+		sampledHeader = "x-datadog-sampling-priority"
+	)
+
+	tests := []struct {
+		name    string
+		makeReq func() *http.Request
+		wantSc  trace.SpanContext
+		wantOk  bool
+	}{
+		{
+			name: "64-bit trace ID + 64-bit span ID; sampled=1",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "5208512171318403364")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				req.Header.Set(sampledHeader, "1")
+				return req
+			},
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{0, 0, 0, 0, 0, 0, 0, 0, 72, 72, 90, 57, 83, 187, 97, 36},
+				SpanID:       trace.SpanID{0, 32, 0, 0, 0, 0, 0, 1},
+				TraceOptions: trace.TraceOptions(1),
+			},
+			wantOk: true,
+		},
+		{
+			name: "short trace ID + short span ID; sampled=1",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "258")
+				req.Header.Set(spanIDHeader, "258")
+				req.Header.Set(sampledHeader, "1")
+				return req
+			},
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2},
+				SpanID:       trace.SpanID{0, 0, 0, 0, 0, 0, 1, 2},
+				TraceOptions: trace.TraceOptions(1),
+			},
+			wantOk: true,
+		},
+		{
+			name: "64-bit trace ID + 64-bit span ID; sampled=0",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "9007199254740993")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				req.Header.Set(sampledHeader, "0")
+				return req
+			},
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 1},
+				SpanID:       trace.SpanID{0, 32, 0, 0, 0, 0, 0, 1},
+				TraceOptions: trace.TraceOptions(0),
+			},
+			wantOk: true,
+		},
+		{
+			name: "64-bit trace ID + 64-bit span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "5208512171318403364")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				return req
+			},
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{0, 0, 0, 0, 0, 0, 0, 0, 72, 72, 90, 57, 83, 187, 97, 36},
+				SpanID:       trace.SpanID{0, 32, 0, 0, 0, 0, 0, 1},
+				TraceOptions: trace.TraceOptions(0),
+			},
+			wantOk: true,
+		},
+		{
+			name: "invalid trace ID + 64-bit span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				return req
+			},
+			wantSc: trace.SpanContext{},
+			wantOk: false,
+		},
+		{
+			name: "invalid >64-bit trace ID + 64-bit span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "18446744073709552000")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				return req
+			},
+			wantSc: trace.SpanContext{},
+			wantOk: false,
+		},
+		{
+			name: "64-bit trace ID; invalid span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "5208512171318403364")
+				req.Header.Set(spanIDHeader, "")
+				return req
+			},
+			wantSc: trace.SpanContext{},
+			wantOk: false,
+		},
+		{
+			name: "64-bit trace ID; invalid >64 bit span ID; no sampling header",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "5208512171318403364")
+				req.Header.Set(spanIDHeader, "18446744073709552000")
+				return req
+			},
+			wantSc: trace.SpanContext{},
+			wantOk: false,
+		},
+		{
+			name: "64-bit trace ID + 64-bit span ID; sampled=2",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "5208512171318403364")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				req.Header.Set(sampledHeader, "2")
+				return req
+			},
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{0, 0, 0, 0, 0, 0, 0, 0, 72, 72, 90, 57, 83, 187, 97, 36},
+				SpanID:       trace.SpanID{0, 32, 0, 0, 0, 0, 0, 1},
+				TraceOptions: trace.TraceOptions(1),
+			},
+			wantOk: true,
+		},
+		{
+			name: "64-bit trace ID + 64-bit span ID; sampled=false",
+			makeReq: func() *http.Request {
+				req, _ := http.NewRequest("GET", "http://example.com", nil) //nolint: errcheck
+				req.Header.Set(traceIDHeader, "5208512171318403364")
+				req.Header.Set(spanIDHeader, "9007199254740993")
+				req.Header.Set(sampledHeader, "false")
+				return req
+			},
+			wantSc: trace.SpanContext{
+				TraceID:      trace.TraceID{0, 0, 0, 0, 0, 0, 0, 0, 72, 72, 90, 57, 83, 187, 97, 36},
+				SpanID:       trace.SpanID{0, 32, 0, 0, 0, 0, 0, 1},
+				TraceOptions: trace.TraceOptions(0),
+			},
+			wantOk: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &oc_http.HTTPFormat{}
+			sc, ok := f.SpanContextFromRequest(tt.makeReq())
+			if ok != tt.wantOk {
+				t.Errorf("HTTPFormat.SpanContextFromRequest() got ok = %v, want %v", ok, tt.wantOk)
+			}
+			if !reflect.DeepEqual(sc, tt.wantSc) {
+				t.Errorf("HTTPFormat.SpanContextFromRequest() got span context = %v, want %v", sc, tt.wantSc)
+			}
+		})
+	}
+}
+
+func TestHTTPFormat_ToRequest(t *testing.T) {
 	const (
 		// B3 headers that OpenCensus understands.
 		b3TraceIDHeader = "X-B3-TraceId"
@@ -223,8 +377,8 @@ func TestHTTPFormat_B3_ToRequest(t *testing.T) {
 				b3TraceIDHeader: "463ac35c9f6413ad48485a3953bb6124",
 				b3SpanIDHeader:  "0020000000000001",
 				b3SampledHeader: "1",
-				ddTraceIDHeader: "48485a3953bb6124",
-				ddSpanIDHeader:  "0020000000000001",
+				ddTraceIDHeader: "5208512171318403364",
+				ddSpanIDHeader:  "9007199254740993",
 				ddSampledHeader: "1",
 			},
 		},
@@ -239,8 +393,8 @@ func TestHTTPFormat_B3_ToRequest(t *testing.T) {
 				b3TraceIDHeader: "463ac35c9f6413ad48485a3953bb6124",
 				b3SpanIDHeader:  "0020000000000001",
 				b3SampledHeader: "0",
-				ddTraceIDHeader: "48485a3953bb6124",
-				ddSpanIDHeader:  "0020000000000001",
+				ddTraceIDHeader: "5208512171318403364",
+				ddSpanIDHeader:  "9007199254740993",
 				ddSampledHeader: "0",
 			},
 		},

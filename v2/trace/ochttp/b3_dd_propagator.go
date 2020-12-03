@@ -1,11 +1,14 @@
 package ochttp
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"net/http"
+	"strconv"
 
 	"go.opencensus.io/trace"
 	"go.opencensus.io/trace/propagation"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 )
 
 const (
@@ -32,46 +35,62 @@ type HTTPFormat struct{}
 
 var _ propagation.HTTPFormat = (*HTTPFormat)(nil)
 
-type headers struct {
-	traceIDHeader string
-	spanIDHeader  string
-	sampledHeader string
-}
-
 // SpanContextFromRequest extracts an OC span context from incoming requests.
 // Will first try to extract from Datadog headers and then from B3 headers.
 func (f *HTTPFormat) SpanContextFromRequest(req *http.Request) (sc trace.SpanContext, ok bool) {
-	ddHeaders := headers{traceIDHeader: datadogTraceIDHeader, spanIDHeader: datadogSpanIDHeader, sampledHeader: datadogSampledHeader}
-	if sc, ok = f.spanContextFromRequest(req, ddHeaders); ok {
+	if sc, ok = f.spanContextFromDatadogHeaders(req); ok {
 		return
 	}
 
-	b3Headers := headers{traceIDHeader: b3TraceIDHeader, spanIDHeader: b3SpanIDHeader, sampledHeader: b3SampledHeader}
-	if sc, ok = f.spanContextFromRequest(req, b3Headers); ok {
+	if sc, ok = f.spanContextFromB3Headers(req); ok {
 		return
 	}
 
 	return
 }
 
-func (f *HTTPFormat) spanContextFromRequest(req *http.Request, headers headers) (sc trace.SpanContext, ok bool) {
-	tid, ok := parseTraceID(req.Header.Get(headers.traceIDHeader))
-	if !ok {
+func (f *HTTPFormat) spanContextFromDatadogHeaders(req *http.Request) (sc trace.SpanContext, ok bool) {
+	if err := parseUint64ToByteSlice(req.Header.Get(datadogTraceIDHeader), sc.TraceID[8:16]); err != nil {
 		return trace.SpanContext{}, false
 	}
 
-	sid, ok := parseSpanID(req.Header.Get(headers.spanIDHeader))
-	if !ok {
+	if err := parseUint64ToByteSlice(req.Header.Get(datadogSpanIDHeader), sc.SpanID[0:8]); err != nil {
 		return trace.SpanContext{}, false
 	}
 
-	sampled, _ := parseSampled(req.Header.Get(headers.sampledHeader))
+	sampled, _ := strconv.Atoi(req.Header.Get(datadogSampledHeader)) //nolint: errcheck
+	if sampled >= ext.PriorityAutoKeep {
+		sampled = 1
+	}
 
-	return trace.SpanContext{
-		TraceID:      tid,
-		SpanID:       sid,
-		TraceOptions: sampled,
-	}, true
+	sc.TraceOptions = trace.TraceOptions(sampled)
+
+	return sc, true
+}
+
+func parseUint64ToByteSlice(str string, v []byte) error {
+	id, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	binary.BigEndian.PutUint64(v, id)
+
+	return nil
+}
+
+func (f *HTTPFormat) spanContextFromB3Headers(req *http.Request) (sc trace.SpanContext, ok bool) {
+	if sc.TraceID, ok = parseTraceID(req.Header.Get(b3TraceIDHeader)); !ok {
+		return trace.SpanContext{}, false
+	}
+
+	if sc.SpanID, ok = parseSpanID(req.Header.Get(b3SpanIDHeader)); !ok {
+		return trace.SpanContext{}, false
+	}
+
+	sc.TraceOptions, _ = parseSampled(req.Header.Get(b3SampledHeader))
+
+	return sc, true
 }
 
 const eightBytes = 8
@@ -125,6 +144,9 @@ func (f *HTTPFormat) SpanContextToRequest(sc trace.SpanContext, req *http.Reques
 	req.Header.Set(b3TraceIDHeader, hex.EncodeToString(sc.TraceID[:]))
 	req.Header.Set(b3SpanIDHeader, hex.EncodeToString(sc.SpanID[:]))
 
+	req.Header.Set(datadogTraceIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.TraceID[8:16]), 10))
+	req.Header.Set(datadogSpanIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.SpanID[0:8]), 10))
+
 	var sampled string
 	if sc.IsSampled() {
 		sampled = "1"
@@ -133,8 +155,5 @@ func (f *HTTPFormat) SpanContextToRequest(sc trace.SpanContext, req *http.Reques
 	}
 
 	req.Header.Set(b3SampledHeader, sampled)
-
-	req.Header.Set(datadogTraceIDHeader, hex.EncodeToString(sc.TraceID[8:]))
-	req.Header.Set(datadogSpanIDHeader, hex.EncodeToString(sc.SpanID[:]))
 	req.Header.Set(datadogSampledHeader, sampled)
 }
