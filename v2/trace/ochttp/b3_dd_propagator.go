@@ -1,9 +1,4 @@
-// Package oc contains a propagation.HTTPFormat implementation for B3 and Datadog propagation.
-// The HTTPFormat is based on ochttp and ddtrace.
-// - ochttp: https://github.com/census-instrumentation/opencensus-go/tree/master/plugin/ochttp/propagation/b3
-// - ddtrace: https://github.com/DataDog/dd-trace-go/blob/v1/ddtrace/tracer/textmap.go
-// See https://github.com/openzipkin/b3-propagation for more details on B3 propagation.
-package oc
+package ochttp
 
 import (
 	"encoding/hex"
@@ -88,20 +83,14 @@ func parseTraceID(tid string) (trace.TraceID, bool) {
 	}
 
 	b, err := hex.DecodeString(tid)
-	if err != nil {
+	if err != nil || len(b) > sixteenBytes {
 		return trace.TraceID{}, false
 	}
 
 	var traceID trace.TraceID
 
-	if len(b) <= eightBytes {
-		// The lower 64-bits.
-		start := eightBytes + (eightBytes - len(b))
-		copy(traceID[start:], b)
-	} else {
-		start := sixteenBytes - len(b)
-		copy(traceID[start:], b)
-	}
+	start := sixteenBytes - len(b)
+	copy(traceID[start:], b)
 
 	return traceID, true
 }
@@ -112,7 +101,7 @@ func parseSpanID(sid string) (spanID trace.SpanID, ok bool) {
 	}
 
 	b, err := hex.DecodeString(sid)
-	if err != nil {
+	if err != nil || len(b) > eightBytes {
 		return trace.SpanID{}, false
 	}
 
