@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	"github.com/SKF/go-utility/v2/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	oc_trace "go.opencensus.io/trace"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+
+	"github.com/SKF/go-utility/v2/log"
 )
 
 func injectSNSPublish(ctx context.Context, input *sns.PublishInput) *sns.PublishInput {
