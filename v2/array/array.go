@@ -15,6 +15,10 @@ func countMap(arrs ...[]string) (result map[string]int) {
 	return
 }
 
+func MergeString(arrs ...string) (result []string) {
+	return arrs
+}
+
 func DistinctString(arr []string) (result []string) {
 	arrayMap := make(map[string]bool)
 	for _, value := range arr {
