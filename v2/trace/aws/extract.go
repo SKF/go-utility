@@ -33,6 +33,10 @@ var propagator = dd_tracer.NewPropagator(nil)
 func StartDatadogSpanFromMessage(ctx context.Context, serviceName string, msg events.SQSMessage) (dd_tracer.Span, context.Context) {
 	spanContext, err := getRecordSpanContext(ctx, msg)
 	if err != nil {
+		log.WithTracing(ctx).
+			WithError(err).
+			Debug("Couldn't create span from headers, using incomming span as parent")
+
 		return startSpan(ctx, serviceName, nil)
 	}
 
@@ -45,13 +49,12 @@ func getRecordSpanContext(ctx context.Context, msg events.SQSMessage) (dd_trace.
 		return nil, errors.New("no trace headers")
 	}
 
+	log.WithTracing(ctx).
+		WithField("headers", traceHeaders).
+		Debug("Trying to extract record span context")
+
 	recordSpanContext, err := propagator.Extract(dd_tracer.TextMapCarrier(traceHeaders))
 	if err != nil {
-		log.WithTracing(ctx).
-			WithError(err).
-			WithField("headers", traceHeaders).
-			Debug("couldnt create span from headers, using incomming span as parent")
-
 		return nil, err
 	}
 

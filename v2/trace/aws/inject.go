@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"strconv"
 
+	"github.com/SKF/go-utility/v2/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -88,6 +89,10 @@ func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 		attributes[datadogTraceHeader] = traceID
 		attributes[datadogParentHeader] = spanID
 	}
+
+	log.WithTracing(ctx).
+		WithField("headers", attributes).
+		Debug("Injecting trace headers")
 
 	return attributes
 }
