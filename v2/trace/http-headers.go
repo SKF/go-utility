@@ -7,7 +7,7 @@ const (
 	B3SampledHeader = "X-B3-Sampled"
 
 	// Datadog headers.
-	DatadogOriginHeader           = "x-datadog-trace-id"
+	DatadogOriginHeader           = "x-datadog-origin"
 	DatadogParentIDHeader         = "x-datadog-parent-id"
 	DatadogSampledHeader          = "x-datadog-sampled"
 	DatadogSamplingPriorityHeader = "x-datadog-sampling-priority"
