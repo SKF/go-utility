@@ -19,5 +19,5 @@ func AllB3Headers() []string {
 }
 
 func AllDatadogHeaders() []string {
-	return []string{DatadogOriginHeader, DatadogParentIDHeader, DatadogSampledHeader, DatadogSampledHeader, DatadogTraceIDHeader}
+	return []string{DatadogOriginHeader, DatadogParentIDHeader, DatadogSampledHeader, DatadogSamplingPriorityHeader, DatadogTraceIDHeader}
 }
