@@ -67,7 +67,7 @@ func Test_InjectOC_HappyCase(t *testing.T) {
 		MessageBody: aws.String(message),
 	})
 	assert.Equal(t, message, *input.MessageBody)
-	assert.Len(t, input.MessageAttributes, 2)
+	assert.Len(t, input.MessageAttributes, 4)
 
 	attributesKeys := []string{}
 	for key := range input.MessageAttributes {
@@ -76,6 +76,8 @@ func Test_InjectOC_HappyCase(t *testing.T) {
 
 	assert.True(t, array.ContainsString(attributesKeys, b3TraceHeader))
 	assert.True(t, array.ContainsString(attributesKeys, b3SpanHeader))
+	assert.True(t, array.ContainsString(attributesKeys, datadogTraceHeader))
+	assert.True(t, array.ContainsString(attributesKeys, datadogParentHeader))
 }
 
 func startOCSpan() context.Context {

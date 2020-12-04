@@ -2,6 +2,7 @@ package awstrace
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/hex"
 	"strconv"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sqs"
 	oc_trace "go.opencensus.io/trace"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+
+	"github.com/SKF/go-utility/v2/log"
 )
 
 func injectSNSPublish(ctx context.Context, input *sns.PublishInput) *sns.PublishInput {
@@ -73,11 +76,11 @@ func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 
 	if span := oc_trace.FromContext(ctx); span != nil {
 		spanCtx := span.SpanContext()
-		traceID := hex.EncodeToString(spanCtx.TraceID[:])
-		spanID := hex.EncodeToString(spanCtx.SpanID[:])
 
-		attributes[b3TraceHeader] = traceID
-		attributes[b3SpanHeader] = spanID
+		attributes[b3TraceHeader] = hex.EncodeToString(spanCtx.TraceID[:])
+		attributes[b3SpanHeader] = hex.EncodeToString(spanCtx.SpanID[:])
+		attributes[datadogTraceHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.TraceID[8:]), 10)
+		attributes[datadogParentHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.SpanID[:]), 10)
 	}
 
 	if span, exists := dd_tracer.SpanFromContext(ctx); exists {
@@ -87,6 +90,10 @@ func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 		attributes[datadogTraceHeader] = traceID
 		attributes[datadogParentHeader] = spanID
 	}
+
+	log.WithTracing(ctx).
+		WithField("headers", attributes).
+		Debug("Injecting trace headers")
 
 	return attributes
 }

@@ -3,6 +3,7 @@ package awstrace
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -30,21 +31,34 @@ var propagator = dd_tracer.NewPropagator(nil)
 // Configure the extraction style by using the environment variable: DD_PROPAGATION_STYLE_EXTRACT=Datadog,B3
 // Default extraction style is set to Datadog
 func StartDatadogSpanFromMessage(ctx context.Context, serviceName string, msg events.SQSMessage) (dd_tracer.Span, context.Context) {
-	traceHeaders := getTraceHeadersFromAttributes(ctx, msg)
-	if len(traceHeaders) == 0 {
-		return startSpan(ctx, serviceName, nil)
-	}
-
-	recordSpanContext, err := propagator.Extract(dd_tracer.TextMapCarrier(traceHeaders))
+	spanContext, err := getRecordSpanContext(ctx, msg)
 	if err != nil {
 		log.WithTracing(ctx).
 			WithError(err).
-			Debug("couldnt create span from headers, using incomming span as parent")
+			Debug("Couldn't create span from headers, using incomming span as parent")
 
 		return startSpan(ctx, serviceName, nil)
 	}
 
-	return startSpan(ctx, serviceName, recordSpanContext)
+	return startSpan(ctx, serviceName, spanContext)
+}
+
+func getRecordSpanContext(ctx context.Context, msg events.SQSMessage) (dd_trace.SpanContext, error) {
+	traceHeaders := getTraceHeadersFromAttributes(ctx, msg)
+	if len(traceHeaders) == 0 {
+		return nil, errors.New("no trace headers")
+	}
+
+	log.WithTracing(ctx).
+		WithField("headers", traceHeaders).
+		Debug("Trying to extract record span context")
+
+	recordSpanContext, err := propagator.Extract(dd_tracer.TextMapCarrier(traceHeaders))
+	if err != nil {
+		return nil, err
+	}
+
+	return recordSpanContext, nil
 }
 
 func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) map[string]string {
