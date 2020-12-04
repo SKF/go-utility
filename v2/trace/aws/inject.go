@@ -73,11 +73,11 @@ func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 
 	if span := oc_trace.FromContext(ctx); span != nil {
 		spanCtx := span.SpanContext()
-		traceID := hex.EncodeToString(spanCtx.TraceID[:])
-		spanID := hex.EncodeToString(spanCtx.SpanID[:])
 
-		attributes[b3TraceHeader] = traceID
-		attributes[b3SpanHeader] = spanID
+		attributes[b3TraceHeader] = hex.EncodeToString(spanCtx.TraceID[:])
+		attributes[b3SpanHeader] = hex.EncodeToString(spanCtx.SpanID[:])
+		attributes[datadogTraceHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.TraceID[8:]), 10))
+		attributes[datadogParentHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.SpanID[:]), 10))
 	}
 
 	if span, exists := dd_tracer.SpanFromContext(ctx); exists {
