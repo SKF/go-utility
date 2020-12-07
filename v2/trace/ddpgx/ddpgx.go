@@ -30,10 +30,12 @@ func Connect(ctx context.Context, url string) (Connection, error) {
 func ConnectPoolConfig(ctx context.Context, config *pgxpool.Config) (Connection, error) {
 	startTime := time.Now()
 	pool, err := pgxpool.ConnectConfig(ctx, config)
+
 	if err != nil {
 		tryTrace(ctx, startTime, "pgxpool:ConnectPoolConfig", nil, err)
 		return nil, err
 	}
+
 	tryTrace(ctx, startTime, "pgxpool:ConnectPoolConfig", nil, nil)
 
 	return &traceConn{conn: &poolCloser{pool}}, nil

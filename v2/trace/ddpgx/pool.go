@@ -18,7 +18,10 @@ func (c *poolCloser) ConnInfo() *pgtype.ConnInfo {
 
 func (c *poolCloser) Close(ctx context.Context) error {
 	startTime := time.Now()
+
 	c.Pool.Close()
+
 	tryTrace(ctx, startTime, "pgxpool:Close", nil, nil)
+
 	return nil
 }

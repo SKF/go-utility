@@ -49,6 +49,7 @@ func (t *traceTx) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults 
 	startTime := time.Now()
 	results := t.parent.SendBatch(ctx, b)
 	tryTrace(ctx, startTime, "pgx:tx:SendBatch", nil, nil)
+
 	return results
 }
 
@@ -60,6 +61,7 @@ func (t *traceTx) Prepare(ctx context.Context, name, sql string) (*pgconn.Statem
 	startTime := time.Now()
 	stmt, err := t.parent.Prepare(ctx, name, sql)
 	tryTrace(ctx, startTime, "pgx:tx:Prepare", nil, err)
+
 	return stmt, err
 }
 
@@ -89,6 +91,7 @@ func (t *traceTx) QueryRow(ctx context.Context, query string, args ...interface{
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
 	tryTrace(ctx, startTime, "pgx:tx:QueryRow", metadata, nil)
+
 	return row
 }
 

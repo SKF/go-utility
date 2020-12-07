@@ -11,6 +11,7 @@ import (
 
 func argsToAttributes(args ...interface{}) map[string]interface{} {
 	output := map[string]interface{}{}
+
 	for i := range args {
 		key := fmt.Sprintf("sql.args.%d", i)
 		output[key] = args[i]
