@@ -2,7 +2,6 @@ package ddpgx
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -10,46 +9,49 @@ import (
 )
 
 type traceTx struct {
-	parent      pgx.Tx
-	serviceName string
+	parent pgx.Tx
+	trace  *internalTracer
 }
 
 func (t *traceTx) Begin(ctx context.Context) (pgx.Tx, error) {
-	startTime := time.Now()
+	t.trace.Start()
 	tx, err := t.parent.Begin(ctx)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Begin", nil, err)
+	t.trace.TryTrace(ctx, "Begin", nil, err)
 
-	return &traceTx{parent: tx}, err
+	return &traceTx{
+		parent: tx,
+		trace:  t.trace,
+	}, err
 }
 
 func (t *traceTx) Commit(ctx context.Context) error {
-	startTime := time.Now()
+	t.trace.Start()
 	err := t.parent.Commit(ctx)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Commit", nil, err)
+	t.trace.TryTrace(ctx, "Commit", nil, err)
 
 	return err
 }
 
 func (t *traceTx) Rollback(ctx context.Context) error {
-	startTime := time.Now()
+	t.trace.Start()
 	err := t.parent.Rollback(ctx)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Rollback", nil, err)
+	t.trace.TryTrace(ctx, "Rollback", nil, err)
 
 	return err
 }
 
 func (t *traceTx) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
-	startTime := time.Now()
+	t.trace.Start()
 	rowsAffected, err := t.parent.CopyFrom(ctx, tableName, columnNames, rowSrc)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "CopyFrom", nil, err)
+	t.trace.TryTrace(ctx, "CopyFrom", nil, err)
 
 	return rowsAffected, err
 }
 
 func (t *traceTx) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
-	startTime := time.Now()
+	t.trace.Start()
 	results := t.parent.SendBatch(ctx, b)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "SendBatch", nil, nil)
+	t.trace.TryTrace(ctx, "SendBatch", nil, nil)
 
 	return results
 }
@@ -59,39 +61,39 @@ func (t *traceTx) LargeObjects() pgx.LargeObjects {
 }
 
 func (t *traceTx) Prepare(ctx context.Context, name, sql string) (*pgconn.StatementDescription, error) {
-	startTime := time.Now()
+	t.trace.Start()
 	stmt, err := t.parent.Prepare(ctx, name, sql)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Prepare", nil, err)
+	t.trace.TryTrace(ctx, "Prepare", nil, err)
 
 	return stmt, err
 }
 
 func (t *traceTx) Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error) {
-	startTime := time.Now()
+	t.trace.Start()
 	tag, err := t.parent.Exec(ctx, sql, arguments...)
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Exec", nil, err)
+	t.trace.TryTrace(ctx, "Exec", nil, err)
 
 	return tag, err
 }
 
 func (t *traceTx) Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
-	startTime := time.Now()
+	t.trace.Start()
 	rows, err := t.parent.Query(ctx, query, args...)
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Query", metadata, err)
+	t.trace.TryTrace(ctx, "Query", metadata, err)
 
 	return rows, err
 }
 
 func (t *traceTx) QueryRow(ctx context.Context, query string, args ...interface{}) pgx.Row {
-	startTime := time.Now()
+	t.trace.Start()
 	row := t.parent.QueryRow(ctx, query, args...)
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "QueryRow", metadata, nil)
+	t.trace.TryTrace(ctx, "QueryRow", metadata, nil)
 
 	return row
 }

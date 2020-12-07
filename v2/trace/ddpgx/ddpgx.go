@@ -2,7 +2,6 @@ package ddpgx
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
@@ -26,29 +25,32 @@ type Connection interface {
 }
 
 func Connect(ctx context.Context, serviceName, url string) (Connection, error) {
-	startTime := time.Now()
+	trace := newTracer(serviceName, driverPgx)
+	trace.Start()
+
 	conn, err := pgx.Connect(ctx, url)
-	tryTrace(ctx, startTime, serviceName, driverPgx, "Connect", nil, err)
+	trace.TryTrace(ctx, "Connect", nil, err)
 
 	return &traceConn{
-		conn:        conn,
-		serviceName: serviceName,
+		conn:  conn,
+		trace: trace,
 	}, err
 }
 
 func ConnectPoolConfig(ctx context.Context, serviceName string, config *pgxpool.Config) (Connection, error) {
-	startTime := time.Now()
-	pool, err := pgxpool.ConnectConfig(ctx, config)
+	trace := newTracer(serviceName, driverPgxPool)
+	trace.Start()
 
+	pool, err := pgxpool.ConnectConfig(ctx, config)
 	if err != nil {
-		tryTrace(ctx, startTime, serviceName, driverPgxPool, "ConnectPoolConfig", nil, err)
+		trace.TryTrace(ctx, "ConnectPoolConfig", nil, err)
 		return nil, err
 	}
 
-	tryTrace(ctx, startTime, serviceName, driverPgxPool, "ConnectPoolConfig", nil, nil)
+	trace.TryTrace(ctx, "ConnectPoolConfig", nil, nil)
 
 	return &traceConn{
-		conn:        &poolCloser{pool},
-		serviceName: serviceName,
+		conn:  &poolCloser{pool},
+		trace: trace,
 	}, nil
 }

@@ -9,6 +9,23 @@ import (
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+type internalTracer struct {
+	serviceName string
+	driver      string
+	startTime   time.Time
+}
+
+func newTracer(serviceName, driver string) *internalTracer {
+	return &internalTracer{
+		serviceName: serviceName,
+		driver:      driver,
+	}
+}
+
+func (t *internalTracer) ServiceName() string {
+	return t.serviceName
+}
+
 func argsToAttributes(args ...interface{}) map[string]interface{} {
 	output := map[string]interface{}{}
 
@@ -20,16 +37,20 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 	return output
 }
 
-func tryTrace(ctx context.Context, startTime time.Time, serviceName, driver, resource string, metadata map[string]interface{}, err error) {
+func (t *internalTracer) Start() {
+	t.startTime = time.Now()
+}
+
+func (t *internalTracer) TryTrace(ctx context.Context, resource string, metadata map[string]interface{}, err error) {
 	if _, exists := dd_tracer.SpanFromContext(ctx); !exists {
 		return
 	}
 
-	operationName := fmt.Sprintf("%s.query", driver)
+	operationName := fmt.Sprintf("%s.query", t.driver)
 	span, _ := dd_tracer.StartSpanFromContext(ctx, operationName,
-		dd_tracer.ServiceName(serviceName),
+		dd_tracer.ServiceName(t.serviceName),
 		dd_tracer.SpanType(dd_ext.SpanTypeSQL),
-		dd_tracer.StartTime(startTime),
+		dd_tracer.StartTime(t.startTime),
 	)
 
 	for key, value := range metadata {

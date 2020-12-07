@@ -2,7 +2,6 @@ package ddpgx
 
 import (
 	"context"
-	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
@@ -11,8 +10,8 @@ import (
 )
 
 type traceConn struct {
-	conn        Connection
-	serviceName string
+	conn  Connection
+	trace *internalTracer
 }
 
 func (o *traceConn) ConnInfo() *pgtype.ConnInfo {
@@ -20,50 +19,53 @@ func (o *traceConn) ConnInfo() *pgtype.ConnInfo {
 }
 
 func (o *traceConn) Begin(ctx context.Context) (pgx.Tx, error) {
-	startTime := time.Now()
+	o.trace.Start()
 	tx, err := o.conn.Begin(ctx)
-	tryTrace(ctx, startTime, o.serviceName, driverPgx, "Begin", nil, err)
+	o.trace.TryTrace(ctx, "Begin", nil, err)
 
-	return &traceTx{parent: tx}, err
+	return &traceTx{
+		parent: tx,
+		trace:  newTracer(o.trace.ServiceName(), driverPgxTx),
+	}, err
 }
 
 func (o *traceConn) Exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error) {
-	startTime := time.Now()
+	o.trace.Start()
 	tag, err := o.conn.Exec(ctx, query, args...)
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, o.serviceName, driverPgx, "Exec", metadata, err)
+	o.trace.TryTrace(ctx, "Exec", metadata, err)
 
 	return tag, err
 }
 
 func (o *traceConn) Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
-	startTime := time.Now()
+	o.trace.Start()
 	rows, err := o.conn.Query(ctx, query, args...)
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, o.serviceName, driverPgx, "Query", metadata, err)
+	o.trace.TryTrace(ctx, "Query", metadata, err)
 
 	return rows, err
 }
 
 func (o *traceConn) QueryRow(ctx context.Context, query string, args ...interface{}) pgx.Row {
-	startTime := time.Now()
+	o.trace.Start()
 	row := o.conn.QueryRow(ctx, query, args...)
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, o.serviceName, driverPgx, "QueryRow", metadata, nil)
+	o.trace.TryTrace(ctx, "QueryRow", metadata, nil)
 
 	return row
 }
 
 func (o *traceConn) Close(ctx context.Context) error {
-	startTime := time.Now()
+	o.trace.Start()
 	err := o.conn.Close(ctx)
-	tryTrace(ctx, startTime, o.serviceName, driverPgx, "Close", nil, err)
+	o.trace.TryTrace(ctx, "Close", nil, err)
 
 	return err
 }
