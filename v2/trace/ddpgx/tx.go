@@ -17,7 +17,7 @@ type traceTx struct {
 func (t *traceTx) Begin(ctx context.Context) (pgx.Tx, error) {
 	startTime := time.Now()
 	tx, err := t.parent.Begin(ctx)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "Begin", nil, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Begin", nil, err)
 
 	return &traceTx{parent: tx}, err
 }
@@ -25,7 +25,7 @@ func (t *traceTx) Begin(ctx context.Context) (pgx.Tx, error) {
 func (t *traceTx) Commit(ctx context.Context) error {
 	startTime := time.Now()
 	err := t.parent.Commit(ctx)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "Commit", nil, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Commit", nil, err)
 
 	return err
 }
@@ -33,7 +33,7 @@ func (t *traceTx) Commit(ctx context.Context) error {
 func (t *traceTx) Rollback(ctx context.Context) error {
 	startTime := time.Now()
 	err := t.parent.Rollback(ctx)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "Rollback", nil, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Rollback", nil, err)
 
 	return err
 }
@@ -41,7 +41,7 @@ func (t *traceTx) Rollback(ctx context.Context) error {
 func (t *traceTx) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
 	startTime := time.Now()
 	rowsAffected, err := t.parent.CopyFrom(ctx, tableName, columnNames, rowSrc)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "CopyFrom", nil, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "CopyFrom", nil, err)
 
 	return rowsAffected, err
 }
@@ -49,7 +49,7 @@ func (t *traceTx) CopyFrom(ctx context.Context, tableName pgx.Identifier, column
 func (t *traceTx) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
 	startTime := time.Now()
 	results := t.parent.SendBatch(ctx, b)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "SendBatch", nil, nil)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "SendBatch", nil, nil)
 
 	return results
 }
@@ -61,7 +61,7 @@ func (t *traceTx) LargeObjects() pgx.LargeObjects {
 func (t *traceTx) Prepare(ctx context.Context, name, sql string) (*pgconn.StatementDescription, error) {
 	startTime := time.Now()
 	stmt, err := t.parent.Prepare(ctx, name, sql)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "Prepare", nil, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Prepare", nil, err)
 
 	return stmt, err
 }
@@ -69,7 +69,7 @@ func (t *traceTx) Prepare(ctx context.Context, name, sql string) (*pgconn.Statem
 func (t *traceTx) Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error) {
 	startTime := time.Now()
 	tag, err := t.parent.Exec(ctx, sql, arguments...)
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "Exec", nil, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Exec", nil, err)
 
 	return tag, err
 }
@@ -80,7 +80,7 @@ func (t *traceTx) Query(ctx context.Context, query string, args ...interface{}) 
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "Query", metadata, err)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "Query", metadata, err)
 
 	return rows, err
 }
@@ -91,7 +91,7 @@ func (t *traceTx) QueryRow(ctx context.Context, query string, args ...interface{
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, t.serviceName, "pgxtx", "QueryRow", metadata, nil)
+	tryTrace(ctx, startTime, t.serviceName, driverPgxTx, "QueryRow", metadata, nil)
 
 	return row
 }

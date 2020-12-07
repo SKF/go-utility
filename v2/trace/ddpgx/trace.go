@@ -20,7 +20,7 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 	return output
 }
 
-func tryTrace(ctx context.Context, startTime time.Time, driver, serviceName, resource string, metadata map[string]interface{}, err error) {
+func tryTrace(ctx context.Context, startTime time.Time, serviceName, driver, resource string, metadata map[string]interface{}, err error) {
 	if _, exists := dd_tracer.SpanFromContext(ctx); !exists {
 		return
 	}

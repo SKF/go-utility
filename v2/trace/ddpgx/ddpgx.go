@@ -10,6 +10,12 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+const (
+	driverPgx     string = "pgx"
+	driverPgxPool string = "pgxpool"
+	driverPgxTx   string = "pgxtx"
+)
+
 type Connection interface {
 	ConnInfo() *pgtype.ConnInfo
 	Begin(context.Context) (pgx.Tx, error)
@@ -22,7 +28,7 @@ type Connection interface {
 func Connect(ctx context.Context, serviceName, url string) (Connection, error) {
 	startTime := time.Now()
 	conn, err := pgx.Connect(ctx, url)
-	tryTrace(ctx, startTime, serviceName, "pgx", "Connect", nil, err)
+	tryTrace(ctx, startTime, serviceName, driverPgx, "Connect", nil, err)
 
 	return &traceConn{
 		conn:        conn,
@@ -35,11 +41,11 @@ func ConnectPoolConfig(ctx context.Context, serviceName string, config *pgxpool.
 	pool, err := pgxpool.ConnectConfig(ctx, config)
 
 	if err != nil {
-		tryTrace(ctx, startTime, serviceName, "pgxpool", "ConnectPoolConfig", nil, err)
+		tryTrace(ctx, startTime, serviceName, driverPgxPool, "ConnectPoolConfig", nil, err)
 		return nil, err
 	}
 
-	tryTrace(ctx, startTime, serviceName, "pgxpool", "ConnectPoolConfig", nil, nil)
+	tryTrace(ctx, startTime, serviceName, driverPgxPool, "ConnectPoolConfig", nil, nil)
 
 	return &traceConn{
 		conn:        &poolCloser{pool},
