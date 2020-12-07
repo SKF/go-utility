@@ -12,36 +12,20 @@ import (
 type internalTracer struct {
 	serviceName string
 	driver      string
-	startTime   time.Time
 }
 
-func newTracer(serviceName, driver string) *internalTracer {
-	return &internalTracer{
+func newTracer(serviceName, driver string) internalTracer {
+	return internalTracer{
 		serviceName: serviceName,
 		driver:      driver,
 	}
 }
 
-func (t *internalTracer) ServiceName() string {
+func (t internalTracer) ServiceName() string {
 	return t.serviceName
 }
 
-func argsToAttributes(args ...interface{}) map[string]interface{} {
-	output := map[string]interface{}{}
-
-	for i := range args {
-		key := fmt.Sprintf("sql.args.%d", i)
-		output[key] = args[i]
-	}
-
-	return output
-}
-
-func (t *internalTracer) Start() {
-	t.startTime = time.Now()
-}
-
-func (t *internalTracer) TryTrace(ctx context.Context, resource string, metadata map[string]interface{}, err error) {
+func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resource string, metadata map[string]interface{}, err error) {
 	if _, exists := dd_tracer.SpanFromContext(ctx); !exists {
 		return
 	}
@@ -50,8 +34,10 @@ func (t *internalTracer) TryTrace(ctx context.Context, resource string, metadata
 	span, _ := dd_tracer.StartSpanFromContext(ctx, operationName,
 		dd_tracer.ServiceName(t.serviceName),
 		dd_tracer.SpanType(dd_ext.SpanTypeSQL),
-		dd_tracer.StartTime(t.startTime),
+		dd_tracer.StartTime(startTime),
 	)
+
+	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
 		span.SetTag(key, value)
@@ -64,4 +50,15 @@ func (t *internalTracer) TryTrace(ctx context.Context, resource string, metadata
 	}
 
 	span.Finish(dd_tracer.WithError(err))
+}
+
+func argsToAttributes(args ...interface{}) map[string]interface{} {
+	output := map[string]interface{}{}
+
+	for i := range args {
+		key := fmt.Sprintf("sql.args.%d", i)
+		output[key] = args[i]
+	}
+
+	return output
 }
