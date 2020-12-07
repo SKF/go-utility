@@ -11,7 +11,8 @@ import (
 )
 
 type traceConn struct {
-	conn Connection
+	conn        Connection
+	serviceName string
 }
 
 func (o *traceConn) ConnInfo() *pgtype.ConnInfo {
@@ -21,7 +22,7 @@ func (o *traceConn) ConnInfo() *pgtype.ConnInfo {
 func (o *traceConn) Begin(ctx context.Context) (pgx.Tx, error) {
 	startTime := time.Now()
 	tx, err := o.conn.Begin(ctx)
-	tryTrace(ctx, startTime, "pgx:Begin", nil, err)
+	tryTrace(ctx, startTime, o.serviceName, "pgx", "Begin", nil, err)
 
 	return &traceTx{parent: tx}, err
 }
@@ -32,7 +33,7 @@ func (o *traceConn) Exec(ctx context.Context, query string, args ...interface{})
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, "pgx:Exec", metadata, err)
+	tryTrace(ctx, startTime, o.serviceName, "pgx", "Exec", metadata, err)
 
 	return tag, err
 }
@@ -43,7 +44,7 @@ func (o *traceConn) Query(ctx context.Context, query string, args ...interface{}
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, "pgx:Query", metadata, err)
+	tryTrace(ctx, startTime, o.serviceName, "pgx", "Query", metadata, err)
 
 	return rows, err
 }
@@ -54,7 +55,7 @@ func (o *traceConn) QueryRow(ctx context.Context, query string, args ...interfac
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
-	tryTrace(ctx, startTime, "pgx:QueryRow", metadata, nil)
+	tryTrace(ctx, startTime, o.serviceName, "pgx", "QueryRow", metadata, nil)
 
 	return row
 }
@@ -62,7 +63,7 @@ func (o *traceConn) QueryRow(ctx context.Context, query string, args ...interfac
 func (o *traceConn) Close(ctx context.Context) error {
 	startTime := time.Now()
 	err := o.conn.Close(ctx)
-	tryTrace(ctx, startTime, "pgx:Close", nil, err)
+	tryTrace(ctx, startTime, o.serviceName, "pgx", "Close", nil, err)
 
 	return err
 }
