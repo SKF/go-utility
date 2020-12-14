@@ -3,6 +3,7 @@ package ddpgx
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
@@ -44,7 +45,7 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, query)
+		span.SetTag(dd_ext.ResourceName, strings.Replace(fmt.Sprintf("%s", query), "\n", "", -1))
 	} else {
 		span.SetTag(dd_ext.ResourceName, resource)
 	}
