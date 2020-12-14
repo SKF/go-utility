@@ -15,12 +15,12 @@ import (
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
 
-	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"go.opencensus.io/plugin/ochttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	rest "github.com/SKF/go-rest-utility/client"
+	"github.com/SKF/proto/v2/common"
 )
 
 const (
@@ -32,6 +32,7 @@ type Config struct {
 
 	// Configures the usage of a User ID Cache when using an Access Token
 	UseUserIDCache bool
+	Client         *rest.Client
 }
 
 type ResponseConfig interface {
@@ -43,6 +44,7 @@ type ResponseConfig interface {
 var (
 	config      Config
 	userIDCache map[string]string
+	client      *rest.Client
 )
 
 func Configure(conf Config) {
@@ -53,6 +55,12 @@ func Configure(conf Config) {
 
 	if conf.UseUserIDCache {
 		userIDCache = map[string]string{}
+	}
+
+	client = rest.NewClient(rest.WithOpenCensusTracing())
+
+	if conf.Client != nil {
+		client = conf.Client
 	}
 }
 
@@ -150,19 +158,11 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodGet, baseURL+endpoint, nil)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create new HTTP request")
-		return
-	}
+	req := rest.Get(baseURL+endpoint).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", accessToken)
 
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", accessToken)
-
-	client := &http.Client{Transport: &ochttp.Transport{}}
-
-	resp, err := client.Do(req)
+	resp, err := client.Do(ctx, req)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute HTTP request")
 		return
