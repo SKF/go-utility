@@ -2,7 +2,6 @@ package httpmiddleware
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
@@ -57,10 +56,16 @@ func Configure(conf Config) {
 		userIDCache = map[string]string{}
 	}
 
-	client = rest.NewClient(rest.WithOpenCensusTracing())
+	if client = conf.Client; client == nil {
+		url, err := auth.GetBaseURL()
+		if err != nil {
+			panic(err)
+		}
 
-	if conf.Client != nil {
-		client = conf.Client
+		client = rest.NewClient(
+			rest.WithBaseURL(url),
+			rest.WithOpenCensusTracing(),
+		)
 	}
 }
 
@@ -150,15 +155,7 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 }
 
 func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err error) {
-	const endpoint = "/users/me"
-
-	baseURL, err := auth.GetBaseURL()
-	if err != nil {
-		err = errors.Wrap(err, "failed to get base URL")
-		return
-	}
-
-	req := rest.Get(baseURL+endpoint).
+	req := rest.Get("/users/me").
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", accessToken)
 
@@ -167,25 +164,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 		err = errors.Wrap(err, "failed to execute HTTP request")
 		return
 	}
-
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var errorResp struct {
-			Error struct {
-				Message string `json:"message"`
-			} `json:"error"`
-		}
-
-		if err = json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
-			err = errors.Wrap(err, "failed to decode Error response to JSON")
-			return
-		}
-
-		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message)
-
-		return
-	}
 
 	var myUserResp struct {
 		Data struct {
@@ -193,7 +172,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 		} `json:"data"`
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
+	if err = resp.Unmarshal(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
 	}
