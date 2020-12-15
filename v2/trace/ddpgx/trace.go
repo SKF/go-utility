@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-var newlineIndent = regexp.MustCompile(`\\n\s+`)
+var newlineIndent = regexp.MustCompile(`\n\s+`)
 
 type internalTracer struct {
 	serviceName string
@@ -47,7 +48,11 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, newlineIndent.ReplaceAllString(fmt.Sprintf("%v", query), " "))
+		q := fmt.Sprintf("%v", query)
+		q = strings.TrimSpace(q)
+		q = newlineIndent.ReplaceAllString(q, " ")
+
+		span.SetTag(dd_ext.ResourceName, q)
 	} else {
 		span.SetTag(dd_ext.ResourceName, resource)
 	}
