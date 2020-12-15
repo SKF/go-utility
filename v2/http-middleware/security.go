@@ -15,12 +15,12 @@ import (
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
 
+	rest "github.com/SKF/go-rest-utility/client"
+	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	rest "github.com/SKF/go-rest-utility/client"
-	"github.com/SKF/proto/v2/common"
 )
 
 const (
