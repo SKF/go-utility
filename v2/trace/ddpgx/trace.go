@@ -44,15 +44,19 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
+		if key == dd_ext.SQLQuery {
+			q := fmt.Sprintf("%v", value)
+			q = strings.TrimSpace(q)
+			q = newlineIndent.ReplaceAllString(q, " ")
+
+			metadata[key] = q
+		}
+
 		span.SetTag(key, value)
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		q := fmt.Sprintf("%v", query)
-		q = strings.TrimSpace(q)
-		q = newlineIndent.ReplaceAllString(q, " ")
-
-		span.SetTag(dd_ext.ResourceName, q)
+		span.SetTag(dd_ext.ResourceName, query)
 	} else {
 		span.SetTag(dd_ext.ResourceName, resource)
 	}
