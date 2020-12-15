@@ -3,7 +3,9 @@ package ddpgx
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
@@ -13,6 +15,8 @@ import (
 var (
 	beginEndSpace = regexp.MustCompile(`^\s+|\s+$`)
 	multipleSpace = regexp.MustCompile(`\s{2,}`)
+
+	flushToLog = strings.EqualFold(os.Getenv("DD_FLUSH_TO_LOG"), "true")
 )
 
 type internalTracer struct {
@@ -51,9 +55,12 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
 		q := fmt.Sprintf("%v", query)
-		q = multipleSpace.ReplaceAllLiteralString(beginEndSpace.ReplaceAllLiteralString(q, ""), " ")
 
-		span.SetTag(dd_ext.SQLQuery, q)
+		if flushToLog {
+			q = multipleSpace.ReplaceAllLiteralString(beginEndSpace.ReplaceAllLiteralString(q, ""), " ")
+			span.SetTag(dd_ext.SQLQuery, q)
+		}
+
 		span.SetTag(dd_ext.ResourceName, q)
 	} else {
 		span.SetTag(dd_ext.ResourceName, resource)
