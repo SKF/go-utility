@@ -3,12 +3,14 @@ package ddpgx
 import (
 	"context"
 	"fmt"
-	"strings"
+	"regexp"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
+
+var newlineIndent = regexp.MustCompile(`\\n\s+`)
 
 type internalTracer struct {
 	serviceName string
@@ -45,7 +47,7 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, strings.Replace(fmt.Sprintf("%s", query), "\n", "", -1))
+		span.SetTag(dd_ext.ResourceName, newlineIndent.ReplaceAllString(fmt.Sprintf("%v", query), " "))
 	} else {
 		span.SetTag(dd_ext.ResourceName, resource)
 	}
