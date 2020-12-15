@@ -4,14 +4,16 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-var newlineIndent = regexp.MustCompile(`\n\s+`)
+var (
+	beginEndSpace = regexp.MustCompile(`^\s+|\s+$`)
+	multipleSpace = regexp.MustCompile(`\s{2,}`)
+)
 
 type internalTracer struct {
 	serviceName string
@@ -44,19 +46,15 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
-		if key == dd_ext.SQLQuery {
-			q := fmt.Sprintf("%v", value)
-			q = strings.TrimSpace(q)
-			q = newlineIndent.ReplaceAllString(q, " ")
-
-			metadata[key] = q
-		}
-
 		span.SetTag(key, value)
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, query)
+		q := fmt.Sprintf("%v", query)
+		q = multipleSpace.ReplaceAllLiteralString(beginEndSpace.ReplaceAllLiteralString(q, ""), " ")
+
+		span.SetTag(dd_ext.SQLQuery, q)
+		span.SetTag(dd_ext.ResourceName, q)
 	} else {
 		span.SetTag(dd_ext.ResourceName, resource)
 	}
