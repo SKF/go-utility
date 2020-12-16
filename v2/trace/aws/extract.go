@@ -30,6 +30,7 @@ var propagator = dd_tracer.NewPropagator(nil)
 // It will extract trace and span id either depending on the extraction style.
 // Configure the extraction style by using the environment variable: DD_PROPAGATION_STYLE_EXTRACT=Datadog,B3
 // Default extraction style is set to Datadog
+// For this to work for SNS subscriptions, you need to enable raw message delivery.
 func StartDatadogSpanFromMessage(ctx context.Context, serviceName string, msg events.SQSMessage) (dd_tracer.Span, context.Context) {
 	spanContext, err := getRecordSpanContext(ctx, msg)
 	if err != nil {

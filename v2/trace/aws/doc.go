@@ -1,5 +1,6 @@
 // Package awstrace contains aws session wrapper for tracing through SNS and SQS
 // supporting Datadog native and B3 tracing contexts.
+// For this to work for SNS subscriptions, you need to enable raw message delivery.
 //
 // Examples
 //
