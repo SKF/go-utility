@@ -9,23 +9,24 @@ import (
 	"github.com/SKF/go-utility/v2/trace"
 )
 
+const (
+	noOfB3Headers      = 3
+	noOfDatadogHeaders = 5
+)
+
 func Test_AllHeaders(t *testing.T) {
-	const expectedLength = 3 + 5
+	const expectedLength = noOfB3Headers + noOfDatadogHeaders
 
 	actual := array.DistinctString(trace.AllHeaders())
 	assert.Len(t, actual, expectedLength)
 }
 
 func Test_AllB3Headers(t *testing.T) {
-	const expectedLength = 3
-
 	actual := array.DistinctString(trace.AllB3Headers())
-	assert.Len(t, actual, expectedLength)
+	assert.Len(t, actual, noOfB3Headers)
 }
 
 func Test_AllDatadogHeaders(t *testing.T) {
-	const expectedLength = 5
-
 	actual := array.DistinctString(trace.AllDatadogHeaders())
-	assert.Len(t, actual, expectedLength)
+	assert.Len(t, actual, noOfDatadogHeaders)
 }
