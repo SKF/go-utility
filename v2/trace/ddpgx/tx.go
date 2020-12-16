@@ -69,9 +69,9 @@ func (t *traceTx) Prepare(ctx context.Context, name, sql string) (*pgconn.Statem
 	return stmt, err
 }
 
-func (t *traceTx) Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error) {
+func (t *traceTx) Exec(ctx context.Context, query string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error) {
 	startTime := time.Now()
-	tag, err := t.parent.Exec(ctx, sql, arguments...)
+	tag, err := t.parent.Exec(ctx, query, arguments...)
 
 	metadata := argsToAttributes(args...)
 	metadata[dd_ext.SQLQuery] = query
