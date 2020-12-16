@@ -22,7 +22,9 @@ func Test_EscapeString(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, expected, actual)
 	}
+}
 
+func Test_EscapeInt(t *testing.T) {
 	testInputInt := 42
 	actual, ok := escapeValue(testInputInt).(int)
 	require.True(t, ok)
