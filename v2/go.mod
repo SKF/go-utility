@@ -15,10 +15,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.8.0
-	github.com/jackc/pgmock v0.0.0-20190831213851-13a1b77aafa2
-	github.com/jackc/pgproto3/v2 v2.0.6
 	github.com/jackc/pgtype v1.6.2
-	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jackc/pgx/v4 v4.10.0
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
