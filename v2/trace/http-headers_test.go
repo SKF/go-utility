@@ -9,6 +9,13 @@ import (
 	"github.com/SKF/go-utility/v2/trace"
 )
 
+func Test_AllHeaders(t *testing.T) {
+	const expectedLength = 3 + 5
+
+	actual := array.DistinctString(trace.AllHeaders())
+	assert.Len(t, actual, expectedLength)
+}
+
 func Test_AllB3Headers(t *testing.T) {
 	const expectedLength = 3
 

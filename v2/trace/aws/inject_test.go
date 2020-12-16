@@ -14,6 +14,7 @@ import (
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/SKF/go-utility/v2/array"
+	"github.com/SKF/go-utility/v2/trace"
 )
 
 func Test_Inject_Basic(t *testing.T) {
@@ -55,8 +56,8 @@ func Test_InjectDatadog_HappyCase(t *testing.T) {
 		attributesKeys = append(attributesKeys, key)
 	}
 
-	assert.True(t, array.ContainsString(attributesKeys, datadogTraceHeader))
-	assert.True(t, array.ContainsString(attributesKeys, datadogParentHeader))
+	assert.True(t, array.ContainsString(attributesKeys, trace.DatadogTraceIDHeader))
+	assert.True(t, array.ContainsString(attributesKeys, trace.DatadogParentIDHeader))
 }
 
 func Test_InjectOC_HappyCase(t *testing.T) {
@@ -67,17 +68,15 @@ func Test_InjectOC_HappyCase(t *testing.T) {
 		MessageBody: aws.String(message),
 	})
 	assert.Equal(t, message, *input.MessageBody)
-	assert.Len(t, input.MessageAttributes, 4)
+	assert.Len(t, input.MessageAttributes, 2)
 
 	attributesKeys := []string{}
 	for key := range input.MessageAttributes {
 		attributesKeys = append(attributesKeys, key)
 	}
 
-	assert.True(t, array.ContainsString(attributesKeys, b3TraceHeader))
-	assert.True(t, array.ContainsString(attributesKeys, b3SpanHeader))
-	assert.True(t, array.ContainsString(attributesKeys, datadogTraceHeader))
-	assert.True(t, array.ContainsString(attributesKeys, datadogParentHeader))
+	assert.True(t, array.ContainsString(attributesKeys, trace.DatadogTraceIDHeader))
+	assert.True(t, array.ContainsString(attributesKeys, trace.DatadogParentIDHeader))
 }
 
 func startOCSpan() context.Context {
@@ -96,11 +95,11 @@ func Test_getTraceAttributesFromContextB3_HappyCase(t *testing.T) {
 		attributesKeys = append(attributesKeys, key)
 	}
 
-	require.True(t, array.ContainsString(attributesKeys, b3TraceHeader))
-	assert.NotEmpty(t, attributes[b3TraceHeader])
+	require.True(t, array.ContainsString(attributesKeys, trace.DatadogTraceIDHeader))
+	assert.NotEmpty(t, attributes[trace.DatadogTraceIDHeader])
 
-	require.True(t, array.ContainsString(attributesKeys, b3SpanHeader))
-	assert.NotEmpty(t, attributes[b3SpanHeader])
+	require.True(t, array.ContainsString(attributesKeys, trace.DatadogParentIDHeader))
+	assert.NotEmpty(t, attributes[trace.DatadogParentIDHeader])
 }
 
 func startDatadogSpan() (dd_mocktracer.Tracer, context.Context) {
@@ -122,11 +121,11 @@ func Test_getTraceAttributesFromContextDatadog_HappyCase(t *testing.T) {
 		attributesKeys = append(attributesKeys, key)
 	}
 
-	require.True(t, array.ContainsString(attributesKeys, datadogTraceHeader))
-	assert.NotEmpty(t, attributes[datadogTraceHeader])
-	assert.NotEqual(t, "0", attributes[datadogTraceHeader])
+	require.True(t, array.ContainsString(attributesKeys, trace.DatadogTraceIDHeader))
+	assert.NotEmpty(t, attributes[trace.DatadogTraceIDHeader])
+	assert.NotEqual(t, "0", attributes[trace.DatadogTraceIDHeader])
 
-	require.True(t, array.ContainsString(attributesKeys, datadogParentHeader))
-	assert.NotEmpty(t, attributes[datadogParentHeader])
-	assert.NotEqual(t, "0", attributes[datadogParentHeader])
+	require.True(t, array.ContainsString(attributesKeys, trace.DatadogParentIDHeader))
+	assert.NotEmpty(t, attributes[trace.DatadogParentIDHeader])
+	assert.NotEqual(t, "0", attributes[trace.DatadogParentIDHeader])
 }

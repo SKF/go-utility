@@ -13,6 +13,7 @@ import (
 
 	"github.com/SKF/go-utility/v2/array"
 	"github.com/SKF/go-utility/v2/log"
+	"github.com/SKF/go-utility/v2/trace"
 )
 
 type messageAttribute struct {
@@ -63,11 +64,12 @@ func getRecordSpanContext(ctx context.Context, msg events.SQSMessage) (dd_trace.
 
 func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) map[string]string {
 	traceAttributes := map[string]string{}
+	allTraceHeaders := trace.AllHeaders()
 
 	// Get SQS message attributes
 	for key, attr := range msg.MessageAttributes {
 		dataType := strings.ToLower(attr.DataType)
-		if array.ContainsString(allHeaders, key) && dataType == "string" {
+		if array.ContainsString(allTraceHeaders, key) && dataType == "string" {
 			traceAttributes[key] = *attr.StringValue
 		}
 	}
@@ -81,7 +83,7 @@ func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) m
 
 	if snsEvent.MessageAttributes != nil {
 		for key, attr := range snsEvent.MessageAttributes {
-			if array.ContainsString(allHeaders, key) && strings.ToLower(attr.Type) == "string" {
+			if array.ContainsString(allTraceHeaders, key) && strings.ToLower(attr.Type) == "string" {
 				traceAttributes[key] = attr.Value
 			}
 		}
