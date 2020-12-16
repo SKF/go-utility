@@ -14,6 +14,10 @@ const (
 	DatadogTraceIDHeader          = "x-datadog-trace-id"
 )
 
+func AllHeaders() []string {
+	return append(AllB3Headers(), AllDatadogHeaders()...)
+}
+
 func AllB3Headers() []string {
 	return []string{B3TraceIDHeader, B3SpanIDHeader, B3SampledHeader}
 }
