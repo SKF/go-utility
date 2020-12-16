@@ -3,10 +3,16 @@ package ddpgx
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+)
+
+var (
+	patternNewlines = regexp.MustCompile(`\s*\r?\n\s*`)
 )
 
 type internalTracer struct {
@@ -40,13 +46,13 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
-		span.SetTag(key, value)
+		span.SetTag(key, escapeValue(value))
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, query)
+		span.SetTag(dd_ext.ResourceName, escapeValue(query))
 	} else {
-		span.SetTag(dd_ext.ResourceName, resource)
+		span.SetTag(dd_ext.ResourceName, escapeValue(resource))
 	}
 
 	span.Finish(dd_tracer.WithError(err))
@@ -61,4 +67,17 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 	}
 
 	return output
+}
+
+func escapeValue(input interface{}) interface{} {
+	if value, ok := input.(string); ok {
+		return stripNewlines(value)
+	}
+
+	return input
+}
+
+func stripNewlines(input string) string {
+	out := patternNewlines.ReplaceAllString(input, " ")
+	return strings.TrimSpace(out)
 }
