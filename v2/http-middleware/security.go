@@ -2,7 +2,6 @@ package httpmiddleware
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
@@ -15,10 +14,10 @@ import (
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
 
+	rest "github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"go.opencensus.io/plugin/ochttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -32,6 +31,7 @@ type Config struct {
 
 	// Configures the usage of a User ID Cache when using an Access Token
 	UseUserIDCache bool
+	Client         *rest.Client
 }
 
 type ResponseConfig interface {
@@ -43,6 +43,7 @@ type ResponseConfig interface {
 var (
 	config      Config
 	userIDCache map[string]string
+	client      *rest.Client
 )
 
 func Configure(conf Config) {
@@ -53,6 +54,18 @@ func Configure(conf Config) {
 
 	if conf.UseUserIDCache {
 		userIDCache = map[string]string{}
+	}
+
+	if client = conf.Client; client == nil {
+		url, err := auth.GetBaseURL()
+		if err != nil {
+			panic(err)
+		}
+
+		client = rest.NewClient(
+			rest.WithBaseURL(url),
+			rest.WithOpenCensusTracing(),
+		)
 	}
 }
 
@@ -142,50 +155,16 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 }
 
 func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err error) {
-	const endpoint = "/users/me"
+	req := rest.Get("/users/me").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", accessToken)
 
-	baseURL, err := auth.GetBaseURL()
-	if err != nil {
-		err = errors.Wrap(err, "failed to get base URL")
-		return
-	}
-
-	req, err := http.NewRequest(http.MethodGet, baseURL+endpoint, nil)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create new HTTP request")
-		return
-	}
-
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", accessToken)
-
-	client := &http.Client{Transport: &ochttp.Transport{}}
-
-	resp, err := client.Do(req)
+	resp, err := client.Do(ctx, req)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute HTTP request")
 		return
 	}
-
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var errorResp struct {
-			Error struct {
-				Message string `json:"message"`
-			} `json:"error"`
-		}
-
-		if err = json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
-			err = errors.Wrap(err, "failed to decode Error response to JSON")
-			return
-		}
-
-		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message)
-
-		return
-	}
 
 	var myUserResp struct {
 		Data struct {
@@ -193,7 +172,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 		} `json:"data"`
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
+	if err = resp.Unmarshal(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
 	}
