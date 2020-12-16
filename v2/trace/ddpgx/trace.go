@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	dd_ext "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
@@ -77,5 +78,6 @@ func escapeValue(input interface{}) interface{} {
 }
 
 func stripNewlines(input string) string {
-	return patternNewlines.ReplaceAllString(input, " ")
+	out := patternNewlines.ReplaceAllString(input, " ")
+	return strings.TrimSpace(out)
 }

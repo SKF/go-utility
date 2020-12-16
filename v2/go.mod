@@ -8,7 +8,6 @@ require (
 	github.com/SKF/proto/v2 v2.4.1-go
 	github.com/aws/aws-lambda-go v1.20.0
 	github.com/aws/aws-sdk-go v1.35.30
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gomodule/redigo v1.8.2
