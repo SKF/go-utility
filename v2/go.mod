@@ -8,12 +8,15 @@ require (
 	github.com/SKF/proto/v2 v2.4.1-go
 	github.com/aws/aws-lambda-go v1.20.0
 	github.com/aws/aws-sdk-go v1.35.30
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gomodule/redigo v1.8.2
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.8.0
+	github.com/jackc/pgmock v0.0.0-20190831213851-13a1b77aafa2
+	github.com/jackc/pgproto3/v2 v2.0.6
 	github.com/jackc/pgtype v1.6.2
 	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jackc/pgx/v4 v4.10.0
