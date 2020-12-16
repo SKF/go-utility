@@ -15,7 +15,6 @@ func Test_EscapeString(t *testing.T) {
 		"newline\r\ntest\n":                     "newline test",
 		"newline\n   with \t   \n   whitespace": "newline with whitespace",
 		"\t trim spaces!\n ":                    "trim spaces!",
-		// "not string":                            1,
 	}
 
 	for input, expected := range testsStrings {
