@@ -36,13 +36,13 @@ func snsPublishHandler(r *request.Request) {
 }
 
 func sqsSendMessageBatchHandler(r *request.Request) {
-	if input, ok := r.Params.(*sqs.SendMessageInput); ok {
-		r.Params = injectSQSSendMessage(r.Context(), input)
+	if input, ok := r.Params.(*sqs.SendMessageBatchInput); ok {
+		r.Params = injectSQSSendMessageBatch(r.Context(), input)
 	}
 }
 
 func sqsSendMessageHandler(r *request.Request) {
-	if input, ok := r.Params.(*sqs.SendMessageBatchInput); ok {
-		r.Params = injectSQSSendMessageBatch(r.Context(), input)
+	if input, ok := r.Params.(*sqs.SendMessageInput); ok {
+		r.Params = injectSQSSendMessage(r.Context(), input)
 	}
 }
