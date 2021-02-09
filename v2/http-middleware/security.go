@@ -211,7 +211,7 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 					WithField("url", req.URL.String()).
 					Error("Couldn't extract User ID from context")
 
-				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
+				responseBody := GetUnauthenticedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
 				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
 				return
 			}
@@ -232,8 +232,8 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 				return
 			}
 			if !isAuthorized {
-				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
+				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseForbidden, secConfig)
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusForbidden, responseBody)
 				return
 			}
 
