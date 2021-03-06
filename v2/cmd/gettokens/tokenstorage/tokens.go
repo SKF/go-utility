@@ -18,7 +18,12 @@ var ErrNotFound = fmt.Errorf("tokens not found")
 func (s Storage) GetTokens(stage string) (auth.Tokens, error) {
 	out, err := s.getAllTokens()
 
-	return out[stage], err
+	tok, ok := out[stage]
+	if !ok {
+		return auth.Tokens{}, ErrNotFound
+	}
+
+	return tok, err
 }
 
 func (s Storage) getAllTokens() (map[string]auth.Tokens, error) {

@@ -1,35 +1,26 @@
 package tokenstorage_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/SKF/go-utility/v2/auth"
 	"github.com/SKF/go-utility/v2/cmd/gettokens/tokenstorage"
+	"github.com/SKF/go-utility/v2/cmd/gettokens/tokenstorage/fakefile"
 )
 
-func getFile() (*os.File, error) {
-	return os.OpenFile("apa.yaml", os.O_RDWR|os.O_CREATE, 0)
-	//return os.Open("apa.yaml")
-}
-
 func TestStorage_noTokens(t *testing.T) {
-	f, err := getFile()
-	require.NoError(t, err)
-	defer f.Close()
+	f := fakefile.New()
 
 	s := tokenstorage.New(f)
 
-	_, err = s.GetTokens("")
+	_, err := s.GetTokens("")
 	require.Error(t, tokenstorage.ErrNotFound, err)
 }
 
 func TestStorage_GetTokens(t *testing.T) {
-	f, err := getFile()
-	require.NoError(t, err)
-	defer f.Close()
+	f := fakefile.New([]byte(testdata)...)
 
 	s := tokenstorage.New(f)
 
@@ -41,11 +32,14 @@ func TestStorage_GetTokens(t *testing.T) {
 	require.Equal(t, "refreshToken", tokens.RefreshToken)
 }
 
-func TestStorage_GetTokensTwice(t *testing.T) {
-	f, err := getFile()
-	require.NoError(t, err)
-	defer f.Close()
+const testdata = `
+sandbox:
+  accesstoken: actoken
+  identitytoken: idToken
+  refreshtoken: refreshToken`
 
+func TestStorage_GetTokensTwice(t *testing.T) {
+	f := fakefile.New([]byte(testdata)...)
 	s := tokenstorage.New(f)
 
 	for i := 0; i < 2; i++ {
@@ -59,10 +53,7 @@ func TestStorage_GetTokensTwice(t *testing.T) {
 }
 
 func TestStorage_SetTokens(t *testing.T) {
-	f, err := getFile()
-	require.NoError(t, err)
-	defer f.Close()
-
+	f := fakefile.New([]byte(testdata)...)
 	s := tokenstorage.New(f)
 	tokens := auth.Tokens{
 		AccessToken:   "atok",
@@ -71,7 +62,7 @@ func TestStorage_SetTokens(t *testing.T) {
 	}
 
 	stage := "test"
-	err = s.SetTokens(stage, tokens)
+	err := s.SetTokens(stage, tokens)
 	require.NoError(t, err)
 
 	fetchedTokens, err := s.GetTokens(stage)
@@ -82,4 +73,12 @@ func TestStorage_SetTokens(t *testing.T) {
 	require.Equal(t, "rtok", fetchedTokens.RefreshToken)
 }
 
-// err no stage not found
+func TestStorage_StageNotFound(t *testing.T) {
+	f := fakefile.New([]byte(testdata)...)
+	s := tokenstorage.New(f)
+	stage := "invalidStage"
+
+	_, err := s.GetTokens(stage)
+	require.Error(t, err)
+
+}
