@@ -13,6 +13,7 @@ import (
 
 type Storage interface {
 	GetTokens(stage string) (auth.Tokens, error)
+	SetTokens(stage string, tokens auth.Tokens) error
 }
 
 type Handler struct {
@@ -21,11 +22,13 @@ type Handler struct {
 	inReader *bufio.Reader
 	storage  Storage
 
+	stage string
+
 	signIn      func(ctx context.Context, username, password string) (auth.Tokens, error)
 	signInToken func(ctx context.Context, refreshToken string) (auth.Tokens, error)
 }
 
-func New(in io.Reader, out io.Writer) Handler {
+func New(stage string, in io.Reader, out io.Writer) Handler {
 	h := Handler{}
 
 	if in == nil {
@@ -40,15 +43,24 @@ func New(in io.Reader, out io.Writer) Handler {
 		h.out = out
 	}
 
+	h.stage = stage
+
 	h.inReader = bufio.NewReader(h.in)
 
 	return h
 }
 
 func (h *Handler) SignIn() (auth.Tokens, error) {
-	tokens, err := h.storage.GetTokens("sandbox")
+	tokens, err := h.storage.GetTokens(h.stage)
 	if err == nil {
-		return h.signInToken(context.Background(), tokens.RefreshToken)
+		newToken, err := h.signInToken(context.Background(), tokens.RefreshToken)
+		if err != nil {
+			return newToken, err
+		}
+
+		err = h.storage.SetTokens(h.stage, newToken)
+
+		return newToken, err
 	}
 
 	username, err := h.readLine("please enter username")
@@ -61,7 +73,14 @@ func (h *Handler) SignIn() (auth.Tokens, error) {
 		return auth.Tokens{}, fmt.Errorf("failed to get password: %w", err)
 	}
 
-	return h.signIn(context.Background(), username, password)
+	newtokens, err := h.signIn(context.Background(), username, password)
+	if err != nil {
+		return auth.Tokens{}, fmt.Errorf("failed to sign in: %w", err)
+	}
+
+	err = h.storage.SetTokens(h.stage, newtokens)
+	return newtokens, err
+
 }
 
 func (h *Handler) GetTokens() auth.Tokens {
