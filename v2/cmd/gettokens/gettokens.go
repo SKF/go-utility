@@ -8,13 +8,21 @@ import (
 	"os"
 
 	"github.com/SKF/go-utility/v2/auth"
+	"github.com/SKF/go-utility/v2/cmd/gettokens/tokenstorage"
 )
+
+type Storage interface {
+	GetTokens(stage string) (auth.Tokens, error)
+}
 
 type Handler struct {
 	in       io.Reader
 	out      io.Writer
-	signIn   func(ctx context.Context, username, password string) (auth.Tokens, error)
 	inReader *bufio.Reader
+	storage  Storage
+
+	signIn      func(ctx context.Context, username, password string) (auth.Tokens, error)
+	signInToken func(ctx context.Context, refreshToken string) (auth.Tokens, error)
 }
 
 func New(in io.Reader, out io.Writer) Handler {
@@ -38,6 +46,11 @@ func New(in io.Reader, out io.Writer) Handler {
 }
 
 func (h *Handler) SignIn() (auth.Tokens, error) {
+	tokens, err := h.storage.GetTokens("sandbox")
+	if err == nil {
+		return h.signInToken(context.Background(), tokens.RefreshToken)
+	}
+
 	username, err := h.readLine("please enter username")
 	if err != nil {
 		return auth.Tokens{}, fmt.Errorf("failed to get username: %w", err)
@@ -76,6 +89,18 @@ func (h *Handler) readLine(prompt string) (string, error) {
 
 func (h Handler) WithSignIn(signIn func(ctx context.Context, username string, password string) (auth.Tokens, error)) Handler {
 	h.signIn = signIn
+
+	return h
+}
+
+func (h Handler) WithSignInToken(signInToken func(ctx context.Context, refreshToken string) (auth.Tokens, error)) Handler {
+	h.signInToken = signInToken
+
+	return h
+}
+
+func (h Handler) WithStorage(s tokenstorage.Storage) Handler {
+	h.storage = s
 
 	return h
 }
