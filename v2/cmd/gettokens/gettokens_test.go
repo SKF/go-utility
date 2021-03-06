@@ -124,6 +124,7 @@ func TestSignIn_UseRefreshTokenIfExists(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "new-access-token", token.AccessToken)
+	require.Equal(t, "old-refresh-token", token.RefreshToken)
 }
 
 type myWriter struct {

@@ -58,6 +58,8 @@ func (h *Handler) SignIn() (auth.Tokens, error) {
 			return newToken, err
 		}
 
+		newToken.RefreshToken = tokens.RefreshToken
+
 		err = h.storage.SetTokens(h.stage, newToken)
 
 		return newToken, err
