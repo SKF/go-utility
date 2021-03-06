@@ -72,7 +72,10 @@ func (c *TCP) Connect() (err error) {
 
 	// configure ssl connection if needed
 	if c.useSsl {
-		sslConfig := &tls.Config{ServerName: c.host}
+		sslConfig := &tls.Config{
+			ServerName: c.host,
+			MinVersion: tls.VersionTLS12,
+		}
 
 		// prep the ssl connection and perform the initial handshake
 		sslConn := tls.Client(c.conn, sslConfig)
@@ -84,7 +87,7 @@ func (c *TCP) Connect() (err error) {
 		c.conn = sslConn
 	}
 
-	return
+	return nil
 }
 
 // Disconnect tries to disconnect from the datadog api

@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SKF/go-utility/v2/env"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/SKF/go-utility/v2/env"
 )
 
 type Field = zapcore.Field
@@ -43,24 +43,40 @@ type Logger interface {
 	Sync() error
 }
 
-var baseLogger logger
+var (
+	baseLogger logger
+	fields     []zap.Field
+)
 
 const skipsToOriginialCaller = 1
 
 func init() {
+	origLogger := newLogger(zapcore.Lock(os.Stdout))
+	baseLogger = logger{origLogger.Sugar()}
+}
+
+func newLogger(syncer zapcore.WriteSyncer) *zap.Logger {
 	encoder := getEncoder()
 
-	origLogger := zap.New(
+	return zap.New(
 		zapcore.NewCore(
 			encoder,
-			zapcore.Lock(os.Stdout),
+			syncer,
 			zap.NewAtomicLevelAt(getLogLevel()),
 		),
 		zap.AddCaller(),
 		zap.AddCallerSkip(skipsToOriginialCaller),
 		zap.AddStacktrace(zapcore.ErrorLevel),
 	)
-	baseLogger = logger{origLogger.Sugar()}
+}
+
+func SetDefaultService(value string) {
+	SetDefaultField("service", value)
+}
+
+func SetDefaultField(key string, value interface{}) {
+	fields = append(fields, zap.Any(key, value))
+	baseLogger.logger = baseLogger.logger.With(key, value)
 }
 
 func getLogLevel() zapcore.Level {
@@ -83,16 +99,17 @@ func getLogLevel() zapcore.Level {
 func getEncoder() zapcore.Encoder {
 	encoderConf := zap.NewProductionEncoderConfig()
 
-	// Set RFC3339 timestamp encoding format
+	encoderConf.MessageKey = "message"
 	encoderConf.TimeKey = "timestamp"
 	encoderConf.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		// Set RFC3339 timestamp encoding format
 		enc.AppendString(t.Format(time.RFC3339))
 	}
 	encoderConf.CallerKey = "source"
 
 	useConsoleEncoder := strings.EqualFold(os.Getenv("CONSOLE_LOGGER"), "true")
-	encoder := zapcore.NewJSONEncoder(encoderConf)
 
+	encoder := zapcore.NewJSONEncoder(encoderConf)
 	if useConsoleEncoder {
 		encoder = zapcore.NewConsoleEncoder(encoderConf)
 	}

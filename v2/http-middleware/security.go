@@ -2,23 +2,24 @@ package httpmiddleware
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
-
-	"github.com/SKF/proto/common"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
-	"go.opencensus.io/plugin/ochttp"
-	"go.opencensus.io/trace"
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
+	"github.com/SKF/go-utility/v2/http-middleware/util"
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
 	"github.com/SKF/go-utility/v2/jwk"
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
+
+	rest "github.com/SKF/go-rest-utility/client"
+	"github.com/SKF/proto/v2/common"
+	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -30,10 +31,20 @@ type Config struct {
 
 	// Configures the usage of a User ID Cache when using an Access Token
 	UseUserIDCache bool
+	Client         *rest.Client
 }
 
-var config Config
-var userIDCache map[string]string
+type ResponseConfig interface {
+	InternalErrorResponse() []byte
+	UnauthenticateResponse() []byte
+	UnauthorizedResponse() []byte
+}
+
+var (
+	config      Config
+	userIDCache map[string]string
+	client      *rest.Client
+)
 
 func Configure(conf Config) {
 	config = conf
@@ -43,6 +54,18 @@ func Configure(conf Config) {
 
 	if conf.UseUserIDCache {
 		userIDCache = map[string]string{}
+	}
+
+	if client = conf.Client; client == nil {
+		url, err := auth.GetBaseURL()
+		if err != nil {
+			panic(err)
+		}
+
+		client = rest.NewClient(
+			rest.WithBaseURL(url),
+			rest.WithOpenCensusTracing(),
+		)
 	}
 }
 
@@ -64,7 +87,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "AuthenticateMiddlewareV3/Handler")
+			ctx, span := util.StartSpanNoRoot(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
 
 			logFields := log.
@@ -74,9 +97,10 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessOrIDToken(ctx, req, secConfig.accessTokenHeader); err != nil {
+				if err := handleAccessOrIDToken(req.Context(), req, secConfig.accessTokenHeader); err != nil {
 					logFields.WithError(err).Warn("User is not authorized")
-					http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
+					responseBody := GetUnauthenticedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
+					http_server.WriteJSONResponse(req.Context(), w, req, http.StatusUnauthorized, responseBody)
 					return
 				}
 			}
@@ -131,50 +155,16 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 }
 
 func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err error) {
-	const endpoint = "/users/me"
+	req := rest.Get("/users/me").
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", accessToken)
 
-	baseURL, err := auth.GetBaseURL()
-	if err != nil {
-		err = errors.Wrap(err, "failed to get base URL")
-		return
-	}
-
-	req, err := http.NewRequest(http.MethodGet, baseURL+endpoint, nil)
-	if err != nil {
-		err = errors.Wrap(err, "failed to create new HTTP request")
-		return
-	}
-
-	req = req.WithContext(ctx)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", accessToken)
-
-	client := &http.Client{Transport: &ochttp.Transport{}}
-
-	resp, err := client.Do(req)
+	resp, err := client.Do(ctx, req)
 	if err != nil {
 		err = errors.Wrap(err, "failed to execute HTTP request")
 		return
 	}
-
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var errorResp struct {
-			Error struct {
-				Message string `json:"message"`
-			} `json:"error"`
-		}
-
-		if err = json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
-			err = errors.Wrap(err, "failed to decode Error response to JSON")
-			return
-		}
-
-		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message)
-
-		return
-	}
 
 	var myUserResp struct {
 		Data struct {
@@ -182,7 +172,7 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 		} `json:"data"`
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&myUserResp); err != nil {
+	if err = resp.Unmarshal(&myUserResp); err != nil {
 		err = errors.Wrap(err, "failed to decode My User response to JSON")
 		return
 	}
@@ -194,13 +184,25 @@ type Authorizer interface {
 	IsAuthorizedWithContext(ctx context.Context, userID, action string, resource *common.Origin) (bool, error)
 }
 
-// AuthorizeMiddleware retrieves the security configuration for the matched route
-// and handles the configured authorizations.
+// AuthorizeMiddleware retrieves the security configuration for the matched
+// route and handles the configured authorizations. If any of the configured
+// ResourceFuncs returns a HTTPError or an error wrapping a HTTPError, the error
+// code and message from that error is written. Other errors from the
+// ResourceFuncs results in a http.StatusInternalServerError response being
+// written. If the request fails the authorization check,
+// http.StatusUnauthorized is returned to the client.
 func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctx, span := trace.StartSpan(req.Context(), "AuthorizeMiddleware/Handler")
+			ctx, span := util.StartSpanNoRoot(req.Context(), "AuthorizeMiddleware/Handler")
 			defer span.End()
+
+			// If current route doesn't need to be authenicated
+			secConfig := lookupSecurityConfig(req)
+			if len(secConfig.authorizations) == 0 {
+				next.ServeHTTP(w, req)
+				return
+			}
 
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
@@ -209,20 +211,32 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 					WithField("url", req.URL.String()).
 					Error("Couldn't extract User ID from context")
 
+				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
+
 				http_server.WriteJSONResponse(
-					ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError,
+					ctx, w, req, http.StatusInternalServerError, responseBody,
 				)
 				return
 			}
 
-			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID)
-			if err != nil {
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, http_model.ErrResponseInternalServerError)
+			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
+			var httpErr *http_model.HTTPError
+			if errors.As(err, &httpErr) {
+				if secConfig.responses != nil {
+					http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, secConfig.responses.InternalErrorResponse())
+				} else {
+					http_server.WriteJSONResponse(ctx, w, req, httpErr.StatusCode, httpErr.Message())
+				}
 				return
 			}
-
+			if err != nil {
+				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
+				return
+			}
 			if !isAuthorized {
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, http_model.ErrResponseUnauthorized)
+				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
+				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
 				return
 			}
 
@@ -232,19 +246,14 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	}
 }
 
-func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string) (bool, error) {
-	secConfig := lookupSecurityConfig(req)
-	if len(secConfig.authorizations) == 0 {
-		return true, nil
-	}
-
+func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
 	logFields := log.
 		WithTracing(ctx).
 		WithUserID(ctx).
 		WithField("method", req.Method).
 		WithField("url", req.URL.String())
 
-	for _, authorizeConfig := range secConfig.authorizations {
+	for _, authorizeConfig := range configuredAuthorizations {
 		resource, err := authorizeConfig.resourceFunc(req)
 		if err != nil {
 			logFields.WithError(err).Error("ResourceFunc failed")
@@ -258,11 +267,18 @@ func checkAuthorization(ctx context.Context, req *http.Request, authorizer Autho
 			resource,
 		)
 		if err != nil {
-			logFields.WithError(err).
+			logFields = logFields.WithError(err).
 				WithField("userId", userID).
 				WithField("action", authorizeConfig.action).
-				WithField("resource", resource).
-				Error("Error when calling IsAuthorized")
+				WithField("resource", resource)
+
+			if grpcStatus := status.Code(err); grpcStatus == codes.Canceled {
+				logFields.Debug("Cancelled context when calling IsAuthorized")
+
+				return false, nil
+			}
+
+			logFields.Error("Error when calling IsAuthorized")
 
 			return false, err
 		}
@@ -310,6 +326,7 @@ type SecurityConfig struct {
 	methods           []string
 	accessTokenHeader string
 	authorizations    []authorizationConfig
+	responses         ResponseConfig
 }
 
 type authorizationConfig struct {
@@ -320,6 +337,16 @@ type authorizationConfig struct {
 // HandleSecureEndpoint creates a new SecurityConfig for the specified endpoint.
 func HandleSecureEndpoint(endpoint string) *SecurityConfig {
 	s := &SecurityConfig{endpoint: endpoint}
+	securityConfigurations = append(securityConfigurations, s)
+
+	return s
+}
+
+func HandleSecureEndpointCustomErrorResponse(endpoint string, responses ResponseConfig) *SecurityConfig {
+	s := &SecurityConfig{
+		endpoint:  endpoint,
+		responses: responses,
+	}
 	securityConfigurations = append(securityConfigurations, s)
 
 	return s
@@ -343,6 +370,33 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 }
 
 // ResourceFunc takes a *http.Request and returns the resource to use for authorization.
+// If the ResourceFunc fails because of invalid input data or a missing resource,
+// return a HttpError, or an error wrapping a HTTPError.
+// The following example ResourceFunc expects an input struct with a non-empty field
+//
+//     func fieldFromBodyFunc(r *http.Request) (*common.Origin, error) {
+//         var inputData struct {
+//             field string `json:"field,omitempty"`
+//         }
+//         body, err := ioutil.ReadAll(r.Body)
+//         if err != nil {
+//             return nil, err
+//         }
+//         r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+//         if err := json.Unmarshal(body, &inputData); err != nil {
+//             return nil, &http_model.HTTPError{
+//                 Msg:        "Failed to unmarshal body",
+//                 StatusCode: http.StatusBadRequest,
+//             }
+//         }
+//         if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
+//             return nil, &http_model.HTTPError{
+//                 Msg:        "Required field 'field' is empty",
+//                 StatusCode: http.StatusBadRequest,
+//             }
+//         }
+//         return &common.Origin{Id: inputData.field, Type: "example"}, nil
+//     }
 type ResourceFunc func(*http.Request) (*common.Origin, error)
 
 // NilResourceFunc represents the Zero Value ResourceFunc.
@@ -358,4 +412,34 @@ func (s *SecurityConfig) Authorize(action string, resourceFunc ResourceFunc) *Se
 	)
 
 	return s
+}
+
+func GetInternalServerErrorResponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
+	responsebody := defaultResponse
+
+	if secConfig.responses != nil && len(secConfig.responses.InternalErrorResponse()) > 0 {
+		responsebody = secConfig.responses.InternalErrorResponse()
+	}
+
+	return responsebody
+}
+
+func GetUnauthenticedErrorResponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
+	responsebody := defaultResponse
+
+	if secConfig.responses != nil && len(secConfig.responses.UnauthenticateResponse()) > 0 {
+		responsebody = secConfig.responses.UnauthenticateResponse()
+	}
+
+	return responsebody
+}
+
+func GetUnauthorizedErrorResponseBody(defaultResponse []byte, secConfig SecurityConfig) []byte {
+	responsebody := defaultResponse
+
+	if secConfig.responses != nil && len(secConfig.responses.UnauthorizedResponse()) > 0 {
+		responsebody = secConfig.responses.UnauthorizedResponse()
+	}
+
+	return responsebody
 }

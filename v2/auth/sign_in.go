@@ -8,7 +8,8 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"go.opencensus.io/plugin/ochttp"
+	oc_http "go.opencensus.io/plugin/ochttp"
+	dd_http "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 
 	"github.com/SKF/go-utility/v2/stages"
 )
@@ -16,10 +17,14 @@ import (
 var config *Config
 
 type Config struct {
-	Stage string
+	WithDatadogTracing    bool   // used when you trace your application with Datadog
+	WithOpenCensusTracing bool   // default and used when you trace your application with Open Census
+	ServiceName           string // needed when using lambda and Datadog for tracing
+	Stage                 string
 }
 
 func Configure(conf Config) {
+	conf.WithOpenCensusTracing = !conf.WithDatadogTracing
 	config = &conf
 }
 
@@ -94,7 +99,14 @@ func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInRe
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Transport: &ochttp.Transport{}}
+	var client = new(http.Client)
+	if config.WithOpenCensusTracing {
+		client.Transport = new(oc_http.Transport)
+	}
+
+	if config.WithDatadogTracing {
+		client = withDatadogTracing(config.ServiceName, client)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -153,4 +165,20 @@ var allowedStages = map[string]bool{
 	stages.StageVerification: true,
 	stages.StageTest:         true,
 	stages.StageSandbox:      true,
+}
+
+func withDatadogTracing(serviceName string, client *http.Client) *http.Client {
+	resourceNamer := func(req *http.Request) string {
+		return fmt.Sprintf("%s %s", req.Method, req.URL.String())
+	}
+
+	var opts = []dd_http.RoundTripperOption{
+		dd_http.RTWithResourceNamer(resourceNamer),
+	}
+
+	if serviceName != "" {
+		opts = append(opts, dd_http.RTWithServiceName(serviceName))
+	}
+
+	return dd_http.WrapClient(client, opts...)
 }

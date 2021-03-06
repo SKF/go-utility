@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
@@ -14,6 +15,7 @@ import (
 
 var tokensMutex = new(sync.RWMutex)
 var tokens auth.Tokens
+var tokenExpireDurationDiff = 5 * time.Minute
 
 var fetchingTokensMutex = new(sync.RWMutex)
 var fetchingTokens bool
@@ -22,6 +24,9 @@ var config *Config
 
 // Config is the configuration of the package
 type Config struct {
+	WithDatadogTracing       bool   // used when you trace your application with Datadog
+	WithOpenCensusTracing    bool   // default and used when you trace your application with Open Census
+	ServiceName              string // needed when using lambda and Datadog for tracing
 	AWSSession               *session.Session
 	AWSSecretsManagerAccount string
 	AWSSecretsManagerRegion  string
@@ -31,9 +36,15 @@ type Config struct {
 
 // Configure will configure the package
 func Configure(conf Config) {
+	conf.WithOpenCensusTracing = !conf.WithDatadogTracing
 	config = &conf
 
-	auth.Configure(auth.Config{Stage: conf.Stage})
+	auth.Configure(auth.Config{
+		WithDatadogTracing:    conf.WithDatadogTracing,
+		WithOpenCensusTracing: conf.WithOpenCensusTracing,
+		ServiceName:           conf.ServiceName,
+		Stage:                 conf.Stage,
+	})
 }
 
 // GetTokens will return the cached tokens
@@ -72,9 +83,17 @@ func SignIn(ctx context.Context) (err error) {
 		fetchingTokensMutex.Unlock()
 	}()
 
-	tokens, err = signIn(ctx)
+	if auth.IsTokenValid(tokens.AccessToken, tokenExpireDurationDiff) {
+		return nil
+	}
 
-	return
+	tokens, err = signIn(ctx)
+	if err != nil {
+		tokens = auth.Tokens{}
+		return err
+	}
+
+	return nil
 }
 
 func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
@@ -82,7 +101,7 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 
 	secretKey := "arn:aws:secretsmanager:" + config.AWSSecretsManagerRegion + ":" + config.AWSSecretsManagerAccount + ":secret:" + config.SecretKey
 
-	output, err := svc.GetSecretValue(&secretsmanager.GetSecretValueInput{SecretId: &secretKey})
+	output, err := svc.GetSecretValueWithContext(ctx, &secretsmanager.GetSecretValueInput{SecretId: &secretKey})
 	if err != nil {
 		err = errors.Wrap(err, "failed to get secret value")
 		return
