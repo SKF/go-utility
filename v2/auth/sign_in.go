@@ -66,6 +66,25 @@ func SignIn(ctx context.Context, username, password string) (tokens Tokens, err 
 	return resp.Data.Tokens, nil
 }
 
+func SignInRefreshToken(ctx context.Context, refreshToken string) (Tokens, error) {
+	const endpoint = "/sign-in/initiate"
+
+	jsonBody := `{"refreshToken": "` + refreshToken + `"}`
+
+	resp, err := signIn(ctx, endpoint, jsonBody)
+	if err != nil {
+		return Tokens{}, fmt.Errorf("failed to sign in with refreshtoken: %w", err)
+	}
+
+	tokens := Tokens{
+		AccessToken:   resp.Data.Tokens.AccessToken,
+		IdentityToken: resp.Data.Tokens.IdentityToken,
+		RefreshToken:  resp.Data.Tokens.RefreshToken,
+	}
+
+	return tokens, nil
+}
+
 func initiateSignIn(ctx context.Context, username, password string) (signInResp SignInResponse, err error) {
 	const endpoint = "/sign-in/initiate"
 

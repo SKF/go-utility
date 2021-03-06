@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/SKF/go-utility/v2/auth"
@@ -18,4 +19,12 @@ func main() {
 	}
 
 	fmt.Printf("tokens: %v\n", tokens)
+
+	ctx := context.Background()
+	tokens, err = auth.SignInRefreshToken(ctx, tokens.RefreshToken)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("refresh tokens: %+v\n", tokens)
 }
