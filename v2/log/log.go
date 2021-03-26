@@ -46,7 +46,6 @@ type Logger interface {
 var (
 	baseLogger logger
 	fields     []zap.Field
-	nopLogger  logger
 )
 
 const skipsToOriginialCaller = 1
@@ -54,7 +53,6 @@ const skipsToOriginialCaller = 1
 func init() {
 	origLogger := newLogger(zapcore.Lock(os.Stdout))
 	baseLogger = logger{origLogger.Sugar()}
-	nopLogger = logger{zap.NewNop().Sugar()}
 }
 
 func newLogger(syncer zapcore.WriteSyncer) *zap.Logger {
@@ -124,7 +122,7 @@ func Base() Logger {
 }
 
 func Nop() Logger {
-	return nopLogger
+	return logger{zap.NewNop().Sugar()}
 }
 
 func WithField(key string, value interface{}) Logger {
