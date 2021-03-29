@@ -121,6 +121,10 @@ func Base() Logger {
 	return baseLogger
 }
 
+func Nop() Logger {
+	return logger{zap.NewNop().Sugar()}
+}
+
 func WithField(key string, value interface{}) Logger {
 	return baseLogger.WithField(key, value)
 }
