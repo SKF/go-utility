@@ -42,8 +42,7 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 		// nolint: gomnd
 		NumCounters: 1000000,  // number of keys to track frequency of (1M).
 		MaxCost:     maxCache, // maximum cost of cache.
-		// nolint: gomnd
-		BufferItems: 64, //  number of keys per Get buffer.
+		BufferItems: 64,       //  number of keys per Get buffer.
 		Metrics:     true,
 	})
 
