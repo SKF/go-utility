@@ -2,7 +2,10 @@ package httpmiddleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+
+	"go.opencensus.io/trace"
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
@@ -104,6 +107,14 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 					return
 				}
 			}
+
+			id, ok := useridcontext.FromContext(ctx)
+			if !ok {
+				log.WithTracing(ctx).
+					WithError(fmt.Errorf("failed to parse userID"))
+			}
+
+			span.AddAttributes(trace.StringAttribute("callerID", id))
 
 			span.End()
 			next.ServeHTTP(w, req)

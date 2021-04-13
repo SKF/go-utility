@@ -34,13 +34,16 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 		log.Infof("Caching disabled, TTL: %d", ttl)
 	}
 
-	maxCache := cacheSizeMaxMB * 1024 * 1024 // nolint:gomnd byte to mb
+	// nolint: gomnd
+	maxCache := cacheSizeMaxMB * 1024 * 1024 // byte to mb
 	log.Infof("Cache size in bytes: %d", maxCache)
 
 	memcache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 1000000,  // nolint: gomnd number of keys to track frequency of (1M).
+		// nolint: gomnd
+		NumCounters: 1000000,  // number of keys to track frequency of (1M).
 		MaxCost:     maxCache, // maximum cost of cache.
-		BufferItems: 64,       // nolint: gomnd number of keys per Get buffer.
+		// nolint: gomnd
+		BufferItems: 64, //  number of keys per Get buffer.
 		Metrics:     true,
 	})
 
