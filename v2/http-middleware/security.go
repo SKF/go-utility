@@ -117,7 +117,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 			span.AddAttributes(trace.StringAttribute("callerID", id))
 
 			span.End()
-			next.ServeHTTP(w, req.WithContext(ctx))
+			next.ServeHTTP(w, req)
 		})
 	}
 }
