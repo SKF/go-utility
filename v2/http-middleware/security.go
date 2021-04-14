@@ -108,7 +108,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 				}
 			}
 
-			id, ok := useridcontext.FromContext(ctx)
+			id, ok := useridcontext.FromContext(req.Context())
 			if !ok {
 				log.WithTracing(ctx).
 					WithError(fmt.Errorf("failed to parse userID"))
@@ -117,7 +117,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 			span.AddAttributes(trace.StringAttribute("callerID", id))
 
 			span.End()
-			next.ServeHTTP(w, req)
+			next.ServeHTTP(w, req.WithContext(ctx))
 		})
 	}
 }
