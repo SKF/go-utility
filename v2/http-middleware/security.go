@@ -90,17 +90,12 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 			ctx, span := util.StartSpanNoRoot(req.Context(), "AuthenticateMiddlewareV3/Handler")
 			defer span.End()
 
-			logFields := log.
-				WithTracing(ctx).
-				WithField("method", req.Method).
-				WithField("url", req.URL.String())
-
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
-				if err := handleAccessOrIDToken(req.Context(), req, secConfig.accessTokenHeader); err != nil {
-					logFields.WithError(err).Warn("User is not authorized")
+				if err := handleAccessOrIDToken(ctx, req, secConfig.accessTokenHeader); err != nil {
 					responseBody := GetUnauthenticedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
-					http_server.WriteJSONResponse(req.Context(), w, req, http.StatusUnauthorized, responseBody)
+					writeAndLogResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
+
 					return
 				}
 			}
@@ -206,16 +201,9 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
-				log.WithTracing(ctx).
-					WithField("method", req.Method).
-					WithField("url", req.URL.String()).
-					Error("Couldn't extract User ID from context")
-
 				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
+				writeAndLogResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
 
-				http_server.WriteJSONResponse(
-					ctx, w, req, http.StatusInternalServerError, responseBody,
-				)
 				return
 			}
 
@@ -223,20 +211,25 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			var httpErr *http_model.HTTPError
 			if errors.As(err, &httpErr) {
 				if secConfig.responses != nil {
-					http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, secConfig.responses.InternalErrorResponse())
+					writeAndLogResponse(ctx, w, req, http.StatusInternalServerError, secConfig.responses.InternalErrorResponse())
 				} else {
-					http_server.WriteJSONResponse(ctx, w, req, httpErr.StatusCode, httpErr.Message())
+					writeAndLogResponse(ctx, w, req, httpErr.StatusCode, httpErr.Message())
 				}
+
 				return
 			}
+
 			if err != nil {
 				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
+				writeAndLogResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
+
 				return
 			}
+
 			if !isAuthorized {
 				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
-				http_server.WriteJSONResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
+				writeAndLogResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
+
 				return
 			}
 
@@ -244,6 +237,19 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			next.ServeHTTP(w, req)
 		})
 	}
+}
+
+func writeAndLogResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, status int, body []byte) {
+	if status == http.StatusInternalServerError {
+		log.
+			WithTracing(ctx).
+			WithUserID(ctx).
+			WithField("method", r.Method).
+			WithField("url", r.URL.String()).
+			Error("AuthenticateMiddlewareV3 returned an 500 error")
+	}
+
+	http_server.WriteJSONResponse(ctx, w, r, status, body)
 }
 
 func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
@@ -256,7 +262,6 @@ func checkAuthorization(ctx context.Context, req *http.Request, authorizer Autho
 	for _, authorizeConfig := range configuredAuthorizations {
 		resource, err := authorizeConfig.resourceFunc(req)
 		if err != nil {
-			logFields.WithError(err).Error("ResourceFunc failed")
 			return false, err
 		}
 
@@ -267,18 +272,9 @@ func checkAuthorization(ctx context.Context, req *http.Request, authorizer Autho
 			resource,
 		)
 		if err != nil {
-			logFields = logFields.WithError(err).
-				WithField("userId", userID).
-				WithField("action", authorizeConfig.action).
-				WithField("resource", resource)
-
 			if grpcStatus := status.Code(err); grpcStatus == codes.Canceled {
-				logFields.Debug("Cancelled context when calling IsAuthorized")
-
 				return false, nil
 			}
-
-			logFields.Error("Error when calling IsAuthorized")
 
 			return false, err
 		}
