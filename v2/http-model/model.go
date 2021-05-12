@@ -3,10 +3,17 @@ package httpmodel
 import "encoding/json"
 
 const (
-	HeaderAuthorization = "Authorization"
-	HeaderContentType   = "Content-Type"
-	HeaderClientID      = "X-Client-ID"
-	HeaderCacheControl  = "Cache-Control"
+	HeaderAuthorization           = "Authorization"
+	HeaderContentType             = "Content-Type"
+	HeaderClientID                = "X-Client-ID"
+	HeaderCacheControl            = "Cache-Control"
+	HeaderDataDogTraceID          = "x-datadog-trace-id"
+	HeaderDataDogParentID         = "x-datadog-parent-id"
+	HeaderDataDogSamplingPriority = "x-datadog-sampling-priority"
+	HeaderDataDogOrigin           = "x-datadog-origin"
+	HeaderB3TraceID               = "x-b3-traceid"
+	HeaderB3SpanID                = "x-b3-spanid"
+	HeaderB3SampledHeader         = "x-b3-sampled"
 
 	CacheControlNoCache = "no-cache"
 	MimeJSON            = "application/json"
