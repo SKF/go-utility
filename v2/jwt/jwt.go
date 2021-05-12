@@ -3,7 +3,7 @@ package jwt
 import (
 	"github.com/SKF/go-utility/v2/jwk"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 )
 
@@ -24,7 +24,10 @@ type CognitoClaims struct {
 }
 
 type EnlightClaims struct {
-	EnlightUserID string `json:"enlightUserId"`
+	EnlightUserID    string `json:"enlightUserId"`
+	EnlightCompanyID string `json:"enlightCompanyId"`
+	EnlightAccess    string `json:"enlightAccess"`
+	EnlightRoles     string `json:"enlightRoles"`
 }
 
 type Claims struct {
