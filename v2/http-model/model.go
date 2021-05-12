@@ -18,7 +18,7 @@ const (
 	HeaderDataDogOrigin           = trace.DatadogOriginHeader
 	HeaderB3TraceID               = trace.B3TraceIDHeader
 	HeaderB3SpanID                = trace.B3SpanIDHeader
-	HeaderB3SampledHeader         = trace.B3SampledHeader
+	HeaderB3Sampled               = trace.B3SampledHeader
 
 	CacheControlNoCache = "no-cache"
 	MimeJSON            = "application/json"
