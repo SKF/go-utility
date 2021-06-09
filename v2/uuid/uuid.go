@@ -35,3 +35,16 @@ func (uuid UUID) StringPtr() *string {
 	val := uuid.String()
 	return &val
 }
+
+func StringList(ids ...UUID) []string {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	res := make([]string, len(ids))
+	for i := range ids {
+		res[i] = string(ids[i])
+	}
+
+	return res
+}
