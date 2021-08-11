@@ -14,15 +14,15 @@ require (
 	github.com/gomodule/redigo v1.8.2
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
-	github.com/jackc/pgconn v1.8.0
-	github.com/jackc/pgtype v1.6.2
-	github.com/jackc/pgx/v4 v4.10.0
+	github.com/jackc/pgconn v1.10.0
+	github.com/jackc/pgtype v1.8.1
+	github.com/jackc/pgx/v4 v4.13.0
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	go.opencensus.io v0.22.5
 	go.uber.org/zap v1.16.0
+	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	google.golang.org/grpc v1.31.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.27.1
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )

@@ -25,6 +25,15 @@ func (t *traceTx) Begin(ctx context.Context) (pgx.Tx, error) {
 	}, err
 }
 
+func (t *traceTx) BeginFunc(ctx context.Context, f func(pgx.Tx) error) error {
+	startTime := time.Now()
+	err := t.parent.BeginFunc(ctx, f)
+
+	t.trace.TryTrace(ctx, startTime, "BeginFunc", nil, err)
+
+	return err
+}
+
 func (t *traceTx) Commit(ctx context.Context) error {
 	startTime := time.Now()
 	err := t.parent.Commit(ctx)
@@ -100,6 +109,15 @@ func (t *traceTx) QueryRow(ctx context.Context, query string, args ...interface{
 	t.trace.TryTrace(ctx, startTime, "QueryRow", metadata, nil)
 
 	return row
+}
+
+func (t *traceTx) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
+	startTime := time.Now()
+	tag, err := t.parent.QueryFunc(ctx, sql, args, scans, f)
+
+	t.trace.TryTrace(ctx, startTime, "QueryFunc", nil, err)
+
+	return tag, err
 }
 
 func (t *traceTx) Conn() *pgx.Conn {
