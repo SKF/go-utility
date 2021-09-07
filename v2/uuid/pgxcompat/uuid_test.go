@@ -1,0 +1,253 @@
+package pgxcompat_test
+
+import (
+	"bytes"
+	"os"
+	"reflect"
+	"testing"
+
+	"github.com/SKF/go-utility/v2/uuid"
+	"github.com/jackc/pgtype"
+	"github.com/jackc/pgtype/testutil"
+	"skfdc.visualstudio.com/rep-sw/hierarchy/backend/datalayer/postgres/pgxcompat"
+)
+
+func TestUUIDTranscode(t *testing.T) {
+	os.Setenv("PGX_TEST_DATABASE", "host=localhost port=5433 user=hierarchyroot password=enter dbname=hierarchydb sslmode=disable")
+	testutil.TestSuccessfulTranscode(t, "uuid", []interface{}{
+		&pgxcompat.UUID{UUID: uuid.UUID("5b9cb067-8180-4953-846c-be5764532dc0"), Status: pgtype.Present},
+		&pgxcompat.UUID{Status: pgtype.Null},
+	})
+}
+
+type SomeUUIDWrapper struct {
+	SomeUUIDType
+}
+
+type SomeUUIDType [16]byte
+
+func TestUUIDSet(t *testing.T) {
+	successfulTests := []struct {
+		name   string
+		source interface{}
+		result pgxcompat.UUID
+	}{
+		{
+			name:   "nil",
+			source: nil,
+			result: pgxcompat.UUID{Status: pgtype.Null},
+		},
+		{
+			name:   "byte array",
+			source: [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+		{
+			name:   "byte slice",
+			source: []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+		{
+			name:   "nil byte slice",
+			source: ([]byte)(nil),
+			result: pgxcompat.UUID{Status: pgtype.Null},
+		},
+		{
+			name:   "string",
+			source: "00010203-0405-0607-0809-0a0b0c0d0e0f",
+			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+		{
+			name:   "string without dashes",
+			source: "000102030405060708090a0b0c0d0e0f",
+			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+	}
+
+	for _, tt := range successfulTests {
+		var r pgxcompat.UUID
+
+		err := r.Set(tt.source)
+		if err != nil {
+			t.Errorf("%s: %v", tt.name, err)
+		}
+
+		if r != tt.result {
+			t.Errorf("%s: expected %v to convert to %v, but it was %v", tt.name, tt.source, tt.result, r)
+		}
+	}
+}
+
+func TestUUIDAssignTo(t *testing.T) {
+	{
+		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		var dst [16]byte
+		expected := [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+		err := src.AssignTo(&dst)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if dst != expected {
+			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+		}
+	}
+
+	{
+		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		var dst []byte
+		expected := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+		err := src.AssignTo(&dst)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if !bytes.Equal(dst, expected) {
+			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+		}
+	}
+
+	{
+		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		var dst SomeUUIDType
+		expected := [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+		err := src.AssignTo(&dst)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if dst != expected {
+			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+		}
+	}
+
+	{
+		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		var dst string
+		expected := "00010203-0405-0607-0809-0a0b0c0d0e0f"
+
+		err := src.AssignTo(&dst)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if dst != expected {
+			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+		}
+	}
+
+	{
+		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		var dst SomeUUIDWrapper
+		expected := [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+		err := src.AssignTo(&dst)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if dst.SomeUUIDType != expected {
+			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+		}
+	}
+}
+
+func TestUUID_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		src     pgxcompat.UUID
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name: "first",
+			src: pgxcompat.UUID{
+				UUID:   uuid.UUID("1d485a7a-6d18-4599-8c6c-34425616887a"),
+				Status: pgtype.Present,
+			},
+			want:    []byte(`"1d485a7a-6d18-4599-8c6c-34425616887a"`),
+			wantErr: false,
+		},
+		{
+			name: "second",
+			src: pgxcompat.UUID{
+				UUID:   uuid.EmptyUUID,
+				Status: pgtype.Undefined,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "third",
+			src: pgxcompat.UUID{
+				UUID:   uuid.EmptyUUID,
+				Status: pgtype.Null,
+			},
+			want:    []byte("null"),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.src.MarshalJSON()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MarshalJSON() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUUID_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		want    *pgxcompat.UUID
+		src     []byte
+		wantErr bool
+	}{
+		{
+			name: "first",
+			want: &pgxcompat.UUID{
+				UUID:   uuid.UUID("1d485a7a-6d18-4599-8c6c-34425616887a"),
+				Status: pgtype.Present,
+			},
+			src:     []byte(`"1d485a7a-6d18-4599-8c6c-34425616887a"`),
+			wantErr: false,
+		},
+		{
+			name: "second",
+			want: &pgxcompat.UUID{
+				UUID:   uuid.EmptyUUID,
+				Status: pgtype.Null,
+			},
+			src:     []byte("null"),
+			wantErr: false,
+		},
+		{
+			name: "third",
+			want: &pgxcompat.UUID{
+				UUID:   uuid.EmptyUUID,
+				Status: pgtype.Undefined,
+			},
+			src:     []byte("1d485a7a-6d18-4599-8c6c-34425616887a"),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := &pgxcompat.UUID{}
+			if err := got.UnmarshalJSON(tt.src); (err != nil) != tt.wantErr {
+				t.Errorf("UnmarshalJSON() run = %v, error = %v, wantErr %v", tt.name, err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UnmarshalJSON() run = %v, got = %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+}
