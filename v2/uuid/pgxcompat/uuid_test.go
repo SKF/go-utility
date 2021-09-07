@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/SKF/go-utility/v2/uuid"
+	"github.com/SKF/go-utility/v2/uuid/pgxcompat"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgtype/testutil"
-	"skfdc.visualstudio.com/rep-sw/hierarchy/backend/datalayer/postgres/pgxcompat"
 )
 
 func TestUUIDTranscode(t *testing.T) {
