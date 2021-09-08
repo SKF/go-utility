@@ -2,18 +2,17 @@ package pgxcompat_test
 
 import (
 	"bytes"
-	"os"
 	"reflect"
 	"testing"
 
-	"github.com/SKF/go-utility/v2/uuid"
-	"github.com/SKF/go-utility/v2/uuid/pgxcompat"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgtype/testutil"
+
+	"github.com/SKF/go-utility/v2/uuid"
+	"github.com/SKF/go-utility/v2/uuid/pgxcompat"
 )
 
 func TestUUIDTranscode(t *testing.T) {
-	os.Setenv("PGX_TEST_DATABASE", "host=localhost port=5433 user=hierarchyroot password=enter dbname=hierarchydb sslmode=disable")
 	testutil.TestSuccessfulTranscode(t, "uuid", []interface{}{
 		&pgxcompat.UUID{UUID: uuid.UUID("5b9cb067-8180-4953-846c-be5764532dc0"), Status: pgtype.Present},
 		&pgxcompat.UUID{Status: pgtype.Null},
@@ -78,7 +77,7 @@ func TestUUIDSet(t *testing.T) {
 	}
 }
 
-func TestUUIDAssignTo(t *testing.T) {
+func TestUUIDAssignTo(t *testing.T) { // nolint:gocyclo
 	{
 		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
 		var dst [16]byte

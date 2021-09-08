@@ -7,8 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/SKF/go-utility/v2/uuid"
 	"github.com/jackc/pgtype"
+
+	"github.com/SKF/go-utility/v2/uuid"
 )
 
 const uuidBinaryLength = 16
@@ -23,13 +24,17 @@ type UUID struct {
 	Status pgtype.Status
 }
 
-func (dst *UUID) Set(src interface{}) error {
+type Getter interface {
+	Get() interface{}
+}
+
+func (dst *UUID) Set(src interface{}) error { // nolint:gocyclo
 	if src == nil {
 		*dst = UUID{Status: pgtype.Null}
 		return nil
 	}
 
-	if value, ok := src.(interface{ Get() interface{} }); ok {
+	if value, ok := src.(Getter); ok {
 		value2 := value.Get()
 		if value2 != value {
 			return dst.Set(value2)
@@ -135,11 +140,12 @@ func (dst *UUID) DecodeBinary(ci *pgtype.ConnInfo, src []byte) error {
 		return nil
 	}
 
-	if uuidStr, err := fromBinary(src); err != nil {
+	uuidStr, err := fromBinary(src)
+	if err != nil {
 		return err
-	} else {
-		*dst = UUID{UUID: uuid.UUID(uuidStr), Status: pgtype.Present}
 	}
+
+	*dst = UUID{UUID: uuid.UUID(uuidStr), Status: pgtype.Present}
 
 	return nil
 }
