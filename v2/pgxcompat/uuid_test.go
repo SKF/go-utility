@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgtype/testutil"
 
+	"github.com/SKF/go-utility/v2/pgxcompat"
 	"github.com/SKF/go-utility/v2/uuid"
-	"github.com/SKF/go-utility/v2/uuid/pgxcompat"
 )
 
 func TestUUIDTranscode(t *testing.T) {
