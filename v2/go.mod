@@ -1,6 +1,6 @@
 module github.com/SKF/go-utility/v2
 
-go 1.16
+go 1.17
 
 require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
