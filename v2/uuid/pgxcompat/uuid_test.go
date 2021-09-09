@@ -25,6 +25,10 @@ type SomeUUIDWrapper struct {
 
 type SomeUUIDType [16]byte
 
+func stringPtr(str string) *string {
+	return &str
+}
+
 func TestUUIDSet(t *testing.T) {
 	successfulTests := []struct {
 		name   string
@@ -60,6 +64,16 @@ func TestUUIDSet(t *testing.T) {
 			name:   "string without dashes",
 			source: "000102030405060708090a0b0c0d0e0f",
 			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+		{
+			name:   "string pointer",
+			source: stringPtr("00010203-0405-0607-0809-0a0b0c0d0e0f"),
+			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+		{
+			name:   "nil string pointer",
+			source: nil,
+			result: pgxcompat.UUID{Status: pgtype.Null},
 		},
 	}
 
