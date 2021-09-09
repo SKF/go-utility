@@ -77,80 +77,88 @@ func TestUUIDSet(t *testing.T) {
 	}
 }
 
-func TestUUIDAssignTo(t *testing.T) { // nolint:gocyclo
-	{
-		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
-		var dst [16]byte
-		expected := [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+func TestUUIDAssignToByteArray(t *testing.T) { // nolint:gocyclo
+	var (
+		src      = pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		dst      [16]byte
+		expected = [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	)
 
-		err := src.AssignTo(&dst)
-		if err != nil {
-			t.Error(err)
-		}
-
-		if dst != expected {
-			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
-		}
+	err := src.AssignTo(&dst)
+	if err != nil {
+		t.Error(err)
 	}
 
-	{
-		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
-		var dst []byte
-		expected := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	if dst != expected {
+		t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+	}
+}
 
-		err := src.AssignTo(&dst)
-		if err != nil {
-			t.Error(err)
-		}
+func TestUUIDAssignToByteSlice(t *testing.T) { // nolint:gocyclo
+	var (
+		src      = pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		dst      []byte
+		expected = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	)
 
-		if !bytes.Equal(dst, expected) {
-			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
-		}
+	err := src.AssignTo(&dst)
+	if err != nil {
+		t.Error(err)
 	}
 
-	{
-		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
-		var dst SomeUUIDType
-		expected := [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	if !bytes.Equal(dst, expected) {
+		t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+	}
+}
 
-		err := src.AssignTo(&dst)
-		if err != nil {
-			t.Error(err)
-		}
+func TestUUIDAssignToBinaryUUID(t *testing.T) { // nolint:gocyclo
+	var (
+		src      = pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		dst      SomeUUIDType
+		expected = [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	)
 
-		if dst != expected {
-			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
-		}
+	err := src.AssignTo(&dst)
+	if err != nil {
+		t.Error(err)
 	}
 
-	{
-		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
-		var dst string
-		expected := "00010203-0405-0607-0809-0a0b0c0d0e0f"
+	if dst != expected {
+		t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+	}
+}
 
-		err := src.AssignTo(&dst)
-		if err != nil {
-			t.Error(err)
-		}
+func TestUUIDAssignToString(t *testing.T) { // nolint:gocyclo
+	var (
+		src      = pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		dst      string
+		expected = "00010203-0405-0607-0809-0a0b0c0d0e0f"
+	)
 
-		if dst != expected {
-			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
-		}
+	err := src.AssignTo(&dst)
+	if err != nil {
+		t.Error(err)
 	}
 
-	{
-		src := pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
-		var dst SomeUUIDWrapper
-		expected := [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	if dst != expected {
+		t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
+	}
+}
 
-		err := src.AssignTo(&dst)
-		if err != nil {
-			t.Error(err)
-		}
+func TestUUIDAssignToWrappedUUID(t *testing.T) { // nolint:gocyclo
+	var (
+		src      = pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present}
+		dst      SomeUUIDWrapper
+		expected = [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+	)
 
-		if dst.SomeUUIDType != expected {
-			t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
-		}
+	err := src.AssignTo(&dst)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if dst.SomeUUIDType != expected {
+		t.Errorf("expected %v to assign %v, but result was %v", src, expected, dst)
 	}
 }
 
@@ -162,7 +170,7 @@ func TestUUID_MarshalJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "first",
+			name: "Marshal valid UUID to JSON",
 			src: pgxcompat.UUID{
 				UUID:   uuid.UUID("1d485a7a-6d18-4599-8c6c-34425616887a"),
 				Status: pgtype.Present,
@@ -171,7 +179,7 @@ func TestUUID_MarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "second",
+			name: "Marshal undefined UUID to json",
 			src: pgxcompat.UUID{
 				UUID:   uuid.EmptyUUID,
 				Status: pgtype.Undefined,
@@ -180,7 +188,7 @@ func TestUUID_MarshalJSON(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "third",
+			name: "Marshal null UUID to JSON",
 			src: pgxcompat.UUID{
 				UUID:   uuid.EmptyUUID,
 				Status: pgtype.Null,
@@ -211,7 +219,7 @@ func TestUUID_UnmarshalJSON(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "first",
+			name: "Unmarshal JSON UUID",
 			want: &pgxcompat.UUID{
 				UUID:   uuid.UUID("1d485a7a-6d18-4599-8c6c-34425616887a"),
 				Status: pgtype.Present,
@@ -220,7 +228,7 @@ func TestUUID_UnmarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "second",
+			name: "Unmarshal JSON null",
 			want: &pgxcompat.UUID{
 				UUID:   uuid.EmptyUUID,
 				Status: pgtype.Null,
@@ -229,7 +237,7 @@ func TestUUID_UnmarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "third",
+			name: "Unmarshal invalid JSON UUID",
 			want: &pgxcompat.UUID{
 				UUID:   uuid.EmptyUUID,
 				Status: pgtype.Undefined,
