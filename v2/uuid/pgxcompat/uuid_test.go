@@ -36,37 +36,37 @@ func TestUUIDSet(t *testing.T) {
 		result pgxcompat.UUID
 	}{
 		{
-			name:   "nil",
+			name:   "Set to nil",
 			source: nil,
 			result: pgxcompat.UUID{Status: pgtype.Null},
 		},
 		{
-			name:   "byte array",
+			name:   "Set to byte array",
 			source: [16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
 		},
 		{
-			name:   "byte slice",
+			name:   "Set to byte slice",
 			source: []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
 			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
 		},
 		{
-			name:   "nil byte slice",
+			name:   "Set nil byte slice",
 			source: ([]byte)(nil),
 			result: pgxcompat.UUID{Status: pgtype.Null},
 		},
 		{
-			name:   "string",
+			name:   "Set string",
 			source: "00010203-0405-0607-0809-0a0b0c0d0e0f",
 			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
 		},
 		{
-			name:   "string without dashes",
+			name:   "Set string without dashes",
 			source: "000102030405060708090a0b0c0d0e0f",
 			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
 		},
 		{
-			name:   "string pointer",
+			name:   "Set string pointer",
 			source: stringPtr("00010203-0405-0607-0809-0a0b0c0d0e0f"),
 			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
 		},
