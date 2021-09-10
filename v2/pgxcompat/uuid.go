@@ -29,11 +29,6 @@ type Getter interface {
 }
 
 func (u *UUID) Set(value interface{}) error { // nolint:gocyclo
-	if value == nil {
-		*u = UUID{Status: pgtype.Null}
-		return nil
-	}
-
 	if getterValue, ok := value.(Getter); ok {
 		value2 := getterValue.Get()
 		if value2 != getterValue {
@@ -42,6 +37,8 @@ func (u *UUID) Set(value interface{}) error { // nolint:gocyclo
 	}
 
 	switch value := value.(type) {
+	case nil:
+		*u = UUID{Status: pgtype.Null}
 	case uuid.UUID:
 		*u = UUID{UUID: value, Status: pgtype.Present}
 	case [16]byte:
