@@ -61,10 +61,13 @@ func (u *UUID) Set(value interface{}) error { // nolint:gocyclo
 		}
 
 		*u = UUID{UUID: uuid.UUID(value), Status: pgtype.Present}
-	case nil:
-		*u = UUID{Status: pgtype.Null}
 	case *string:
-		return u.Set(*value)
+		if value == nil {
+			*u = UUID{Status: pgtype.Null}
+		} else {
+			return u.Set(*value)
+		}
+
 	default:
 		return fmt.Errorf("cannot convert %v of type %T to UUID", value, value)
 	}
