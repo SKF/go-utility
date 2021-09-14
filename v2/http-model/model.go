@@ -8,9 +8,10 @@ const (
 	HeaderClientID      = "X-Client-ID"
 	HeaderCacheControl  = "Cache-Control"
 
-	CacheControlNoCache = "no-cache"
-	MimeJSON            = "application/json"
-	MimeParameterUTF8   = "charset=utf-8"
+	CacheControlNoCache     = "no-cache"
+	MimeParameterUrlEncoded = "application/x-www-form-urlencoded"
+	MimeJSON                = "application/json"
+	MimeParameterUTF8       = "charset=utf-8"
 )
 
 type ErrorResponse struct {
