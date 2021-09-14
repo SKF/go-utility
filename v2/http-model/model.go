@@ -1,12 +1,24 @@
 package httpmodel
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/SKF/go-utility/v2/trace"
+)
 
 const (
-	HeaderAuthorization = "Authorization"
-	HeaderContentType   = "Content-Type"
-	HeaderClientID      = "X-Client-ID"
-	HeaderCacheControl  = "Cache-Control"
+	HeaderAuthorization           = "Authorization"
+	HeaderContentType             = "Content-Type"
+	HeaderClientID                = "X-Client-ID"
+	HeaderCacheControl            = "Cache-Control"
+	HeaderDataDogTraceID          = trace.DatadogTraceIDHeader
+	HeaderDataDogParentID         = trace.DatadogParentIDHeader
+	HeaderDataDogSampled          = trace.DatadogSampledHeader
+	HeaderDataDogSamplingPriority = trace.DatadogSamplingPriorityHeader
+	HeaderDataDogOrigin           = trace.DatadogOriginHeader
+	HeaderB3TraceID               = trace.B3TraceIDHeader
+	HeaderB3SpanID                = trace.B3SpanIDHeader
+	HeaderB3Sampled               = trace.B3SampledHeader
 
 	CacheControlNoCache     = "no-cache"
 	MimeParameterUrlEncoded = "application/x-www-form-urlencoded"
