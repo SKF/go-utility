@@ -21,7 +21,7 @@ const (
 	HeaderB3Sampled               = trace.B3SampledHeader
 
 	CacheControlNoCache     = "no-cache"
-	MimeParameterUrlEncoded = "application/x-www-form-urlencoded"
+	MimeParameterURLEncoded = "application/x-www-form-urlencoded"
 	MimeJSON                = "application/json"
 	MimeParameterUTF8       = "charset=utf-8"
 )
