@@ -7,6 +7,7 @@ github.com/DataDog/datadog-go v3.5.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616/go.mod h1:gMGUEe16aZh0QN941HgDjwrdjU4iTthPoz2/AtDRADE=
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0 h1:Y6HFfo8UuntPOpfmUmLb0o3MNYKfUuH2aNmvypsDbY4=
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0/go.mod h1:/VV3EFO/hTNQZHAqaj+CPGy2+ioFrP4EX3iRwozubhQ=
+github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
