@@ -75,6 +75,16 @@ func TestUUIDSet(t *testing.T) {
 			source: (*string)(nil),
 			result: pgxcompat.UUID{Status: pgtype.Null},
 		},
+		{
+			name:   "Set UUID",
+			source: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"),
+			result: pgxcompat.UUID{UUID: uuid.UUID("00010203-0405-0607-0809-0a0b0c0d0e0f"), Status: pgtype.Present},
+		},
+		{
+			name:   "Set empty UUID",
+			source: uuid.EmptyUUID,
+			result: pgxcompat.UUID{Status: pgtype.Null},
+		},
 	}
 
 	for _, tt := range successfulTests {

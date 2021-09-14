@@ -40,7 +40,11 @@ func (u *UUID) Set(value interface{}) error { // nolint:gocyclo
 	case nil:
 		*u = UUID{Status: pgtype.Null}
 	case uuid.UUID:
-		*u = UUID{UUID: value, Status: pgtype.Present}
+		if value == uuid.EmptyUUID {
+			*u = UUID{Status: pgtype.Null}
+		} else {
+			*u = UUID{UUID: value, Status: pgtype.Present}
+		}
 	case [16]byte:
 		uuidStr, _ := fromBinary(value[:]) // nolint:errcheck // we know input is 16 bytes
 		*u = UUID{UUID: uuid.UUID(uuidStr), Status: pgtype.Present}
