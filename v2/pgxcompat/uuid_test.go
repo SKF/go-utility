@@ -2,11 +2,13 @@ package pgxcompat_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"reflect"
 	"testing"
 
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgtype/testutil"
+	"github.com/stretchr/testify/require"
 
 	"github.com/SKF/go-utility/v2/pgxcompat"
 	"github.com/SKF/go-utility/v2/uuid"
@@ -27,6 +29,21 @@ type SomeUUIDType [16]byte
 
 func stringPtr(str string) *string {
 	return &str
+}
+
+func TestInterfaceImplementations(t *testing.T) {
+	var u interface{} = &pgxcompat.UUID{}
+
+	// ValueTranscoder is the interface we need to implement to
+	// enable pgx to use the type in both text and binary mode
+	_, ok := u.(pgtype.ValueTranscoder)
+	require.True(t, ok)
+
+	_, ok = u.(json.Marshaler)
+	require.True(t, ok)
+
+	_, ok = u.(json.Unmarshaler)
+	require.True(t, ok)
 }
 
 func TestUUIDSet(t *testing.T) {
