@@ -28,6 +28,7 @@ type Config struct {
 	WithOpenCensusTracing    bool   // default and used when you trace your application with Open Census
 	ServiceName              string // needed when using lambda and Datadog for tracing
 	AWSSession               *session.Session
+	SecretKeyARN             string
 	AWSSecretsManagerAccount string
 	AWSSecretsManagerRegion  string
 	SecretKey                string
@@ -99,7 +100,11 @@ func SignIn(ctx context.Context) (err error) {
 func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 	svc := secretsmanager.New(config.AWSSession)
 
-	secretKey := "arn:aws:secretsmanager:" + config.AWSSecretsManagerRegion + ":" + config.AWSSecretsManagerAccount + ":secret:" + config.SecretKey
+	var secretKey string
+
+	if secretKey = config.SecretKeyARN; secretKey == "" {
+		secretKey = "arn:aws:secretsmanager:" + config.AWSSecretsManagerRegion + ":" + config.AWSSecretsManagerAccount + ":secret:" + config.SecretKey
+	}
 
 	output, err := svc.GetSecretValueWithContext(ctx, &secretsmanager.GetSecretValueInput{SecretId: &secretKey})
 	if err != nil {
