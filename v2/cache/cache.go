@@ -43,7 +43,6 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 		BufferItems: 64,       // nolint: gomnd number of keys per Get buffer.
 		Metrics:     true,
 	})
-
 	if err != nil {
 		err = errors.Wrap(err, "Error creating cache")
 		log.WithError(err).Error("Error creating cache")
