@@ -9,13 +9,19 @@ import (
 	"github.com/SKF/go-utility/v2/log"
 )
 
+const (
+	defaultNumCounters = 1000000 // default number of keys to track frequency of (1M).
+	defaultBufferItems = 64      // default number of keys per Get buffer.
+
+	megaByte = 1 << 10
+)
+
 type Cache struct {
 	cache          *ristretto.Cache
 	log            log.Logger
 	gets           uint64
 	sets           uint64
 	perFuncMetrics map[string]*perFuncMetric
-	expired        uint64
 	ttl            time.Duration
 }
 
@@ -24,26 +30,20 @@ type perFuncMetric struct {
 	hits uint64
 }
 
-type item struct {
-	expiration time.Time
-	data       interface{}
-}
-
 func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 	if ttl <= 0 {
 		log.Infof("Caching disabled, TTL: %d", ttl)
 	}
 
-	maxCache := cacheSizeMaxMB * 1024 * 1024 // nolint:gomnd byte to mb
+	maxCache := cacheSizeMaxMB * megaByte
 	log.Infof("Cache size in bytes: %d", maxCache)
 
 	memcache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 1000000,  // nolint: gomnd number of keys to track frequency of (1M).
+		NumCounters: defaultNumCounters,
 		MaxCost:     maxCache, // maximum cost of cache.
-		BufferItems: 64,       // nolint: gomnd number of keys per Get buffer.
+		BufferItems: defaultBufferItems,
 		Metrics:     true,
 	})
-
 	if err != nil {
 		err = errors.Wrap(err, "Error creating cache")
 		log.WithError(err).Error("Error creating cache")
