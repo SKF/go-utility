@@ -11,7 +11,6 @@ import (
 	oc_trace "go.opencensus.io/trace"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
-	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/trace"
 )
 
@@ -88,10 +87,6 @@ func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 		attributes[trace.DatadogTraceIDHeader] = traceID
 		attributes[trace.DatadogParentIDHeader] = spanID
 	}
-
-	log.WithTracing(ctx).
-		WithField("headers", attributes).
-		Debug("Injecting trace headers")
 
 	return attributes
 }
