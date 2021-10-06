@@ -100,9 +100,9 @@ func SignIn(ctx context.Context) (err error) {
 func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 	svc := secretsmanager.New(config.AWSSession)
 
-	var secretKey string
+	secretKey := config.SecretKeyARN
 
-	if secretKey = config.SecretKeyARN; secretKey == "" {
+	if secretKey == "" {
 		secretKey = "arn:aws:secretsmanager:" + config.AWSSecretsManagerRegion + ":" + config.AWSSecretsManagerAccount + ":secret:" + config.SecretKey
 	}
 
