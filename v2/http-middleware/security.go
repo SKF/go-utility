@@ -3,6 +3,7 @@ package httpmiddleware
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
@@ -93,8 +94,11 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 			secConfig := lookupSecurityConfig(req)
 			if secConfig.accessTokenHeader != "" {
 				if err := handleAccessOrIDToken(ctx, req, secConfig.accessTokenHeader); err != nil {
+					status := http.StatusUnauthorized
 					responseBody := GetUnauthenticedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
-					writeAndLogResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
+
+					logResponse(ctx, req, status, err)
+					http_server.WriteJSONResponse(ctx, w, req, status, responseBody)
 
 					return
 				}
@@ -201,8 +205,11 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 
 			userID, ok := useridcontext.FromContext(req.Context())
 			if !ok {
+				status := http.StatusInternalServerError
 				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
-				writeAndLogResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
+
+				logResponse(ctx, req, status, errors.New("no user id inside context"))
+				http_server.WriteJSONResponse(ctx, w, req, status, responseBody)
 
 				return
 			}
@@ -210,25 +217,37 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 			isAuthorized, err := checkAuthorization(ctx, req, authorizer, userID, secConfig.authorizations)
 			var httpErr *http_model.HTTPError
 			if errors.As(err, &httpErr) {
+
+				status := httpErr.StatusCode
+				responseBody := httpErr.Message()
+
 				if secConfig.responses != nil {
-					writeAndLogResponse(ctx, w, req, http.StatusInternalServerError, secConfig.responses.InternalErrorResponse())
-				} else {
-					writeAndLogResponse(ctx, w, req, httpErr.StatusCode, httpErr.Message())
+					status = http.StatusInternalServerError
+					responseBody = secConfig.responses.InternalErrorResponse()
 				}
+
+				logResponse(ctx, req, status, err)
+				http_server.WriteJSONResponse(ctx, w, req, status, responseBody)
 
 				return
 			}
 
 			if err != nil {
+				status := http.StatusInternalServerError
 				responseBody := GetInternalServerErrorResponseBody(http_model.ErrResponseInternalServerError, secConfig)
-				writeAndLogResponse(ctx, w, req, http.StatusInternalServerError, responseBody)
+
+				logResponse(ctx, req, status, err)
+				http_server.WriteJSONResponse(ctx, w, req, status, responseBody)
 
 				return
 			}
 
 			if !isAuthorized {
+				status := http.StatusUnauthorized
 				responseBody := GetUnauthorizedErrorResponseBody(http_model.ErrResponseUnauthorized, secConfig)
-				writeAndLogResponse(ctx, w, req, http.StatusUnauthorized, responseBody)
+
+				logResponse(ctx, req, status, err)
+				http_server.WriteJSONResponse(ctx, w, req, status, responseBody)
 
 				return
 			}
@@ -239,17 +258,20 @@ func AuthorizeMiddleware(authorizer Authorizer) mux.MiddlewareFunc {
 	}
 }
 
-func writeAndLogResponse(ctx context.Context, w http.ResponseWriter, r *http.Request, status int, body []byte) {
-	if status == http.StatusInternalServerError {
-		log.
-			WithTracing(ctx).
-			WithUserID(ctx).
-			WithField("method", r.Method).
-			WithField("url", r.URL.String()).
-			Error("AuthenticateMiddlewareV3 returned an 500 error")
-	}
+func logResponse(ctx context.Context, r *http.Request, status int, err error) {
+	l := log.
+		WithTracing(ctx).
+		WithUserID(ctx).
+		WithError(err).
+		WithField("method", r.Method).
+		WithField("url", r.URL.String()).
+		WithField("time.now", time.Now().Format(time.RFC3339))
 
-	http_server.WriteJSONResponse(ctx, w, r, status, body)
+	if status == http.StatusInternalServerError {
+		l.Error("AuthenticateMiddlewareV3 returned an 500 error")
+	} else {
+		l.Info("Auth middleware returned non-500 error")
+	}
 }
 
 func checkAuthorization(ctx context.Context, req *http.Request, authorizer Authorizer, userID string, configuredAuthorizations []authorizationConfig) (bool, error) {
