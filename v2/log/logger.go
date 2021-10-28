@@ -26,6 +26,14 @@ func (l logger) CheckWrite(lvl Level, msg string, fields ...Field) {
 	}
 }
 
+func (l logger) WithClientID(ctx context.Context) Logger {
+	if clientID, exists := clientid_models.FromContext(ctx); exists {
+		l.WithField("clientId", clientID.Identifier.String)
+	}
+
+	return l
+}
+
 func (l logger) WithFields(fields Fields) Logger {
 	return logger{l.logger.Desugar().With(fields...).Sugar()}
 }
@@ -39,10 +47,6 @@ func (l logger) WithError(err error) Logger {
 // https://github.com/DataDog/opencensus-go-exporter-datadog/blob/master/span.go
 // https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/?tab=go
 func (l logger) WithTracing(ctx context.Context) Logger {
-	if clientID, exists := clientid_models.FromContext(ctx); exists {
-		l.WithField("ClientID", clientID.Identifier.String)
-	}
-
 	if span := oc_trace.FromContext(ctx); span != nil {
 		traceID := span.SpanContext().TraceID
 		spanID := span.SpanContext().SpanID
