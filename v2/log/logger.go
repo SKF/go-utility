@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 
-	clientid_mw "github.com/SKF/go-enlight-middleware/client-id"
+	clientid_models "github.com/SKF/go-enlight-middleware/client-id/models"
 	oc_trace "go.opencensus.io/trace"
 	"go.uber.org/zap"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -39,7 +39,7 @@ func (l logger) WithError(err error) Logger {
 // https://github.com/DataDog/opencensus-go-exporter-datadog/blob/master/span.go
 // https://docs.datadoghq.com/tracing/advanced/connect_logs_and_traces/?tab=go
 func (l logger) WithTracing(ctx context.Context) Logger {
-	if clientID, exists := clientid_mw.FromContext(ctx); exists {
+	if clientID, exists := clientid_models.FromContext(ctx); exists {
 		l.WithField("ClientID", clientID.Identifier.String)
 	}
 
