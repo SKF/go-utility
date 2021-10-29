@@ -26,14 +26,6 @@ func (l logger) CheckWrite(lvl Level, msg string, fields ...Field) {
 	}
 }
 
-func (l logger) WithClientID(ctx context.Context) Logger {
-	if clientID, exists := clientid_models.FromContext(ctx); exists {
-		l.WithField("clientId", clientID.Identifier.String)
-	}
-
-	return l
-}
-
 func (l logger) WithFields(fields Fields) Logger {
 	return logger{l.logger.Desugar().With(fields...).Sugar()}
 }
@@ -60,6 +52,14 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 		return l.
 			WithField("dd.trace_id", span.Context().TraceID()).
 			WithField("dd.span_id", span.Context().SpanID())
+	}
+
+	return l
+}
+
+func (l logger) WithClientID(ctx context.Context) Logger {
+	if clientID, exists := clientid_models.FromContext(ctx); exists {
+		l.WithField("clientId", clientID.Identifier.String)
 	}
 
 	return l
