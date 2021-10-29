@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 
+	clientid_models "github.com/SKF/go-enlight-middleware/client-id/models"
 	oc_trace "go.opencensus.io/trace"
 	"go.uber.org/zap"
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -51,6 +52,14 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 		return l.
 			WithField("dd.trace_id", span.Context().TraceID()).
 			WithField("dd.span_id", span.Context().SpanID())
+	}
+
+	return l
+}
+
+func (l logger) WithClientID(ctx context.Context) Logger {
+	if clientID, exists := clientid_models.FromContext(ctx); exists {
+		l.WithField("clientId", clientID.Identifier.String)
 	}
 
 	return l
