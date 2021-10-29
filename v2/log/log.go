@@ -17,6 +17,7 @@ type Fields = []Field
 type Level = zapcore.Level
 
 type Logger interface {
+	WithClientID(ctx context.Context) Logger
 	WithField(key string, value interface{}) Logger
 	WithFields(fields Fields) Logger
 	WithError(err error) Logger
@@ -140,6 +141,10 @@ func WithError(err error) Logger {
 // WithTracing will take an OpenCensus trace and add log fields for Datadog.
 func WithTracing(ctx context.Context) Logger {
 	return baseLogger.WithTracing(ctx)
+}
+
+func WithClientID(ctx context.Context) Logger {
+	return baseLogger.WithClientID(ctx)
 }
 
 func WithUserID(ctx context.Context) Logger {
