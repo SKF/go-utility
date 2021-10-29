@@ -60,6 +60,7 @@ func (l logger) WithTracing(ctx context.Context) Logger {
 func (l logger) WithClientID(ctx context.Context) Logger {
 	if clientID, exists := clientid_models.FromContext(ctx); exists {
 		l.WithField("clientId", clientID.Identifier.String)
+		l.WithField("clientName", clientID.Name)
 	}
 
 	return l
