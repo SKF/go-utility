@@ -27,9 +27,11 @@ require (
 	gopkg.in/DataDog/dd-trace-go.v1 v1.29.2
 )
 
+require github.com/SKF/go-enlight-middleware v0.4.0
+
 require (
 	github.com/DataDog/datadog-go v4.4.0+incompatible // indirect
-	github.com/SKF/go-enlight-middleware v0.4.0 // indirect
+	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
