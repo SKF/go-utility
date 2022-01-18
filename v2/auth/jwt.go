@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // IsTokenValid checks if the token is still valid
@@ -17,8 +17,8 @@ func IsTokenValid(token string, tokenExpireDurationDiff time.Duration) bool {
 	}
 
 	var claims jwt.StandardClaims
-	_, _, err := parser.ParseUnverified(token, &claims)
 
+	_, _, err := parser.ParseUnverified(token, &claims)
 	if err != nil {
 		return false
 	}
