@@ -16,7 +16,7 @@ func IsTokenValid(token string, tokenExpireDurationDiff time.Duration) bool {
 		SkipClaimsValidation: true,
 	}
 
-	var claims jwt.StandardClaims
+	var claims jwt.RegisteredClaims
 
 	_, _, err := parser.ParseUnverified(token, &claims)
 	if err != nil {
@@ -25,7 +25,7 @@ func IsTokenValid(token string, tokenExpireDurationDiff time.Duration) bool {
 
 	// Verify if token still valid within the current time diff
 	// no need to sign in once again
-	ts := time.Now().Add(tokenExpireDurationDiff).Unix()
+	ts := time.Now().Add(tokenExpireDurationDiff)
 
 	return claims.VerifyExpiresAt(ts, false) &&
 		claims.VerifyIssuedAt(ts, false) &&
