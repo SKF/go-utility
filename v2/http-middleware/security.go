@@ -4,12 +4,13 @@ import (
 	"context"
 	"net/http"
 
+	rest "github.com/SKF/go-rest-utility/client"
+	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	rest "github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
 	"github.com/SKF/go-utility/v2/http-middleware/util"
@@ -19,7 +20,6 @@ import (
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/useridcontext"
-	"github.com/SKF/proto/v2/common"
 )
 
 const (

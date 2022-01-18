@@ -31,7 +31,7 @@ type EnlightClaims struct {
 }
 
 type Claims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	CognitoClaims
 	EnlightClaims
 }
@@ -42,7 +42,7 @@ const (
 )
 
 func (c Claims) Valid() (err error) {
-	if err = c.StandardClaims.Valid(); err != nil {
+	if err = c.RegisteredClaims.Valid(); err != nil {
 		return
 	}
 
