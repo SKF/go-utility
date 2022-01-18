@@ -1,10 +1,10 @@
 package jwt
 
 import (
-	"github.com/SKF/go-utility/v2/jwk"
-
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
+
+	"github.com/SKF/go-utility/v2/jwk"
 )
 
 type Token jwt.Token
@@ -31,16 +31,18 @@ type EnlightClaims struct {
 }
 
 type Claims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	CognitoClaims
 	EnlightClaims
 }
 
-const TokenUseAccess = "access"
-const TokenUseID = "id"
+const (
+	TokenUseAccess = "access"
+	TokenUseID     = "id"
+)
 
 func (c Claims) Valid() (err error) {
-	if err = c.StandardClaims.Valid(); err != nil {
+	if err = c.RegisteredClaims.Valid(); err != nil {
 		return
 	}
 
@@ -85,7 +87,6 @@ func Parse(jwtToken string) (_ Token, err error) {
 			return key.GetPublicKey()
 		},
 	)
-
 	if err != nil {
 		err = errors.Wrap(err, "parse with claims failed")
 		return
