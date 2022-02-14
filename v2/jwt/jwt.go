@@ -28,6 +28,7 @@ type EnlightClaims struct {
 	EnlightCompanyID string `json:"enlightCompanyId"`
 	EnlightAccess    string `json:"enlightAccess"`
 	EnlightRoles     string `json:"enlightRoles"`
+	EnlightEmail     string `json:"enlightEmail"`
 }
 
 type Claims struct {
