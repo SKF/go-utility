@@ -12,7 +12,6 @@ import (
 	dd_tracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/SKF/go-utility/v2/array"
-	"github.com/SKF/go-utility/v2/log"
 	"github.com/SKF/go-utility/v2/trace"
 )
 
@@ -35,10 +34,6 @@ var propagator = dd_tracer.NewPropagator(nil)
 func StartDatadogSpanFromMessage(ctx context.Context, serviceName string, msg events.SQSMessage) (dd_tracer.Span, context.Context) {
 	spanContext, err := getRecordSpanContext(ctx, msg)
 	if err != nil {
-		log.WithTracing(ctx).
-			WithError(err).
-			Debug("Couldn't create span from headers, using incomming span as parent")
-
 		return startSpan(ctx, serviceName, nil)
 	}
 
@@ -51,10 +46,6 @@ func getRecordSpanContext(ctx context.Context, msg events.SQSMessage) (dd_trace.
 		return nil, errors.New("no trace headers")
 	}
 
-	log.WithTracing(ctx).
-		WithField("headers", traceHeaders).
-		Debug("Trying to extract record span context")
-
 	recordSpanContext, err := propagator.Extract(dd_tracer.TextMapCarrier(traceHeaders))
 	if err != nil {
 		return nil, err
@@ -63,7 +54,7 @@ func getRecordSpanContext(ctx context.Context, msg events.SQSMessage) (dd_trace.
 	return recordSpanContext, nil
 }
 
-func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) map[string]string {
+func getTraceHeadersFromAttributes(_ context.Context, msg events.SQSMessage) map[string]string {
 	traceAttributes := map[string]string{}
 	allTraceHeaders := trace.AllHeaders()
 
@@ -78,7 +69,6 @@ func getTraceHeadersFromAttributes(ctx context.Context, msg events.SQSMessage) m
 	// Get SNS message attributes
 	var snsEvent snsEntityBody
 	if err := json.Unmarshal([]byte(msg.Body), &snsEvent); err != nil {
-		log.WithTracing(ctx).WithError(err).Debug("failed to unmarshal sns body")
 		return traceAttributes
 	}
 
