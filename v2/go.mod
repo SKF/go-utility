@@ -9,7 +9,7 @@ require (
 	github.com/SKF/proto/v2 v2.18.0-go
 	github.com/aws/aws-lambda-go v1.29.0
 	github.com/aws/aws-sdk-go v1.43.32
-	github.com/dgraph-io/ristretto v0.0.3
+	github.com/dgraph-io/ristretto v0.1.0
 	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/gomodule/redigo v1.8.2
 	github.com/google/uuid v1.1.2
@@ -37,9 +37,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.13.0 // indirect
 	github.com/aws/smithy-go v1.10.0 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
+	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -58,7 +60,7 @@ require (
 	go.uber.org/atomic v1.6.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220405052023-b1e9470b6e64 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20220118154757-00ab72f36ad5 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
