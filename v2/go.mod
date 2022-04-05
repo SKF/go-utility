@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
-	github.com/SKF/go-rest-utility v0.5.0
+	github.com/SKF/go-rest-utility v0.10.1
 	github.com/SKF/go-utility v1.10.4
 	github.com/SKF/proto/v2 v2.4.3-go
 	github.com/aws/aws-lambda-go v1.20.0
@@ -32,6 +32,11 @@ require github.com/SKF/go-enlight-middleware v0.4.0
 require (
 	github.com/DataDog/datadog-go v4.4.0+incompatible // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.2.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.13.0 // indirect
+	github.com/aws/smithy-go v1.10.0 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
