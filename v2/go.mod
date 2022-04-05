@@ -7,7 +7,7 @@ require (
 	github.com/SKF/go-rest-utility v0.10.1
 	github.com/SKF/go-utility v1.10.4
 	github.com/SKF/proto/v2 v2.18.0-go
-	github.com/aws/aws-lambda-go v1.20.0
+	github.com/aws/aws-lambda-go v1.29.0
 	github.com/aws/aws-sdk-go v1.35.30
 	github.com/dgraph-io/ristretto v0.0.3
 	github.com/golang-jwt/jwt/v4 v4.2.0
