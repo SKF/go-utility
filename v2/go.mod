@@ -12,7 +12,7 @@ require (
 	github.com/dgraph-io/ristretto v0.1.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/gomodule/redigo v1.8.8
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgtype v1.8.1
