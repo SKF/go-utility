@@ -14,6 +14,8 @@ import (
 	"github.com/SKF/go-utility/v2/trace"
 )
 
+const base10 = 10
+
 func injectSNSPublish(ctx context.Context, input *sns.PublishInput) *sns.PublishInput {
 	if input == nil {
 		return nil
@@ -76,13 +78,13 @@ func getTraceAttributesFromContext(ctx context.Context) map[string]string {
 	if span := oc_trace.FromContext(ctx); span != nil {
 		spanCtx := span.SpanContext()
 
-		attributes[trace.DatadogTraceIDHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.TraceID[8:]), 10)
-		attributes[trace.DatadogParentIDHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.SpanID[:]), 10)
+		attributes[trace.DatadogTraceIDHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.TraceID[8:]), base10)
+		attributes[trace.DatadogParentIDHeader] = strconv.FormatUint(binary.BigEndian.Uint64(spanCtx.SpanID[:]), base10)
 	}
 
 	if span, exists := dd_tracer.SpanFromContext(ctx); exists {
-		traceID := strconv.FormatUint(span.Context().TraceID(), 10)
-		spanID := strconv.FormatUint(span.Context().SpanID(), 10)
+		traceID := strconv.FormatUint(span.Context().TraceID(), base10)
+		spanID := strconv.FormatUint(span.Context().SpanID(), base10)
 
 		attributes[trace.DatadogTraceIDHeader] = traceID
 		attributes[trace.DatadogParentIDHeader] = spanID

@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+const bitSize64 = 64
+
 // MustGetAsString returns value for given environment variable
 func MustGetAsString(variableName string) string {
 	value := os.Getenv(variableName)
@@ -31,7 +33,7 @@ func GetAsFloat(variableName string, defaultValue float64) (floatValue float64) 
 		return defaultValue
 	}
 	var err error
-	if floatValue, err = strconv.ParseFloat(stringValue, 64); err != nil {
+	if floatValue, err = strconv.ParseFloat(stringValue, bitSize64); err != nil {
 		log.Panicf("Failed to parse string %s to float - %+v", stringValue, err)
 	}
 	return

@@ -13,6 +13,11 @@ import (
 	"github.com/SKF/go-utility/v2/trace"
 )
 
+const (
+	base10    = 10
+	bitSize64 = 64
+)
+
 // HTTPFormat implements propagation.HTTPFormat to propagate
 // traces in HTTP headers in B3 and Datadog propagation format.
 // HTTPFormat skips the X-B3-ParentId and X-B3-Flags headers
@@ -81,7 +86,7 @@ func (f *HTTPFormat) spanContextFromDatadogHeaders(req *http.Request) (sc oc_tra
 }
 
 func parseUint64ToByteSlice(str string, v []byte) error {
-	id, err := strconv.ParseUint(str, 10, 64)
+	id, err := strconv.ParseUint(str, base10, bitSize64)
 	if err != nil {
 		return err
 	}
@@ -156,8 +161,8 @@ func (f *HTTPFormat) SpanContextToRequest(sc oc_trace.SpanContext, req *http.Req
 	req.Header.Set(trace.B3TraceIDHeader, hex.EncodeToString(sc.TraceID[:]))
 	req.Header.Set(trace.B3SpanIDHeader, hex.EncodeToString(sc.SpanID[:]))
 
-	req.Header.Set(trace.DatadogTraceIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.TraceID[8:16]), 10))
-	req.Header.Set(trace.DatadogParentIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.SpanID[0:8]), 10))
+	req.Header.Set(trace.DatadogTraceIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.TraceID[8:16]), base10))
+	req.Header.Set(trace.DatadogParentIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.SpanID[0:8]), base10))
 
 	var sampled string
 	if sc.IsSampled() {
