@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
 	github.com/SKF/go-rest-utility v0.10.1
-	github.com/SKF/go-utility v1.10.4
 	github.com/SKF/proto/v2 v2.18.0-go
 	github.com/aws/aws-lambda-go v1.29.0
 	github.com/aws/aws-sdk-go v1.43.32
