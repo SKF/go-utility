@@ -115,7 +115,7 @@ func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInRe
 			return
 		}
 
-		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message)
+		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message) //nolint: revive
 
 		return
 	}
