@@ -89,7 +89,8 @@ func Parse(jwtToken string) (_ Token, err error) {
 		},
 	)
 	if err != nil {
-		if validationError, ok := err.(*jwt.ValidationError); ok {
+		validationError := &jwt.ValidationError{}
+		if errors.As(err, &validationError) {
 			if validationError.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 				err = errNotValidNowType{underLyingErr: err}
 

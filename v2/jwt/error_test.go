@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,4 +45,15 @@ func TestErrorTextIsKept(t *testing.T) {
 
 func TestIs(t *testing.T) {
 	require.False(t, errors.Is(errors.New(""), ErrNotValidNow))
+}
+
+func TestGetUnderlying(t *testing.T) {
+	err1 := jwt.NewValidationError("oh no", 2)
+	err := errNotValidNowType{
+		underLyingErr: err1,
+	}
+
+	ve := &jwt.ValidationError{}
+	vep := &ve
+	require.True(t, errors.As(err, vep))
 }
