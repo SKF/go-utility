@@ -34,7 +34,7 @@ func GetAsFloat(variableName string, defaultValue float64) (floatValue float64) 
 	}
 
 	var err error
-	if floatValue, err = strconv.ParseFloat(stringValue, 64); err != nil {
+	if floatValue, err = strconv.ParseFloat(stringValue, 64); err != nil { //nolint:gomnd
 		log.Panicf("Failed to parse string %s to float - %+v", stringValue, err)
 	}
 

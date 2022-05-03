@@ -3,7 +3,6 @@ package jwt
 var ErrNotValidNow = errExpiredType{}
 
 func errNotValidNow(underlyingErr error) error {
-
 	return errExpiredType{
 		underLyingErr: underlyingErr,
 	}

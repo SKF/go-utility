@@ -92,11 +92,13 @@ func Parse(jwtToken string) (_ Token, err error) {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 				err = errNotValidNow(err)
+
 				return
 			}
 		}
 
 		err = errors.Wrap(err, "parse with claims failed")
+
 		return
 	}
 
