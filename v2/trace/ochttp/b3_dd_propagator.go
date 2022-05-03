@@ -81,7 +81,7 @@ func (f *HTTPFormat) spanContextFromDatadogHeaders(req *http.Request) (sc oc_tra
 }
 
 func parseUint64ToByteSlice(str string, v []byte) error {
-	id, err := strconv.ParseUint(str, 10, 64)
+	id, err := strconv.ParseUint(str, 10, 64) //nolint: gomnd
 	if err != nil {
 		return err
 	}
@@ -156,8 +156,8 @@ func (f *HTTPFormat) SpanContextToRequest(sc oc_trace.SpanContext, req *http.Req
 	req.Header.Set(trace.B3TraceIDHeader, hex.EncodeToString(sc.TraceID[:]))
 	req.Header.Set(trace.B3SpanIDHeader, hex.EncodeToString(sc.SpanID[:]))
 
-	req.Header.Set(trace.DatadogTraceIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.TraceID[8:16]), 10))
-	req.Header.Set(trace.DatadogParentIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.SpanID[0:8]), 10))
+	req.Header.Set(trace.DatadogTraceIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.TraceID[8:16]), 10)) //nolint: gomnd
+	req.Header.Set(trace.DatadogParentIDHeader, strconv.FormatUint(binary.BigEndian.Uint64(sc.SpanID[0:8]), 10))  //nolint: gomnd
 
 	var sampled string
 	if sc.IsSampled() {
