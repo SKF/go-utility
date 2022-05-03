@@ -23,7 +23,7 @@ func TestIsNotValidNowError(t *testing.T) {
 
 func TestRandomErrorIsNotNotValidNowErr(t *testing.T) {
 	err := errors.New("random Error")
-	require.False(t, errors.Is(err, errExpiredType{}))
+	require.False(t, errors.Is(err, ErrNotValidNow))
 }
 
 func TestErrorTextIsKept(t *testing.T) {
