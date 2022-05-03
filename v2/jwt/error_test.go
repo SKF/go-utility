@@ -9,10 +9,12 @@ import (
 )
 
 func TestDoNotLooseUnderlyingError(t *testing.T) {
-	internalError := fmt.Errorf("my nice error")
-	err := errNotValidNowType{underLyingErr: internalError}
+	err1 := fmt.Errorf("my nice error")
+	err2 := fmt.Errorf("my nice error: %w", err1)
 
-	require.ErrorIs(t, err, internalError)
+	err := errNotValidNowType{underLyingErr: err2}
+
+	require.ErrorIs(t, err, err1)
 }
 
 func TestIsNotValidNowError(t *testing.T) {
@@ -26,10 +28,20 @@ func TestRandomErrorIsNotNotValidNowErr(t *testing.T) {
 	require.False(t, errors.Is(err, ErrNotValidNow))
 }
 
+func TestIsNotValidNowErrorIsNotRandomError(t *testing.T) {
+	err := errNotValidNowType{errors.New("")}
+
+	require.False(t, errors.Is(err, errors.New("my random error")))
+}
+
 func TestErrorTextIsKept(t *testing.T) {
 	internalError := errors.New("my error")
 	err := errNotValidNowType{underLyingErr: internalError}
 
 	fmt.Printf("%s\n", err)
 	require.Contains(t, err.Error(), internalError.Error())
+}
+
+func TestIs(t *testing.T) {
+	require.False(t, errors.Is(errors.New(""), ErrNotValidNow))
 }
