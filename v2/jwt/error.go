@@ -1,25 +1,19 @@
 package jwt
 
-var ErrNotValidNow = errExpiredType{}
+var ErrNotValidNow = errNotValidNowType{}
 
-func errNotValidNow(underlyingErr error) error {
-	return errExpiredType{
-		underLyingErr: underlyingErr,
-	}
-}
-
-type errExpiredType struct {
+type errNotValidNowType struct {
 	underLyingErr error
 }
 
-func (e errExpiredType) Error() string {
+func (e errNotValidNowType) Error() string {
 	return "token is not valid right now: " + e.underLyingErr.Error()
 }
 
-func (e errExpiredType) Unwrap() error {
+func (e errNotValidNowType) Unwrap() error {
 	return e.underLyingErr
 }
 
-func (e errExpiredType) Is(_ error) bool {
+func (e errNotValidNowType) Is(_ error) bool {
 	return true
 }
