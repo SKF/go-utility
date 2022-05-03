@@ -94,7 +94,6 @@ func Parse(jwtToken string) (_ Token, err error) {
 				err = errNotValidNow(err)
 				return
 			}
-
 		}
 
 		err = errors.Wrap(err, "parse with claims failed")
