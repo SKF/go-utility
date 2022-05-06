@@ -8,8 +8,8 @@ require (
 	github.com/SKF/proto v1.21.0-go
 	github.com/aws/aws-lambda-go v1.12.0
 	github.com/aws/aws-sdk-go v1.25.49
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/uuid v1.0.0
 	github.com/gorilla/mux v1.7.3

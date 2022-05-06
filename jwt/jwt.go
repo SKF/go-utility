@@ -3,7 +3,7 @@ package jwt
 import (
 	"github.com/SKF/go-utility/jwk"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
 
