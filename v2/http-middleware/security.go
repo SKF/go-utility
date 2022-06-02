@@ -3,6 +3,7 @@ package httpmiddleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	rest "github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/proto/v2/common"
@@ -24,6 +25,7 @@ import (
 
 const (
 	HeaderAuthorization = "Authorization"
+	impersonatePrefix   = "impersonate:"
 )
 
 type Config struct {
@@ -124,9 +126,20 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 	case jwt.TokenUseID:
 		userID = claims.EnlightUserID
 	case jwt.TokenUseAccess:
+		// Memory map key has been changed to username to provide seamless impersonation.
+		// There is no way to change tokens' claims.Subject in Cognito.
+		// So, we applied a workaround to get the user for impersonation from the access token.
+		// ID token will be generated for the impersonated user in such cases.
+		// In order to be successful, cache key should be set as a username.
+		// If token is created for impersonation, the cache key will be the impersonated user's username.
+		// Required changes for getUserIDByToken for impersonation has been done on users repo.
+		// Since username attribute in Cognito is unique as well, no harm to change the cache key to username.
+		// Ref: https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
+		username := GetUsernameFromClaims(ctx, claims)
+
 		if config.UseUserIDCache {
 			var found bool
-			if userID, found = userIDCache[claims.Subject]; found {
+			if userID, found = userIDCache[username]; found {
 				break
 			}
 		}
@@ -136,7 +149,7 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		}
 
 		if config.UseUserIDCache {
-			userIDCache[claims.Subject] = userID
+			userIDCache[username] = userID
 		}
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
@@ -173,6 +186,34 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 	}
 
 	return myUserResp.Data.ID, err
+}
+
+func GetUsernameFromClaims(ctx context.Context, claims jwt.Claims) string {
+	cognitoGroups := claims.CognitoGroups
+	username := claims.Username
+
+	if len(cognitoGroups) == 0 {
+		return username
+	}
+
+	for _, group := range cognitoGroups {
+		if strings.HasPrefix(group, impersonatePrefix) {
+			if len(group) == len(impersonatePrefix) { // nothing after the prefix
+				return username
+			}
+
+			result := group[len(impersonatePrefix):]
+
+			log.WithTracing(ctx).
+				WithField("username", username).
+				WithField("impersonatedUser", result).
+				Infof("User %s is impersonating %s", username, result)
+
+			return result
+		}
+	}
+
+	return username
 }
 
 type Authorizer interface {
