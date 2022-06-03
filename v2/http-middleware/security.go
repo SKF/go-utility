@@ -204,11 +204,6 @@ func GetUsernameFromClaims(ctx context.Context, claims jwt.Claims) string {
 
 			result := group[len(impersonatePrefix):]
 
-			log.WithTracing(ctx).
-				WithField("username", username).
-				WithField("impersonatedUser", result).
-				Infof("User %s is impersonating %s", username, result)
-
 			return result
 		}
 	}
