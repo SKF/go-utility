@@ -14,6 +14,7 @@ import (
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
+	"github.com/SKF/go-utility/v2/authorcontext"
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
@@ -25,7 +26,8 @@ import (
 
 const (
 	HeaderAuthorization = "Authorization"
-	impersonatePrefix   = "impersonate:"
+	userIDPrefix        = "enlightUserId:"
+	authorIDPrefix      = "authorId:"
 )
 
 type Config struct {
@@ -119,27 +121,31 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		return errors.Wrap(err, "authorization token not valid")
 	}
 
-	var userID string
+	// we need author ID for impersonation to log properly in micro services.
+	var userID, authorID string
 
 	claims := token.GetClaims()
 	switch claims.TokenUse {
 	case jwt.TokenUseID:
 		userID = claims.EnlightUserID
-	case jwt.TokenUseAccess:
-		// Memory map key has been changed to username to provide seamless impersonation.
-		// There is no way to change tokens' claims.Subject in Cognito.
-		// So, we applied a workaround to get the user for impersonation from the access token.
-		// ID token will be generated for the impersonated user in such cases.
-		// In order to be successful, cache key should be set as a username.
-		// If token is created for impersonation, the cache key will be the impersonated user's username.
-		// Required changes for getUserIDByToken for impersonation has been done on users repo.
-		// Since username attribute in Cognito is unique as well, no harm to change the cache key to username.
-		// Ref: https://docs.aws.amazon.com/cognito/latest/developerguide/user-pool-settings-attributes.html
-		username := GetUsernameFromClaims(ctx, claims)
 
+		_, author := resolveUserAndAuthor(claims)
+		authorID = *author
+	case jwt.TokenUseAccess:
+		enlightUserID, author := resolveUserAndAuthor(claims)
+		if enlightUserID != nil {
+			userID = *enlightUserID
+			authorID = *author
+
+			break
+		}
+
+		// added for backward compatibility. In case of an old token, which has no enlightUserId and authorId,  has been sent to the middleware.
+		// in this case , we assume that there is no impersonation.
 		if config.UseUserIDCache {
 			var found bool
-			if userID, found = userIDCache[username]; found {
+			if userID, found = userIDCache[claims.Subject]; found {
+				authorID = userID
 				break
 			}
 		}
@@ -149,14 +155,17 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		}
 
 		if config.UseUserIDCache {
-			userIDCache[username] = userID
+			userIDCache[claims.Subject] = userID
 		}
+
+		authorID = userID
 	default:
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
 	ctx = accesstokensubcontext.NewContext(ctx, claims.Subject)
 	ctx = useridcontext.NewContext(ctx, userID)
+	ctx = authorcontext.NewContext(ctx, authorID)
 	*req = *req.WithContext(ctx)
 
 	return nil
@@ -188,27 +197,37 @@ func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err er
 	return myUserResp.Data.ID, err
 }
 
-func GetUsernameFromClaims(ctx context.Context, claims jwt.Claims) string {
+// userID is the Enlight User ID of the authenticated/impersonated user.
+// authorID is the Enlight User ID of the authenticated user who creates the token.
+// If token is generated for impersonation, author indicates the admin user who wants to impersonate.
+// If it is a normal token, authorID and userID are the same.
+// We added these two fields to all the tokens to make sure that it will be consistent between the services.
+func resolveUserAndAuthor(claims jwt.Claims) (userID *string, authorID *string) {
 	cognitoGroups := claims.CognitoGroups
-	username := claims.Username
-
-	if len(cognitoGroups) == 0 {
-		return username
-	}
 
 	for _, group := range cognitoGroups {
-		if strings.HasPrefix(group, impersonatePrefix) {
-			if len(group) == len(impersonatePrefix) { // nothing after the prefix
-				return username
+		if strings.HasPrefix(group, userIDPrefix) {
+			if len(group) == len(userIDPrefix) { // nothing after the prefix
+				continue
 			}
 
-			result := group[len(impersonatePrefix):]
+			result := group[len(userIDPrefix):]
 
-			return result
+			userID = &result
+		}
+
+		if strings.HasPrefix(group, authorIDPrefix) {
+			if len(group) == len(authorIDPrefix) { // nothing after the prefix
+				continue
+			}
+
+			result := group[len(authorIDPrefix):]
+
+			authorID = &result
 		}
 	}
 
-	return username
+	return
 }
 
 type Authorizer interface {
