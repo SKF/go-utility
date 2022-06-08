@@ -130,7 +130,12 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		userID = claims.EnlightUserID
 
 		_, author := resolveUserAndAuthor(claims)
-		authorID = *author
+		if author != nil { // check whether token is in new format
+			authorID = *author
+			break
+		}
+
+		authorID = userID
 	case jwt.TokenUseAccess:
 		enlightUserID, author := resolveUserAndAuthor(claims)
 		if enlightUserID != nil {
