@@ -44,21 +44,11 @@ type ResponseConfig interface {
 	UnauthorizedResponse() []byte
 }
 
-var (
-	config      Config
-	userIDCache map[string]string
-	client      *rest.Client
-)
+var client *rest.Client
 
 func Configure(conf Config) {
-	config = conf
-
 	auth.Configure(auth.Config{Stage: conf.Stage})
 	jwk.Configure(jwk.Config{Stage: conf.Stage})
-
-	if conf.UseUserIDCache {
-		userIDCache = map[string]string{}
-	}
 
 	if client = conf.Client; client == nil {
 		url, err := auth.GetBaseURL()
@@ -123,49 +113,10 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 	}
 
 	// we need author ID for impersonation to log properly in micro services.
-	var userID, authorID string
-
 	claims := token.GetClaims()
-	switch claims.TokenUse {
-	case jwt.TokenUseID:
-		userID = claims.EnlightUserID
+	userID, authorID := resolveUserAndAuthor(claims)
 
-		_, author := resolveUserAndAuthor(claims)
-		if author != nil { // check whether token is in new format
-			authorID = *author
-			break
-		}
-
-		authorID = userID
-	case jwt.TokenUseAccess:
-		enlightUserID, author := resolveUserAndAuthor(claims)
-		if enlightUserID != nil && author != nil {
-			userID = *enlightUserID
-			authorID = *author
-
-			break
-		}
-
-		// added for backward compatibility. In case of an old token, which has no enlightUserId and authorId,  has been sent to the middleware.
-		// in this case , we assume that there is no impersonation.
-		if config.UseUserIDCache {
-			var found bool
-			if userID, found = userIDCache[claims.Subject]; found {
-				authorID = userID
-				break
-			}
-		}
-
-		if userID, err = getUserIDByToken(ctx, base64Token); err != nil {
-			return errors.Wrap(err, "couldn't get User by token")
-		}
-
-		if config.UseUserIDCache {
-			userIDCache[claims.Subject] = userID
-		}
-
-		authorID = userID
-	default:
+	if claims.TokenUse != jwt.TokenUseID && claims.TokenUse != jwt.TokenUseAccess {
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
@@ -177,38 +128,12 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 	return nil
 }
 
-func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err error) {
-	req := rest.Get("/users/me").
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Authorization", accessToken)
-
-	resp, err := client.Do(ctx, req)
-	if err != nil {
-		err = errors.Wrap(err, "failed to execute HTTP request")
-		return
-	}
-	defer resp.Body.Close()
-
-	var myUserResp struct {
-		Data struct {
-			ID string `json:"id"`
-		} `json:"data"`
-	}
-
-	if err = resp.Unmarshal(&myUserResp); err != nil {
-		err = errors.Wrap(err, "failed to decode My User response to JSON")
-		return
-	}
-
-	return myUserResp.Data.ID, err
-}
-
 // userID is the Enlight User ID of the authenticated/impersonated user.
 // authorID is the Enlight User ID of the authenticated user who creates the token.
 // If token is generated for impersonation, author indicates the admin user who wants to impersonate.
 // If it is a normal token, authorID and userID are the same.
 // We added these two fields to all the tokens to make sure that it will be consistent between the services.
-func resolveUserAndAuthor(claims jwt.Claims) (userID *string, authorID *string) {
+func resolveUserAndAuthor(claims jwt.Claims) (userID string, authorID string) {
 	cognitoGroups := claims.CognitoGroups
 
 	for _, group := range cognitoGroups {
@@ -219,7 +144,7 @@ func resolveUserAndAuthor(claims jwt.Claims) (userID *string, authorID *string) 
 
 			result := group[len(userIDPrefix):]
 
-			userID = &result
+			userID = result
 		}
 
 		if strings.HasPrefix(group, authorIDPrefix) {
@@ -229,7 +154,7 @@ func resolveUserAndAuthor(claims jwt.Claims) (userID *string, authorID *string) 
 
 			result := group[len(authorIDPrefix):]
 
-			authorID = &result
+			authorID = result
 		}
 	}
 
