@@ -110,6 +110,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 	}
 }
 
+//nolint:gocyclo
 func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string) error {
 	base64Token := req.Header.Get(header)
 	if base64Token == "" {
