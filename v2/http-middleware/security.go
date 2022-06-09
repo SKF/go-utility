@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	rest "github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -35,7 +34,9 @@ type Config struct {
 
 	// Configures the usage of a User ID Cache when using an Access Token
 	UseUserIDCache bool
-	Client         *rest.Client
+
+	// This parameter is deprecated.
+	Client interface{}
 }
 
 type ResponseConfig interface {
@@ -44,23 +45,9 @@ type ResponseConfig interface {
 	UnauthorizedResponse() []byte
 }
 
-var client *rest.Client
-
 func Configure(conf Config) {
 	auth.Configure(auth.Config{Stage: conf.Stage})
 	jwk.Configure(jwk.Config{Stage: conf.Stage})
-
-	if client = conf.Client; client == nil {
-		url, err := auth.GetBaseURL()
-		if err != nil {
-			panic(err)
-		}
-
-		client = rest.NewClient(
-			rest.WithBaseURL(url),
-			rest.WithOpenCensusTracing(),
-		)
-	}
 }
 
 // AuthenticateMiddleware retrieves the security configuration for the matched route

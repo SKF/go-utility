@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
-	github.com/SKF/go-rest-utility v0.5.0
 	github.com/SKF/go-utility v1.10.4
 	github.com/SKF/proto/v2 v2.4.3-go
 	github.com/aws/aws-lambda-go v1.20.0
@@ -34,7 +33,6 @@ require (
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -44,7 +42,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
 	github.com/jackc/puddle v1.1.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/jtacoma/uritemplates v1.0.0 // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
