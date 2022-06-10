@@ -13,10 +13,10 @@ import (
 
 	"github.com/SKF/go-utility/v2/accesstokensubcontext"
 	"github.com/SKF/go-utility/v2/auth"
-	"github.com/SKF/go-utility/v2/authorcontext"
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
+	"github.com/SKF/go-utility/v2/impersonatercontext"
 	"github.com/SKF/go-utility/v2/jwk"
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
@@ -109,7 +109,7 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 
 	ctx = accesstokensubcontext.NewContext(ctx, claims.Subject)
 	ctx = useridcontext.NewContext(ctx, userID)
-	ctx = authorcontext.NewContext(ctx, authorID)
+	ctx = impersonatercontext.NewContext(ctx, authorID)
 	*req = *req.WithContext(ctx)
 
 	return nil
