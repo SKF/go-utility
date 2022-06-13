@@ -3,8 +3,8 @@ package httpmiddleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
-	rest "github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -16,6 +16,7 @@ import (
 	"github.com/SKF/go-utility/v2/http-middleware/util"
 	http_model "github.com/SKF/go-utility/v2/http-model"
 	http_server "github.com/SKF/go-utility/v2/http-server"
+	"github.com/SKF/go-utility/v2/impersonatercontext"
 	"github.com/SKF/go-utility/v2/jwk"
 	"github.com/SKF/go-utility/v2/jwt"
 	"github.com/SKF/go-utility/v2/log"
@@ -24,6 +25,8 @@ import (
 
 const (
 	HeaderAuthorization = "Authorization"
+	userIDPrefix        = "enlightUserId:"
+	authorIDPrefix      = "authorId:"
 )
 
 type Config struct {
@@ -31,7 +34,9 @@ type Config struct {
 
 	// Configures the usage of a User ID Cache when using an Access Token
 	UseUserIDCache bool
-	Client         *rest.Client
+
+	// This parameter is deprecated.
+	Client interface{}
 }
 
 type ResponseConfig interface {
@@ -40,33 +45,9 @@ type ResponseConfig interface {
 	UnauthorizedResponse() []byte
 }
 
-var (
-	config      Config
-	userIDCache map[string]string
-	client      *rest.Client
-)
-
 func Configure(conf Config) {
-	config = conf
-
 	auth.Configure(auth.Config{Stage: conf.Stage})
 	jwk.Configure(jwk.Config{Stage: conf.Stage})
-
-	if conf.UseUserIDCache {
-		userIDCache = map[string]string{}
-	}
-
-	if client = conf.Client; client == nil {
-		url, err := auth.GetBaseURL()
-		if err != nil {
-			panic(err)
-		}
-
-		client = rest.NewClient(
-			rest.WithBaseURL(url),
-			rest.WithOpenCensusTracing(),
-		)
-	}
 }
 
 // AuthenticateMiddleware retrieves the security configuration for the matched route
@@ -106,6 +87,7 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 	}
 }
 
+//nolint:gocyclo
 func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string) error {
 	base64Token := req.Header.Get(header)
 	if base64Token == "" {
@@ -117,62 +99,53 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 		return errors.Wrap(err, "authorization token not valid")
 	}
 
-	var userID string
-
+	// we need author ID for impersonation to log properly in micro services.
 	claims := token.GetClaims()
-	switch claims.TokenUse {
-	case jwt.TokenUseID:
-		userID = claims.EnlightUserID
-	case jwt.TokenUseAccess:
-		if config.UseUserIDCache {
-			var found bool
-			if userID, found = userIDCache[claims.Subject]; found {
-				break
-			}
-		}
+	userID, authorID := resolveUserAndAuthor(claims)
 
-		if userID, err = getUserIDByToken(ctx, base64Token); err != nil {
-			return errors.Wrap(err, "couldn't get User by token")
-		}
-
-		if config.UseUserIDCache {
-			userIDCache[claims.Subject] = userID
-		}
-	default:
+	if claims.TokenUse != jwt.TokenUseID && claims.TokenUse != jwt.TokenUseAccess {
 		return errors.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
 	ctx = accesstokensubcontext.NewContext(ctx, claims.Subject)
 	ctx = useridcontext.NewContext(ctx, userID)
+	ctx = impersonatercontext.NewContext(ctx, authorID)
 	*req = *req.WithContext(ctx)
 
 	return nil
 }
 
-func getUserIDByToken(ctx context.Context, accessToken string) (_ string, err error) {
-	req := rest.Get("/users/me").
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Authorization", accessToken)
+// userID is the Enlight User ID of the authenticated/impersonated user.
+// authorID is the Enlight User ID of the authenticated user who creates the token.
+// If token is generated for impersonation, author indicates the admin user who wants to impersonate.
+// If it is a normal token, authorID and userID are the same.
+// We added these two fields to all the tokens to make sure that it will be consistent between the services.
+func resolveUserAndAuthor(claims jwt.Claims) (userID string, authorID string) {
+	cognitoGroups := claims.CognitoGroups
 
-	resp, err := client.Do(ctx, req)
-	if err != nil {
-		err = errors.Wrap(err, "failed to execute HTTP request")
-		return
+	for _, group := range cognitoGroups {
+		if strings.HasPrefix(group, userIDPrefix) {
+			if len(group) == len(userIDPrefix) { // nothing after the prefix
+				continue
+			}
+
+			result := group[len(userIDPrefix):]
+
+			userID = result
+		}
+
+		if strings.HasPrefix(group, authorIDPrefix) {
+			if len(group) == len(authorIDPrefix) { // nothing after the prefix
+				continue
+			}
+
+			result := group[len(authorIDPrefix):]
+
+			authorID = result
+		}
 	}
-	defer resp.Body.Close()
 
-	var myUserResp struct {
-		Data struct {
-			ID string `json:"id"`
-		} `json:"data"`
-	}
-
-	if err = resp.Unmarshal(&myUserResp); err != nil {
-		err = errors.Wrap(err, "failed to decode My User response to JSON")
-		return
-	}
-
-	return myUserResp.Data.ID, err
+	return
 }
 
 type Authorizer interface {
