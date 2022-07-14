@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	patternNewlines = regexp.MustCompile(`\s*\r?\n\s*`)
+	maxArraySizeToLog = 100
+	patternNewlines   = regexp.MustCompile(`\s*\r?\n\s*`)
 )
 
 type internalTracer struct {
@@ -63,7 +64,16 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 
 	for i := range args {
 		key := fmt.Sprintf("sql.args.%d", i)
-		output[key] = args[i]
+		switch x := args[i].(type) {
+		case []float64:
+			if len(x) > maxArraySizeToLog {
+				output[key] = len(x) // avoiding excessive logging sizes and costs #304131
+			} else {
+				output[key] = args[i]
+			}
+		default:
+			output[key] = args[i]
+		}
 	}
 
 	return output
