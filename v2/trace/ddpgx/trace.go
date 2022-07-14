@@ -67,8 +67,8 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 
 		switch x := args[i].(type) {
 		case []float64:
-			if len(x) > maxArraySizeToLog {
-				output[key] = len(x) // avoiding excessive logging sizes and costs #304131
+			if len(x) > maxArraySizeToLog { // avoiding excessive logging sizes and costs #304131
+				output[key] = fmt.Sprintf("<a float array of length %d>", len(x))
 			} else {
 				output[key] = args[i]
 			}
