@@ -64,6 +64,7 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 
 	for i := range args {
 		key := fmt.Sprintf("sql.args.%d", i)
+		
 		switch x := args[i].(type) {
 		case []float64:
 			if len(x) > maxArraySizeToLog {
