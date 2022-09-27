@@ -19,13 +19,20 @@ var (
 type internalTracer struct {
 	serviceName string
 	driver      string
+	spanTagVal  func(interface{}) interface{}
 }
 
 func newTracer(serviceName, driver string) internalTracer {
 	return internalTracer{
 		serviceName: serviceName,
 		driver:      driver,
+		spanTagVal:  escapeValue,
 	}
+}
+
+func (t internalTracer) WithoutSpanTagValueEscape() internalTracer {
+	t.spanTagVal = func(v interface{}) interface{} { return v }
+	return t
 }
 
 func (t internalTracer) ServiceName() string {
@@ -47,13 +54,13 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
-		span.SetTag(key, escapeValue(value))
+		span.SetTag(key, t.spanTagVal(value))
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, escapeValue(query))
+		span.SetTag(dd_ext.ResourceName, t.spanTagVal(query))
 	} else {
-		span.SetTag(dd_ext.ResourceName, escapeValue(resource))
+		span.SetTag(dd_ext.ResourceName, t.spanTagVal(resource))
 	}
 
 	span.Finish(dd_tracer.WithError(err))
