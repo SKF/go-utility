@@ -33,6 +33,7 @@ issues:
     - don't use ALL_CAPS in Go names; use CamelCase
 
 linters:
+  disable-all: true
   enable:
     - bodyclose #- checks whether HTTP response body is closed successfully
     - revive
