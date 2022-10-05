@@ -25,17 +25,9 @@ type Connection interface {
 	Close(context.Context) error
 }
 
-func Connect(ctx context.Context, serviceName, url string) (Connection, error) {
-	trace := newTracer(serviceName, driverPgx)
-	return connect(ctx, url, trace)
-}
+func Connect(ctx context.Context, serviceName, url string, tracerOpts ...TracerOpt) (Connection, error) {
+	trace := newTracer(serviceName, driverPgx, tracerOpts...)
 
-func ConnectWithoutSpanValueEscape(ctx context.Context, serviceName, url string) (Connection, error) {
-	trace := newTracer(serviceName, driverPgx).WithoutSpanTagValueEscape()
-	return connect(ctx, url, trace)
-}
-
-func connect(ctx context.Context, url string, trace internalTracer) (Connection, error) {
 	startTime := time.Now()
 
 	conn, err := pgx.Connect(ctx, url)
@@ -47,17 +39,9 @@ func connect(ctx context.Context, url string, trace internalTracer) (Connection,
 	}, err
 }
 
-func ConnectPoolConfig(ctx context.Context, serviceName string, config *pgxpool.Config) (Connection, error) {
-	trace := newTracer(serviceName, driverPgxPool)
-	return connectPoolConfig(ctx, config, trace)
-}
+func ConnectPoolConfig(ctx context.Context, serviceName string, config *pgxpool.Config, tracerOpts ...TracerOpt) (Connection, error) {
+	trace := newTracer(serviceName, driverPgxPool, tracerOpts...)
 
-func ConnectPoolConfigWithoutSpanValueEscape(ctx context.Context, serviceName string, config *pgxpool.Config) (Connection, error) {
-	trace := newTracer(serviceName, driverPgxPool).WithoutSpanTagValueEscape()
-	return connectPoolConfig(ctx, config, trace)
-}
-
-func connectPoolConfig(ctx context.Context, config *pgxpool.Config, trace internalTracer) (Connection, error) {
 	startTime := time.Now()
 
 	pool, err := pgxpool.ConnectConfig(ctx, config)

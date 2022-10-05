@@ -17,22 +17,31 @@ var (
 )
 
 type internalTracer struct {
-	serviceName string
-	driver      string
-	spanTagVal  func(interface{}) interface{}
+	serviceName        string
+	driver             string
+	spanValueFormatter SpanValueFormatter
 }
 
-func newTracer(serviceName, driver string) internalTracer {
-	return internalTracer{
-		serviceName: serviceName,
-		driver:      driver,
-		spanTagVal:  escapeValue,
+func newTracer(serviceName, driver string, opts ...TracerOpt) internalTracer {
+	tracer := internalTracer{
+		serviceName:        serviceName,
+		driver:             driver,
+		spanValueFormatter: NewDefaultFormatter(),
 	}
+
+	for _, opt := range opts {
+		opt(&tracer)
+	}
+
+	return tracer
 }
 
-func (t internalTracer) WithoutSpanTagValueEscape() internalTracer {
-	t.spanTagVal = func(v interface{}) interface{} { return v }
-	return t
+type TracerOpt func(c *internalTracer)
+
+func WithNoopSpanValueFormatter() TracerOpt {
+	return func(t *internalTracer) {
+		t.spanValueFormatter = NewNoopFormatter()
+	}
 }
 
 func (t internalTracer) ServiceName() string {
@@ -54,13 +63,13 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
-		span.SetTag(key, t.spanTagVal(value))
+		span.SetTag(key, t.spanValueFormatter.format(value))
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, t.spanTagVal(query))
+		span.SetTag(dd_ext.ResourceName, t.spanValueFormatter.format(query))
 	} else {
-		span.SetTag(dd_ext.ResourceName, t.spanTagVal(resource))
+		span.SetTag(dd_ext.ResourceName, t.spanValueFormatter.format(resource))
 	}
 
 	span.Finish(dd_tracer.WithError(err))
