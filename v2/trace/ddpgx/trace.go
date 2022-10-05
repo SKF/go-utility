@@ -17,16 +17,16 @@ var (
 )
 
 type internalTracer struct {
-	serviceName        string
-	driver             string
-	spanValueFormatter SpanValueFormatter
+	serviceName       string
+	driver            string
+	tagValueFormatter TagValueFormatter
 }
 
 func newTracer(serviceName, driver string, opts ...TracerOpt) internalTracer {
 	tracer := internalTracer{
-		serviceName:        serviceName,
-		driver:             driver,
-		spanValueFormatter: NewDefaultFormatter(),
+		serviceName:       serviceName,
+		driver:            driver,
+		tagValueFormatter: NewDefaultFormatter(),
 	}
 
 	for _, opt := range opts {
@@ -40,7 +40,7 @@ type TracerOpt func(c *internalTracer)
 
 func NoopSpanValueFormatter() TracerOpt {
 	return func(t *internalTracer) {
-		t.spanValueFormatter = NewNoopFormatter()
+		t.tagValueFormatter = NewNoopFormatter()
 	}
 }
 
@@ -63,13 +63,13 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
-		span.SetTag(key, t.spanValueFormatter.format(value))
+		span.SetTag(key, t.tagValueFormatter.format(value))
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, t.spanValueFormatter.format(query))
+		span.SetTag(dd_ext.ResourceName, t.tagValueFormatter.format(query))
 	} else {
-		span.SetTag(dd_ext.ResourceName, t.spanValueFormatter.format(resource))
+		span.SetTag(dd_ext.ResourceName, t.tagValueFormatter.format(resource))
 	}
 
 	span.Finish(dd_tracer.WithError(err))

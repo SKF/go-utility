@@ -4,11 +4,11 @@ import (
 	"strings"
 )
 
-type SpanValueFormatter interface {
+type TagValueFormatter interface {
 	format(interface{}) interface{}
 }
 
-func NewDefaultFormatter() SpanValueFormatter {
+func NewDefaultFormatter() TagValueFormatter {
 	return &StripNewLinesFormatter{}
 }
 
@@ -29,7 +29,7 @@ func (s *StripNewLinesFormatter) stripNewlines(input string) string {
 
 type NoopFormatter struct{}
 
-func NewNoopFormatter() SpanValueFormatter {
+func NewNoopFormatter() TagValueFormatter {
 	return &NoopFormatter{}
 }
 
