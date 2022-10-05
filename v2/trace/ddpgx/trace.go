@@ -38,7 +38,7 @@ func newTracer(serviceName, driver string, opts ...TracerOpt) internalTracer {
 
 type TracerOpt func(c *internalTracer)
 
-func WithNoopSpanValueFormatter() TracerOpt {
+func NoopSpanValueFormatter() TracerOpt {
 	return func(t *internalTracer) {
 		t.spanValueFormatter = NewNoopFormatter()
 	}
