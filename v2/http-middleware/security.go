@@ -343,29 +343,29 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 // return a HttpError, or an error wrapping a HTTPError.
 // The following example ResourceFunc expects an input struct with a non-empty field
 //
-//     func fieldFromBodyFunc(r *http.Request) (*common.Origin, error) {
-//         var inputData struct {
-//             field string `json:"field,omitempty"`
-//         }
-//         body, err := ioutil.ReadAll(r.Body)
-//         if err != nil {
-//             return nil, err
-//         }
-//         r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-//         if err := json.Unmarshal(body, &inputData); err != nil {
-//             return nil, &http_model.HTTPError{
-//                 Msg:        "Failed to unmarshal body",
-//                 StatusCode: http.StatusBadRequest,
-//             }
-//         }
-//         if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
-//             return nil, &http_model.HTTPError{
-//                 Msg:        "Required field 'field' is empty",
-//                 StatusCode: http.StatusBadRequest,
-//             }
-//         }
-//         return &common.Origin{Id: inputData.field, Type: "example"}, nil
-//     }
+//	func fieldFromBodyFunc(r *http.Request) (*common.Origin, error) {
+//	    var inputData struct {
+//	        field string `json:"field,omitempty"`
+//	    }
+//	    body, err := ioutil.ReadAll(r.Body)
+//	    if err != nil {
+//	        return nil, err
+//	    }
+//	    r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+//	    if err := json.Unmarshal(body, &inputData); err != nil {
+//	        return nil, &http_model.HTTPError{
+//	            Msg:        "Failed to unmarshal body",
+//	            StatusCode: http.StatusBadRequest,
+//	        }
+//	    }
+//	    if inputData.field == "" || uuid.UUID(inputData.field) == uuid.EmptyUUID {
+//	        return nil, &http_model.HTTPError{
+//	            Msg:        "Required field 'field' is empty",
+//	            StatusCode: http.StatusBadRequest,
+//	        }
+//	    }
+//	    return &common.Origin{Id: inputData.field, Type: "example"}, nil
+//	}
 type ResourceFunc func(*http.Request) (*common.Origin, error)
 
 // NilResourceFunc represents the Zero Value ResourceFunc.
