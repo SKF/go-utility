@@ -3,28 +3,30 @@ module github.com/SKF/go-utility
 go 1.14
 
 require (
-	github.com/DataDog/datadog-go v2.2.0+incompatible // indirect
-	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20190726131236-c7b72e836616
+	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
+	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/SKF/proto v1.21.0-go
-	github.com/aws/aws-lambda-go v1.12.0
-	github.com/aws/aws-sdk-go v1.25.49
+	github.com/aws/aws-lambda-go v1.20.0
+	github.com/aws/aws-sdk-go v1.35.30
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gogo/protobuf v1.3.0 // indirect
-	github.com/golang/protobuf v1.4.2 // indirect
-	github.com/google/uuid v1.0.0
-	github.com/gorilla/mux v1.7.3
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
-	github.com/hashicorp/golang-lru v0.5.3 // indirect
-	github.com/philhofer/fwd v1.0.0 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/google/uuid v1.1.2
+	github.com/gorilla/mux v1.8.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/kr/pretty v0.2.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.5.1
-	github.com/tinylib/msgp v1.1.0 // indirect
-	go.opencensus.io v0.22.0
-	go.uber.org/zap v1.14.1
-	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
-	golang.org/x/tools v0.0.0-20191113232020-e2727e816f5a // indirect
-	google.golang.org/grpc v1.31.1
-	gopkg.in/DataDog/dd-trace-go.v1 v1.16.1 // indirect
+	github.com/stretchr/objx v0.3.0 // indirect
+	github.com/stretchr/testify v1.7.0
+	go.opencensus.io v0.23.0
+	go.uber.org/zap v1.16.0
+	golang.org/x/net v0.0.0-20210414194228-064579744ee0 // indirect
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20210414175830-92282443c685 // indirect
+	google.golang.org/grpc v1.37.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.29.2 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v2 v2.2.7 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

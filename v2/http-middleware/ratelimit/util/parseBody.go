@@ -3,14 +3,14 @@ package util
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
 // reads the body and then resets the request.body reader
 // runs json.unmarshal on the body into the out variable
 func ParseBody(req *http.Request, out interface{}) error {
-	bodybytes, err := ioutil.ReadAll(req.Body)
+	bodybytes, err := io.ReadAll(req.Body)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func ParseBody(req *http.Request, out interface{}) error {
 		return err
 	}
 
-	req.Body = ioutil.NopCloser(bytes.NewReader(bodybytes))
+	req.Body = io.NopCloser(bytes.NewReader(bodybytes))
 
 	return nil
 }
