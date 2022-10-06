@@ -3,5 +3,4 @@
 //
 // The package is using on
 // github.com/grpc-ecosystem/go-grpc-middleware/tags
-//
 package requestid

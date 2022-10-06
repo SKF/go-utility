@@ -27,22 +27,22 @@ import (
 // - ddtrace: https://github.com/DataDog/dd-trace-go/blob/v1/ddtrace/tracer/textmap.go
 // See https://github.com/openzipkin/b3-propagation for more details on B3 propagation.
 //
-// Examples
+// # Examples
 //
 // An example of using the propagator
 //
-//		func ListenAndServe(port string, handler http.Handler) error {
-//			ocHandler := new(oc_http.Handler)
-//			ocHandler.Handler = handler
-//			ocHandler.Propagation = new(HTTPFormat)
+//	func ListenAndServe(port string, handler http.Handler) error {
+//		ocHandler := new(oc_http.Handler)
+//		ocHandler.Handler = handler
+//		ocHandler.Propagation = new(HTTPFormat)
 //
-//			server = http.Server{
-//				Addr:    ":" + port,
-//				Handler: ocHandler,
-//			}
-//
-//			return server.ListenAndServe()
+//		server = http.Server{
+//			Addr:    ":" + port,
+//			Handler: ocHandler,
 //		}
+//
+//		return server.ListenAndServe()
+//	}
 type HTTPFormat struct{}
 
 var _ propagation.HTTPFormat = (*HTTPFormat)(nil)

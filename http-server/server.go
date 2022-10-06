@@ -26,7 +26,7 @@ func StartHealthServer(port string) {
 
 	log.Infof("Starting health server on port %s", port)
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil { // nolint: gosec
 		log.WithError(err).Error("ListenAndServe")
 	}
 }

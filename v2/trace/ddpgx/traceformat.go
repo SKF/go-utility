@@ -33,6 +33,6 @@ func NewNoopFormatter() TagValueFormatter {
 	return &NoopFormatter{}
 }
 
-func (_ NoopFormatter) format(v interface{}) interface{} {
+func (NoopFormatter) format(v interface{}) interface{} {
 	return v
 }

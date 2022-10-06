@@ -28,7 +28,7 @@ func main() {
 		})
 	r.Use(limiter.Middleware())
 
-	err := http.ListenAndServe(":8080", r)
+	err := http.ListenAndServe(":8080", r) // nolint: gosec
 	log.Errorf(err.Error())
 }
 

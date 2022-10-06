@@ -1,21 +1,19 @@
 package ratelimit_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	http_model "github.com/SKF/go-utility/v2/http-model"
-
-	"github.com/SKF/go-utility/v2/http-middleware/ratelimit"
-
-	"github.com/SKF/go-utility/v2/http-middleware/ratelimit/util"
-
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SKF/go-utility/v2/http-middleware/ratelimit"
+	"github.com/SKF/go-utility/v2/http-middleware/ratelimit/util"
+	http_model "github.com/SKF/go-utility/v2/http-model"
 )
 
 func TestRateLimitOk(t *testing.T) {
@@ -166,7 +164,7 @@ func TestReadBodyInMiddleware(t *testing.T) {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/apa", func(w http.ResponseWriter, r *http.Request) {
-		b, readBodyErr := ioutil.ReadAll(r.Body)
+		b, readBodyErr := io.ReadAll(r.Body)
 		if readBodyErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error")) //nolint: errcheck
@@ -216,7 +214,7 @@ func TestReadBodyInMiddleware(t *testing.T) {
 	connMock.AssertExpectations(t)
 
 	require.Equal(t, http.StatusOK, resp.Code)
-	res, readErr := ioutil.ReadAll(resp.Body)
+	res, readErr := io.ReadAll(resp.Body)
 	require.NoError(t, readErr)
 
 	require.Equal(t, string(res), testBody)

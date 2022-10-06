@@ -1,7 +1,7 @@
 package log
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"sync"
 	"time"
@@ -40,7 +40,7 @@ func (s *sampleSyncer) Write(b []byte) (int, error) {
 	s.lastTick = now
 
 	if s.count > s.first && s.count%s.thereafter != 0 {
-		return ioutil.Discard.Write(b)
+		return io.Discard.Write(b)
 	}
 
 	return s.WriteSyncer.Write(b)
