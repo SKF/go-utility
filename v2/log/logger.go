@@ -74,6 +74,16 @@ func (l logger) WithUserID(ctx context.Context) Logger {
 	return l
 }
 
+func (l logger) OnlyWithTracing(ctx context.Context) Logger {
+	if _, exists := dd_tracer.SpanFromContext(ctx); exists {
+		return l.WithTracing(ctx)
+	} else if span := oc_trace.FromContext(ctx); span != nil {
+		return l.WithTracing(ctx)
+	}
+
+	return Nop()
+}
+
 func (l logger) Debugf(format string, args ...interface{}) {
 	l.logger.Debugf(format, args...)
 }
