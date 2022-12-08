@@ -23,6 +23,7 @@ type Logger interface {
 	WithError(err error) Logger
 	WithTracing(ctx context.Context) Logger
 	WithUserID(ctx context.Context) Logger
+	OnlyWithTracing(ctx context.Context) Logger
 
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})
@@ -149,6 +150,10 @@ func WithClientID(ctx context.Context) Logger {
 
 func WithUserID(ctx context.Context) Logger {
 	return baseLogger.WithUserID(ctx)
+}
+
+func OnlyWithTracing(ctx context.Context) Logger {
+	return baseLogger.OnlyWithTracing(ctx)
 }
 
 // We must directly call the bundled logger here (whenever a func instead of
