@@ -12,7 +12,11 @@ import (
 
 var stringDataType = "String"
 
-func injectMiddleware(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (middleware.InitializeOutput, middleware.Metadata, error) {
+func injectMiddleware(
+	ctx context.Context,
+	in middleware.InitializeInput,
+	next middleware.InitializeHandler,
+) (middleware.InitializeOutput, middleware.Metadata, error) {
 	span, ok := tracer.SpanFromContext(ctx)
 	if !ok {
 		return next.HandleInitialize(ctx, in)
@@ -20,13 +24,21 @@ func injectMiddleware(ctx context.Context, in middleware.InitializeInput, next m
 
 	switch v := in.Parameters.(type) {
 	case *sqs.SendMessageBatchInput:
-		tracer.Inject(span.Context(), (*SendMessageBatchInputCarrier)(v))
+		if err := tracer.Inject(span.Context(), (*SendMessageBatchInputCarrier)(v)); err != nil {
+			return middleware.InitializeOutput{}, middleware.Metadata{}, err
+		}
 	case *sqs.SendMessageInput:
-		tracer.Inject(span.Context(), (*SendMessageInputCarrier)(v))
+		if err := tracer.Inject(span.Context(), (*SendMessageInputCarrier)(v)); err != nil {
+			return middleware.InitializeOutput{}, middleware.Metadata{}, err
+		}
 	case *sns.PublishBatchInput:
-		tracer.Inject(span.Context(), (*PublishBatchInputCarrier)(v))
+		if err := tracer.Inject(span.Context(), (*PublishBatchInputCarrier)(v)); err != nil {
+			return middleware.InitializeOutput{}, middleware.Metadata{}, err
+		}
 	case *sns.PublishInput:
-		tracer.Inject(span.Context(), (*PublishInputCarrier)(v))
+		if err := tracer.Inject(span.Context(), (*PublishInputCarrier)(v)); err != nil {
+			return middleware.InitializeOutput{}, middleware.Metadata{}, err
+		}
 	}
 
 	return next.HandleInitialize(ctx, in)
