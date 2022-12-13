@@ -23,14 +23,19 @@ func Test_Lambda_StartFromSQS(t *testing.T) {
 	host, err := url.Parse(s.URL)
 	require.NoError(t, err)
 
+	t.Setenv("DD_TRACE_STARTUP_LOGS", "false")
 	t.Setenv("DD_AGENT_HOST", host.Hostname())
 	t.Setenv("DD_TRACE_AGENT_PORT", host.Port())
 	t.Setenv("DD_PROPAGATION_STYLE_EXTRACT", "DataDog")
 
 	tracer.Start()
 
-	traceID := strconv.FormatUint(1, 10)
-	parentID := strconv.FormatUint(2, 10)
+	var (
+		traceID          = strconv.FormatUint(1, 10)
+		parentID         = strconv.FormatUint(2, 10)
+		samplingPriority = "1"
+		tags             = "_dd.p.dm=-1"
+	)
 
 	event := events.SQSMessage{
 		MessageAttributes: map[string]events.SQSMessageAttribute{
@@ -41,6 +46,14 @@ func Test_Lambda_StartFromSQS(t *testing.T) {
 			tracer.DefaultParentIDHeader: {
 				DataType:    "String",
 				StringValue: &parentID,
+			},
+			tracer.DefaultPriorityHeader: {
+				DataType:    "String",
+				StringValue: &samplingPriority,
+			},
+			"x-datadog-tags": {
+				DataType:    "String",
+				StringValue: &tags,
 			},
 		},
 	}
