@@ -46,7 +46,7 @@ func injectMiddleware(
 
 func AppendMiddleware(cfg *aws.Config) {
 	cfg.APIOptions = append(cfg.APIOptions, func(stack *middleware.Stack) error {
-		return stack.Initialize.Add(middleware.InitializeMiddlewareFunc("InitInjectMiddleware", injectMiddleware), middleware.Before)
+		return stack.Initialize.Add(middleware.InitializeMiddlewareFunc("InitTraceMessageAttributesMiddleware", injectMiddleware), middleware.Before)
 	})
 }
 
@@ -55,5 +55,7 @@ func StartSpan(ctx context.Context, carrier tracer.TextMapReader, operationName 
 		opts = append(opts, tracer.ChildOf(parent))
 	}
 
-	return tracer.StartSpanFromContext(ctx, operationName, opts...)
+	span := tracer.StartSpan(operationName, opts...)
+
+	return span, tracer.ContextWithSpan(ctx, span)
 }
