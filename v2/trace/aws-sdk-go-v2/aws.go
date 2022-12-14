@@ -51,11 +51,14 @@ func AppendMiddleware(cfg *aws.Config) {
 }
 
 func StartSpan(ctx context.Context, carrier tracer.TextMapReader, operationName string, opts ...tracer.StartSpanOption) (tracer.Span, context.Context) {
-	if parent, err := tracer.Extract(carrier); err == nil {
-		opts = append(opts, tracer.ChildOf(parent))
+	parent, err := tracer.Extract(carrier)
+	if err != nil || parent.TraceID() == 0 {
+		// If there was no trace information in the carrier a regular
+		// span is created with the same options.
+		return tracer.StartSpanFromContext(ctx, operationName, opts...)
 	}
 
-	span := tracer.StartSpan(operationName, opts...)
+	span := tracer.StartSpan(operationName, append(opts, tracer.ChildOf(parent))...)
 
 	return span, tracer.ContextWithSpan(ctx, span)
 }
