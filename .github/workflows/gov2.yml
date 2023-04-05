@@ -41,7 +41,4 @@ jobs:
     - name: Test
       run: cd v2 && go test -v ./...
       env:
-        PGHOST: localhost
-        PGUSER: postgres
-        PGPASSWORD: secret
-        PGSSLMODE: disable
+        PGX_TEST_DATABASE: postgres://postgres:secret@localhost:5432?sslmode=disable
