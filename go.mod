@@ -21,9 +21,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	go.opencensus.io v0.23.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/net v0.0.0-20210414194228-064579744ee0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20210414175830-92282443c685 // indirect
 	google.golang.org/grpc v1.37.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.29.2 // indirect
