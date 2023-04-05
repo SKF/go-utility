@@ -3,9 +3,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/SKF/go-utility/log"
-
 	"github.com/SKF/go-utility/v2/http-middleware/ratelimit"
+	"github.com/SKF/go-utility/v2/log"
 
 	"github.com/gorilla/mux"
 )
@@ -28,7 +27,7 @@ func main() {
 		})
 	r.Use(limiter.Middleware())
 
-	err := http.ListenAndServe(":8080", r)
+	err := http.ListenAndServe(":8080", r) // nolint: gosec
 	log.Errorf(err.Error())
 }
 

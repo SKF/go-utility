@@ -19,8 +19,9 @@ func (t Token) GetClaims() Claims {
 }
 
 type CognitoClaims struct {
-	Username string `json:"username"`
-	TokenUse string `json:"token_use"`
+	Username      string   `json:"username"`
+	TokenUse      string   `json:"token_use"`
+	CognitoGroups []string `json:"cognito:groups"`
 }
 
 type EnlightClaims struct {

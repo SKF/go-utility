@@ -25,8 +25,9 @@ type Connection interface {
 	Close(context.Context) error
 }
 
-func Connect(ctx context.Context, serviceName, url string) (Connection, error) {
-	trace := newTracer(serviceName, driverPgx)
+func Connect(ctx context.Context, serviceName, url string, tracerOpts ...TracerOpt) (Connection, error) {
+	trace := newTracer(serviceName, driverPgx, tracerOpts...)
+
 	startTime := time.Now()
 
 	conn, err := pgx.Connect(ctx, url)
@@ -38,8 +39,9 @@ func Connect(ctx context.Context, serviceName, url string) (Connection, error) {
 	}, err
 }
 
-func ConnectPoolConfig(ctx context.Context, serviceName string, config *pgxpool.Config) (Connection, error) {
-	trace := newTracer(serviceName, driverPgxPool)
+func ConnectPoolConfig(ctx context.Context, serviceName string, config *pgxpool.Config, tracerOpts ...TracerOpt) (Connection, error) {
+	trace := newTracer(serviceName, driverPgxPool, tracerOpts...)
+
 	startTime := time.Now()
 
 	pool, err := pgxpool.ConnectConfig(ctx, config)

@@ -20,7 +20,7 @@ func (s *Server) ListenAndServe(port string) {
 	handler.Handler = s.mux
 	handler.Propagation = new(skf_oc_http.HTTPFormat)
 
-	s.httpServer = &http.Server{
+	s.httpServer = &http.Server{ // nolint: gosec
 		Addr:    ":" + port,
 		Handler: handler,
 	}

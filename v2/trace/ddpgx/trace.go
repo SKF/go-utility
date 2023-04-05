@@ -12,18 +12,35 @@ import (
 )
 
 var (
-	patternNewlines = regexp.MustCompile(`\s*\r?\n\s*`)
+	maxArraySizeToLog = 100
+	patternNewlines   = regexp.MustCompile(`\s*\r?\n\s*`)
 )
 
 type internalTracer struct {
-	serviceName string
-	driver      string
+	serviceName       string
+	driver            string
+	tagValueFormatter TagValueFormatter
 }
 
-func newTracer(serviceName, driver string) internalTracer {
-	return internalTracer{
-		serviceName: serviceName,
-		driver:      driver,
+func newTracer(serviceName, driver string, opts ...TracerOpt) internalTracer {
+	tracer := internalTracer{
+		serviceName:       serviceName,
+		driver:            driver,
+		tagValueFormatter: NewDefaultFormatter(),
+	}
+
+	for _, opt := range opts {
+		opt(&tracer)
+	}
+
+	return tracer
+}
+
+type TracerOpt func(c *internalTracer)
+
+func NoopSpanValueFormatter() TracerOpt {
+	return func(t *internalTracer) {
+		t.tagValueFormatter = NewNoopFormatter()
 	}
 }
 
@@ -46,13 +63,13 @@ func (t internalTracer) TryTrace(ctx context.Context, startTime time.Time, resou
 	span.SetTag("sql.method", resource)
 
 	for key, value := range metadata {
-		span.SetTag(key, escapeValue(value))
+		span.SetTag(key, t.tagValueFormatter.format(value))
 	}
 
 	if query, ok := metadata[dd_ext.SQLQuery]; ok {
-		span.SetTag(dd_ext.ResourceName, escapeValue(query))
+		span.SetTag(dd_ext.ResourceName, t.tagValueFormatter.format(query))
 	} else {
-		span.SetTag(dd_ext.ResourceName, escapeValue(resource))
+		span.SetTag(dd_ext.ResourceName, t.tagValueFormatter.format(resource))
 	}
 
 	span.Finish(dd_tracer.WithError(err))
@@ -63,7 +80,17 @@ func argsToAttributes(args ...interface{}) map[string]interface{} {
 
 	for i := range args {
 		key := fmt.Sprintf("sql.args.%d", i)
-		output[key] = args[i]
+
+		switch x := args[i].(type) {
+		case []float64:
+			if len(x) > maxArraySizeToLog { // avoiding excessive logging sizes and costs #304131
+				output[key] = fmt.Sprintf("<a float array of length %d>", len(x))
+			} else {
+				output[key] = args[i]
+			}
+		default:
+			output[key] = args[i]
+		}
 	}
 
 	return output

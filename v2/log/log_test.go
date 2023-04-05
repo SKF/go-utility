@@ -1,6 +1,7 @@
 package log_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -28,6 +29,8 @@ func TestLog(t *testing.T) {
 	log.WithField("application", "backend").Debug("This is a debug message")
 	log.WithField("token", "1234").Warning("A warning msg")
 	log.WithError(errors.New("A test error")).Error("A test error, should have stacktrace")
+	log.WithTracing(context.TODO()).Info("Actual tracing information would be empty")
+	log.OnlyWithTracing(context.TODO()).Info("Empty context should not log anything")
 
 	assert.Panics(t, panicLog)
 }

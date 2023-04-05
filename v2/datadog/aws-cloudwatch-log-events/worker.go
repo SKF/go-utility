@@ -75,7 +75,7 @@ func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {
 	done <- w.id
 }
 
-//mapToDatadogLog converts the Cloudwatch Log Event into a dictionary for Datadog
+// mapToDatadogLog converts the Cloudwatch Log Event into a dictionary for Datadog
 func (w *worker) mapToDatadogLog(event events.CloudwatchLogsLogEvent) (_ interface{}, err error) {
 	msg := strings.TrimSpace(event.Message)
 	if msg == "" {
