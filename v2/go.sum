@@ -429,8 +429,8 @@ github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAE
 github.com/PuerkitoBio/purell v1.0.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/SKF/go-enlight-middleware v0.4.0/go.mod h1:6MczgmHn4QL8yYTVEvnO/DbDWzTmLWIe1sbqAOlocVg=
-github.com/SKF/go-enlight-middleware v0.7.0 h1:2WecLUbiDbtT/N6rRkzD8i3qGe96bJU0iplzJF5uXFc=
-github.com/SKF/go-enlight-middleware v0.7.0/go.mod h1:QGV9VUm/vkm6yVHejOISQBiaVM1ewl9CehLMsnXoo/M=
+github.com/SKF/go-enlight-middleware v0.8.0 h1:/9jc1pOTGAqGxP+zibANLWHdCuJwLe4oZRQMlmz1ebo=
+github.com/SKF/go-enlight-middleware v0.8.0/go.mod h1:QGV9VUm/vkm6yVHejOISQBiaVM1ewl9CehLMsnXoo/M=
 github.com/SKF/go-enlight-sdk/v2 v2.9.3/go.mod h1:DvI0hYYH9D9HX9DVgJqAfjjWo0vp4dfHGRcMpjfw7WM=
 github.com/SKF/go-enlight-sdk/v2 v2.13.0/go.mod h1:vaJCPigIkGFLupnqN7CTjflR57mFZykVbxhHlhgHefY=
 github.com/SKF/go-eventsource v1.4.2/go.mod h1:iFoudpu5x2oj7LkiUAslraR0RUbJcScosdAWwxmDVds=
