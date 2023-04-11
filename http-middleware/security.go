@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SKF/proto/common"
+	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
