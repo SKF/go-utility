@@ -7,7 +7,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/SKF/proto/v2 v2.19.0-go
 	github.com/aws/aws-lambda-go v1.39.1
-	github.com/aws/aws-sdk-go v1.35.30
+	github.com/aws/aws-sdk-go v1.44.240
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
