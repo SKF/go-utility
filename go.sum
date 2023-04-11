@@ -10,8 +10,6 @@ github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882
 github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0/go.mod h1:/VV3EFO/hTNQZHAqaj+CPGy2+ioFrP4EX3iRwozubhQ=
 github.com/Microsoft/go-winio v0.4.17 h1:iT12IBVClFevaf8PuVyi3UmZOVh4OqnaLxDTW2O6j3w=
 github.com/Microsoft/go-winio v0.4.17/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/SKF/proto v1.21.0-go h1:l4nbV3lqmcwHMJ4pn00/1KUtzgDdHEoK9fmCOsPj3oQ=
-github.com/SKF/proto v1.21.0-go/go.mod h1:fLZMzpComrKyD9V74fS1lT4ryHZX9LlYYjM1TmBZw+s=
 github.com/aws/aws-lambda-go v1.20.0 h1:ZSweJx/Hy9BoIDXKBEh16vbHH0t0dehnF8MKpMiOWc0=
 github.com/aws/aws-lambda-go v1.20.0/go.mod h1:jJmlefzPfGnckuHdXX7/80O3BvUUi12XOkbv4w9SGLU=
 github.com/aws/aws-sdk-go v1.35.30 h1:ZT+70Tw1ar5U2bL81ZyIvcLorxlD1UoxoIgjsEkismY=

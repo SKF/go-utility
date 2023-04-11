@@ -5,7 +5,6 @@ go 1.14
 require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
 	github.com/Microsoft/go-winio v0.4.17 // indirect
-	github.com/SKF/proto v1.21.0-go
 	github.com/aws/aws-lambda-go v1.20.0
 	github.com/aws/aws-sdk-go v1.35.30
 	github.com/gogo/protobuf v1.3.2 // indirect
