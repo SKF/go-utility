@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	wait          = 1 * time.Millisecond
+	wait          = 3 * time.Millisecond
 	TTL           = 5 * wait
 	NoTTL         = 0
 	cacheFuncKey  = "myFunc"
