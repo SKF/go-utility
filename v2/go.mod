@@ -7,7 +7,7 @@ require (
 	github.com/SKF/proto/v2 v2.19.0-go
 	github.com/aws/aws-lambda-go v1.39.1
 	github.com/aws/aws-sdk-go v1.44.241
-	github.com/dgraph-io/ristretto v0.1.0
+	github.com/dgraph-io/ristretto v0.1.1
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/gomodule/redigo v1.8.9
 	github.com/google/uuid v1.3.0
