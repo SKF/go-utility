@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"net/http"
 
@@ -114,6 +115,10 @@ func RefreshKeySets() (err error) {
 	defer resp.Body.Close()
 
 	var data map[string]JWKeySets
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("received non 200 status code when fetching key sets, %d", resp.StatusCode)
+	}
 
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		err = errors.Wrap(err, "failed to unmarshal key sets")
