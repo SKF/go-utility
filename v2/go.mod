@@ -20,12 +20,12 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/time v0.3.0 // indirect
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.52.0
 )
 
 require (
-	github.com/SKF/go-enlight-middleware v0.8.2
+	github.com/SKF/go-enlight-middleware v0.8.4
 	github.com/aws/aws-sdk-go-v2 v1.18.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.27
 	github.com/aws/aws-sdk-go-v2/service/sns v1.20.13
