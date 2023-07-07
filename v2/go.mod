@@ -20,7 +20,7 @@ require (
 	go.opencensus.io v0.24.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/time v0.3.0 // indirect
-	google.golang.org/grpc v1.56.1
+	google.golang.org/grpc v1.56.2
 	gopkg.in/DataDog/dd-trace-go.v1 v1.52.0
 )
 
