@@ -26,11 +26,11 @@ require (
 
 require (
 	github.com/SKF/go-enlight-middleware v0.8.4
-	github.com/aws/aws-sdk-go-v2 v1.18.1
+	github.com/aws/aws-sdk-go-v2 v1.20.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.27
 	github.com/aws/aws-sdk-go-v2/service/sns v1.20.13
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.2
-	github.com/aws/smithy-go v1.13.5
+	github.com/aws/smithy-go v1.14.0
 )
 
 require (
