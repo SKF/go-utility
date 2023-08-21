@@ -45,22 +45,19 @@ func GetBaseURL() (string, error) {
 }
 
 // SignIn will sign in the user and if needed complete the change password challenge
-func SignIn(ctx context.Context, username, password string) (tokens Tokens, err error) {
+func SignIn(ctx context.Context, username, password string) (Tokens, error) {
 	var resp SignInResponse
 
 	if resp, err = initiateSignIn(ctx, username, password); err != nil {
-		err = errors.Wrap(err, "failed to initiate sign in")
-		return
+		return Tokens{}, errors.Wrap(err, "failed to initiate sign in")
 	}
 
 	if resp.Data.Challenge.Type == "" {
-		tokens = resp.Data.Tokens
-		return
+		return resp.Data.Tokens, nil
 	}
 
 	if resp, err = completeSignIn(ctx, resp.Data.Challenge, username, password); err != nil {
-		err = errors.Wrap(err, "failed to complete sign in")
-		return
+		return Tokens{}, errors.Wrap(err, "failed to complete sign in")
 	}
 
 	return resp.Data.Tokens, nil
@@ -93,7 +90,7 @@ func initiateSignIn(ctx context.Context, username, password string) (signInResp 
 	return signIn(ctx, endpoint, jsonBody)
 }
 
-func completeSignIn(ctx context.Context, challenge Challenge, username, newPassword string) (signInResp SignInResponse, err error) {
+func completeSignIn(ctx context.Context, challenge Challenge, username, newPassword string) (SignInResponse, error) {
 	const endpoint = "/sign-in/complete"
 
 	baseJSON := `{"username": "%s", "id": "%s", "type": "%s", "properties": {"newPassword": "%s"}}`

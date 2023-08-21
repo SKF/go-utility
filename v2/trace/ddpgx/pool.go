@@ -15,7 +15,7 @@ func (c *poolCloser) ConnInfo() *pgtype.ConnInfo {
 	return nil
 }
 
-func (c *poolCloser) Close(ctx context.Context) error {
+func (c *poolCloser) Close(_ context.Context) error {
 	c.Pool.Close()
 	return nil
 }

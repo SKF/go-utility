@@ -2,10 +2,10 @@ package awscloudwatchlogevents
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/pkg/errors"
 
 	datadog "github.com/SKF/go-utility/v2/datadog/client"
 	"github.com/SKF/go-utility/v2/datadog/tags"
@@ -52,7 +52,7 @@ func (p *Processor) Errors() []error {
 func (p *Processor) Process(ctx context.Context, request events.CloudwatchLogsEvent) {
 	logsData, err := request.AWSLogs.Parse()
 	if err != nil {
-		p.errs = append(p.errs, errors.Wrap(err, "failed to parse raw AWS logs"))
+		p.errs = append(p.errs, fmt.Errorf("failed to parse raw AWS logs: %w", err))
 		return
 	}
 

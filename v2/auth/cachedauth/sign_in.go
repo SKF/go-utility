@@ -2,10 +2,9 @@ package cachedauth
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/SKF/go-utility/v2/auth"
 )
@@ -64,12 +63,12 @@ func GetTokensByUser(username string) auth.Tokens {
 }
 
 // SignIn is thread safe and only returns new tokens if the old tokens are about to expire
-func SignIn(ctx context.Context, username, password string) (err error) {
+func SignIn(ctx context.Context, username, password string) error {
 	lock.Lock()
 	defer lock.Unlock()
 
 	if config == nil {
-		return errors.New("cachedauth is not configured")
+		return fmt.Errorf("cachedauth is not configured")
 	}
 
 	const tokenExpireDurationDiff = 5 * time.Minute
@@ -80,8 +79,12 @@ func SignIn(ctx context.Context, username, password string) (err error) {
 	}
 
 	newtokens, err := auth.SignIn(ctx, username, password)
+	if err != nil {
+		return err
+	}
+
 	tokens[username] = newtokens
 	tokens[latest] = newtokens
 
-	return err
+	return nil
 }

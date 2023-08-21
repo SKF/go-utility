@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	datadog "github.com/DataDog/opencensus-go-exporter-datadog"
-	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -61,7 +60,7 @@ func UnmarshalRequest(body io.ReadCloser, v interface{}) (err error) {
 	defer body.Close()
 
 	if err = json.NewDecoder(body).Decode(v); err != nil {
-		err = errors.Wrap(err, "failed to unmarshal request body")
+		err = fmt.Errorf("failed to unmarshal request body: %w", err)
 	}
 
 	return

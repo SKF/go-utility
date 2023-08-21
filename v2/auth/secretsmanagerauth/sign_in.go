@@ -3,12 +3,12 @@ package secretsmanagerauth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/pkg/errors"
 
 	"github.com/SKF/go-utility/v2/auth"
 )
@@ -58,7 +58,7 @@ func GetTokens() auth.Tokens {
 // SignIn will fetch credentials from the Secret Manager and Sign In using those credentials
 func SignIn(ctx context.Context) (err error) {
 	if config == nil {
-		return errors.New("secretsmanagerauth is not configured")
+		return fmt.Errorf("secretsmanagerauth is not configured")
 	}
 
 	// handle multiple concurrent calls to secretsmanagerlogin.SignIn
@@ -103,7 +103,7 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 
 	output, err := svc.GetSecretValueWithContext(ctx, &secretsmanager.GetSecretValueInput{SecretId: &secretKey})
 	if err != nil {
-		err = errors.Wrap(err, "failed to get secret value")
+		err = fmt.Errorf("failed to get secret value: %w", err)
 		return
 	}
 
@@ -113,12 +113,12 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 	}
 
 	if err = json.Unmarshal(output.SecretBinary, &secret); err != nil {
-		err = errors.Wrap(err, "failed to unmarshal secret value")
+		err = fmt.Errorf("failed to unmarshal secret value: %w", err)
 		return
 	}
 
 	if tokens, err = auth.SignIn(ctx, secret.Username, secret.Password); err != nil {
-		err = errors.Wrap(err, "failed to sign in")
+		err = fmt.Errorf("failed to sign in: %w", err)
 		return
 	}
 

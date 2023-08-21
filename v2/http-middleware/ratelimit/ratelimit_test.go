@@ -279,7 +279,7 @@ func TestUseDynamicRoute(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp3.Code)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func handler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("apa")) //nolint: errcheck
 }

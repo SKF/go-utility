@@ -1,10 +1,10 @@
 package cache
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dgraph-io/ristretto"
-	"github.com/pkg/errors"
 
 	"github.com/SKF/go-utility/v2/log"
 )
@@ -45,7 +45,7 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 		Metrics:     true,
 	})
 	if err != nil {
-		err = errors.Wrap(err, "Error creating cache")
+		err = fmt.Errorf("error creating cache: %w", err)
 		log.WithError(err).Error("Error creating cache")
 
 		return nil, err

@@ -3,10 +3,10 @@ package awscloudwatchlogevents
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/pkg/errors"
 
 	lambda_report_messages "github.com/SKF/go-utility/v2/datadog/aws-cloudwatch-log-events/lambda-report-messages"
 	datadog "github.com/SKF/go-utility/v2/datadog/client"
@@ -54,7 +54,7 @@ func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {
 	for event := range work {
 		logEntry, err := w.mapToDatadogLog(event)
 		if err != nil {
-			err = errors.Wrapf(err, "failed to map AWS log event [%s] to a Datadog log", event.ID)
+			err = fmt.Errorf("failed to map AWS log event [%s] to a Datadog log: %w", event.ID, err)
 			w.errs = append(w.errs, err)
 
 			continue
@@ -65,7 +65,7 @@ func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {
 		}
 
 		if err = w.client.PostLogEntry(logEntry); err != nil {
-			err = errors.Wrapf(err, "failed to send AWS log event [%s] to Datadog", event.ID)
+			err = fmt.Errorf("failed to send AWS log event [%s] to Datadog: %w", event.ID, err)
 			w.errs = append(w.errs, err)
 
 			continue
@@ -76,10 +76,10 @@ func (w *worker) start(done chan int, work chan events.CloudwatchLogsLogEvent) {
 }
 
 // mapToDatadogLog converts the Cloudwatch Log Event into a dictionary for Datadog
-func (w *worker) mapToDatadogLog(event events.CloudwatchLogsLogEvent) (_ interface{}, err error) {
+func (w *worker) mapToDatadogLog(event events.CloudwatchLogsLogEvent) (any, error) {
 	msg := strings.TrimSpace(event.Message)
 	if msg == "" {
-		return
+		return nil, nil
 	}
 
 	if strings.HasPrefix(msg, "MONITORING") {
@@ -91,8 +91,8 @@ func (w *worker) mapToDatadogLog(event events.CloudwatchLogsLogEvent) (_ interfa
 
 	if strings.HasPrefix(msg, "{") && strings.HasSuffix(msg, "}") {
 		// probably json
-		if err = handleJSON(msg, jsonDict); err != nil {
-			return
+		if err := handleJSON(msg, jsonDict); err != nil {
+			return nil, err
 		}
 	} else {
 		// probably not json, just set the message

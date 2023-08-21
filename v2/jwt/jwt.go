@@ -1,10 +1,15 @@
 package jwt
 
 import (
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/pkg/errors"
+	"errors"
+	"fmt"
 
-	"github.com/SKF/go-utility/v2/jwk"
+	"github.com/golang-jwt/jwt/v5"
+)
+
+const (
+	TokenUseAccess = "access"
+	TokenUseID     = "id"
 )
 
 type Token jwt.Token
@@ -38,80 +43,54 @@ type Claims struct {
 	EnlightClaims
 }
 
-const (
-	TokenUseAccess = "access"
-	TokenUseID     = "id"
-)
-
-func (c Claims) Valid() (err error) {
-	if err = c.RegisteredClaims.Valid(); err != nil {
-		return
-	}
-
+func (c Claims) Validate() error {
 	switch c.TokenUse {
 	case TokenUseAccess:
 		if c.Username == "" {
-			return errors.New("missing username in claims")
+			return fmt.Errorf("missing username in claims")
 		}
 	case TokenUseID:
 		if c.EnlightUserID == "" {
-			return errors.New("missing enlight user ID in claims")
+			return fmt.Errorf("missing enlight user ID in claims")
 		}
 	default:
-		return errors.Errorf("wrong type of token: %s, should be %s or %s", c.TokenUse, TokenUseAccess, TokenUseID)
+		return fmt.Errorf("wrong type of token: %s, should be %s or %s", c.TokenUse, TokenUseAccess, TokenUseID)
 	}
 
-	return
+	return nil
 }
 
-func Parse(jwtToken string) (_ Token, err error) {
-	keySets, err := jwk.GetKeySets()
+func keyFunc(token *jwt.Token) (any, error) {
+	keySets, err := getKeySets()
 	if err != nil {
-		err = errors.Wrap(err, "failed to get key sets")
-		return
+		return Token{}, fmt.Errorf("failed to get key sets: %w", err)
 	}
 
-	token, err := jwt.ParseWithClaims(
-		jwtToken,
-		&Claims{},
-		func(token *jwt.Token) (_ interface{}, err error) {
-			keyID, ok := token.Header["kid"].(string)
-			if !ok {
-				return nil, errors.New("expecting JWT header to have string `kid`")
-			}
+	keyID, ok := token.Header["kid"].(string)
+	if !ok {
+		return nil, fmt.Errorf("expecting JWT header to have string `kid`")
+	}
 
-			key, err := keySets.LookupKeyID(keyID)
-			if err != nil {
-				err = errors.Wrap(err, "failed to look up key id")
-				return
-			}
-
-			return key.GetPublicKey()
-		},
-	)
+	key, err := keySets.LookupKeyID(keyID)
 	if err != nil {
-		validationError := &jwt.ValidationError{}
-		if errors.As(err, &validationError) {
-			if validationError.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-				err = errNotValidNowType{underLyingErr: err}
+		return nil, fmt.Errorf("failed to lookup key id: %w", err)
+	}
 
-				return
-			}
+	return key.GetPublicKey()
+}
+
+func Parse(jwtToken string) (Token, error) {
+	token, err := jwt.ParseWithClaims(jwtToken, &Claims{}, keyFunc)
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
+			return Token{}, fmt.Errorf("%w: %w", ErrNotValidNow, err)
 		}
 
-		err = errors.Wrap(err, "parse with claims failed")
-
-		return
+		return Token{}, fmt.Errorf("parse with claims failed: %w", err)
 	}
 
 	if !token.Valid {
-		err = errors.New("token is not valid")
-		return
-	}
-
-	if err = token.Claims.Valid(); err != nil {
-		err = errors.Wrap(err, "failed to validate claims")
-		return
+		return Token{}, fmt.Errorf("token is not valid")
 	}
 
 	return Token(*token), nil

@@ -120,7 +120,7 @@ func (u *UUID) AssignTo(target interface{}) (err error) {
 	return fmt.Errorf("cannot assign %v into %T", u, target)
 }
 
-func (u *UUID) DecodeText(ci *pgtype.ConnInfo, value []byte) error {
+func (u *UUID) DecodeText(_ *pgtype.ConnInfo, value []byte) error {
 	if value == nil {
 		*u = UUID{Status: pgtype.Null}
 		return nil
@@ -136,7 +136,7 @@ func (u *UUID) DecodeText(ci *pgtype.ConnInfo, value []byte) error {
 	return nil
 }
 
-func (u *UUID) DecodeBinary(ci *pgtype.ConnInfo, value []byte) error {
+func (u *UUID) DecodeBinary(_ *pgtype.ConnInfo, value []byte) error {
 	if value == nil {
 		*u = UUID{Status: pgtype.Null}
 		return nil
@@ -152,7 +152,7 @@ func (u *UUID) DecodeBinary(ci *pgtype.ConnInfo, value []byte) error {
 	return nil
 }
 
-func (u UUID) EncodeText(ci *pgtype.ConnInfo, outBuf []byte) ([]byte, error) {
+func (u UUID) EncodeText(_ *pgtype.ConnInfo, outBuf []byte) ([]byte, error) {
 	switch u.Status {
 	case pgtype.Null:
 		return nil, nil
@@ -163,7 +163,7 @@ func (u UUID) EncodeText(ci *pgtype.ConnInfo, outBuf []byte) ([]byte, error) {
 	return append(outBuf, u.UUID.String()...), nil
 }
 
-func (u UUID) EncodeBinary(ci *pgtype.ConnInfo, outBuf []byte) ([]byte, error) {
+func (u UUID) EncodeBinary(_ *pgtype.ConnInfo, outBuf []byte) ([]byte, error) {
 	switch u.Status {
 	case pgtype.Null:
 		return nil, nil
