@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
 	oc_http "go.opencensus.io/plugin/ochttp"
 	dd_http "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 
@@ -30,11 +29,11 @@ func Configure(conf Config) {
 
 func GetBaseURL() (string, error) {
 	if config == nil {
-		return "", errors.New("auth is not configured")
+		return "", fmt.Errorf("auth is not configured")
 	}
 
 	if !allowedStages[config.Stage] {
-		return "", errors.Errorf("stage %s is not allowed", config.Stage)
+		return "", fmt.Errorf("stage %s is not allowed", config.Stage)
 	}
 
 	if config.Stage == stages.StageProd {
@@ -46,18 +45,18 @@ func GetBaseURL() (string, error) {
 
 // SignIn will sign in the user and if needed complete the change password challenge
 func SignIn(ctx context.Context, username, password string) (Tokens, error) {
-	var resp SignInResponse
-
-	if resp, err = initiateSignIn(ctx, username, password); err != nil {
-		return Tokens{}, errors.Wrap(err, "failed to initiate sign in")
+	resp, err := initiateSignIn(ctx, username, password)
+	if err != nil {
+		return Tokens{}, fmt.Errorf("failed to initiate sign in: %w", err)
 	}
 
 	if resp.Data.Challenge.Type == "" {
 		return resp.Data.Tokens, nil
 	}
 
-	if resp, err = completeSignIn(ctx, resp.Data.Challenge, username, password); err != nil {
-		return Tokens{}, errors.Wrap(err, "failed to complete sign in")
+	resp, err = completeSignIn(ctx, resp.Data.Challenge, username, password)
+	if err != nil {
+		return Tokens{}, fmt.Errorf("failed to complete sign in: %w", err)
 	}
 
 	return resp.Data.Tokens, nil
@@ -99,17 +98,15 @@ func completeSignIn(ctx context.Context, challenge Challenge, username, newPassw
 	return signIn(ctx, endpoint, jsonBody)
 }
 
-func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInResponse, err error) {
+func signIn(ctx context.Context, endpoint, jsonBody string) (SignInResponse, error) {
 	baseURL, err := GetBaseURL()
 	if err != nil {
-		err = errors.Wrap(err, "failed to get base URL")
-		return
+		return SignInResponse{}, fmt.Errorf("failed to get base URL: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, baseURL+endpoint, bytes.NewBufferString(jsonBody))
 	if err != nil {
-		err = errors.Wrap(err, "failed to create new HTTP request")
-		return
+		return SignInResponse{}, fmt.Errorf("failed to create new HTTP request: %w", err)
 	}
 
 	req = req.WithContext(ctx)
@@ -126,8 +123,7 @@ func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInRe
 
 	resp, err := client.Do(req)
 	if err != nil {
-		err = errors.Wrap(err, "failed to execute HTTP request")
-		return
+		return SignInResponse{}, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -140,21 +136,19 @@ func signIn(ctx context.Context, endpoint, jsonBody string) (signInResp SignInRe
 		}
 
 		if err = json.NewDecoder(resp.Body).Decode(&errorResp); err != nil {
-			err = errors.Wrap(err, "failed to decode Error response to JSON")
-			return
+			return SignInResponse{}, fmt.Errorf("failed to decode Error response to JSON: %w", err)
 		}
 
-		err = errors.Errorf("StatusCode: %s, Error Message: %s \n", resp.Status, errorResp.Error.Message) //nolint: revive
-
-		return
+		return SignInResponse{}, fmt.Errorf("status code: %s, error message: %s", resp.Status, errorResp.Error.Message)
 	}
+
+	var signInResp SignInResponse
 
 	if err = json.NewDecoder(resp.Body).Decode(&signInResp); err != nil {
-		err = errors.Wrap(err, "failed to decode Sign In response to JSON")
-		return
+		return SignInResponse{}, fmt.Errorf("failed to decode Sign In response to JSON: %w", err)
 	}
 
-	return signInResp, err
+	return signInResp, nil
 }
 
 type SignInResponse struct {
