@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/SKF/go-utility/v2/jwk"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -61,7 +63,7 @@ func (c Claims) Validate() error {
 }
 
 func keyFunc(token *jwt.Token) (any, error) {
-	keySets, err := getKeySets()
+	keySets, err := jwk.GetKeySets()
 	if err != nil {
 		return Token{}, fmt.Errorf("failed to get key sets: %w", err)
 	}

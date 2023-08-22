@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"sync"
 
 	"github.com/SKF/go-utility/v2/stages"
 )
@@ -26,6 +27,7 @@ func Configure(conf Config) {
 // Deprecated: Use Configure(Config{Stage: "..."}) instead.
 var KeySetURL string
 var keySets JWKeySets
+var getKeySetsLock = &sync.Mutex{}
 
 type JWKeySets []JWKeySet
 
@@ -88,6 +90,9 @@ func (ks JWKeySet) GetPublicKey() (*rsa.PublicKey, error) {
 }
 
 func GetKeySets() (JWKeySets, error) {
+	getKeySetsLock.Lock()
+	defer getKeySetsLock.Unlock()
+
 	if len(keySets) == 0 {
 		if err := RefreshKeySets(); err != nil {
 			return JWKeySets{}, err
