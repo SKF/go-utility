@@ -128,6 +128,9 @@ func RefreshKeySets() error {
 	if keys, present := data["Keys"]; present {
 		// keys from Cognito
 		keySets = keys
+	} else if keys, present := data["keys"]; present {
+		// keys from Cognito
+		keySets = keys
 	} else if keys, present := data["data"]; present {
 		// keys from SSO-API
 		keySets = keys
