@@ -22,7 +22,7 @@ import (
 // These tests relies on global variables in packages and can't be run in
 // parallel.
 
-func Test_AccessToken(t *testing.T) {
+func createKey(t *testing.T) (ljwk.Key, ljwk.Set) {
 	// Create an RSA keypair
 	valid, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
@@ -34,7 +34,7 @@ func Test_AccessToken(t *testing.T) {
 	// Adds fields expected by our packages
 	// The "kid" needs to be different in each test to ensure
 	// the library refetches the keyset.
-	validKey.Set(ljwk.KeyIDKey, "a")           //nolint:errcheck
+	validKey.Set(ljwk.KeyIDKey, t.Name())      //nolint:errcheck
 	validKey.Set(ljwk.AlgorithmKey, jwa.RS256) //nolint:errcheck
 	validKey.Set(ljwk.KeyUsageKey, "sig")      //nolint:errcheck
 
@@ -48,25 +48,47 @@ func Test_AccessToken(t *testing.T) {
 	err = validSet.AddKey(validJWTKey)
 	require.NoError(t, err)
 
+	return validKey, validSet
+}
+
+func createJWKSServer(t *testing.T, set ljwk.Set) *httptest.Server {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		// The server returns the public keyset
-		publicSet, setErr := ljwk.PublicSetOf(validSet)
-		require.NoError(t, setErr)
-		err = json.NewEncoder(w).Encode(publicSet)
+		public, err := ljwk.PublicSetOf(set)
 		require.NoError(t, err)
+		require.NoError(t, json.NewEncoder(w).Encode(public))
 	}))
-	defer s.Close()
 
 	jwk.KeySetURL = s.URL
 
+	return s
+}
+
+func createSignedToken(t *testing.T, key ljwk.Key, values map[string]any) []byte {
 	// Create a token and add fields for an access token
 	token := ljwt.New()
-	token.Set("token_use", jwt.TokenUseAccess) //nolint:errcheck
-	token.Set("username", "a.b@example.com")   //nolint:errcheck
+
+	for key, value := range values {
+		token.Set(key, value) //nolint:errcheck
+	}
 
 	// Signed it using the private key
-	signed, err := ljwt.Sign(token, ljwt.WithKey(jwa.RS256, validKey))
+	signed, err := ljwt.Sign(token, ljwt.WithKey(jwa.RS256, key))
 	require.NoError(t, err)
+
+	return signed
+}
+
+func Test_AccessToken(t *testing.T) {
+	validKey, validSet := createKey(t)
+
+	s := createJWKSServer(t, validSet)
+	defer s.Close()
+
+	signed := createSignedToken(t, validKey, map[string]any{
+		"token_use": jwt.TokenUseAccess,
+		"username":  "a.b@example.com",
+	})
 
 	// Parse it
 	parsedToken, err := jwt.Parse(string(signed))
@@ -80,100 +102,50 @@ func Test_AccessToken(t *testing.T) {
 }
 
 func Test_InvalidKeyShouldFailValidation(t *testing.T) {
-	valid, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
+	_, validSet := createKey(t)
 
-	validKey, err := ljwk.FromRaw(valid)
-	require.NoError(t, err)
+	fakeKey, _ := createKey(t)
 
-	validKey.Set(ljwk.KeyIDKey, "b")           //nolint:errcheck
-	validKey.Set(ljwk.AlgorithmKey, jwa.RS256) //nolint:errcheck
-	validKey.Set(ljwk.KeyUsageKey, "sig")      //nolint:errcheck
-
-	validJWTKey, ok := validKey.(ljwk.RSAPrivateKey)
-	require.True(t, ok)
-
-	validSet := ljwk.NewSet()
-
-	err = validSet.AddKey(validJWTKey)
-	require.NoError(t, err)
-
-	fake, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
-
-	fakeKey, err := ljwk.FromRaw(fake)
-	require.NoError(t, err)
-
-	fakeKey.Set(ljwk.KeyIDKey, "b")           //nolint:errcheck
-	fakeKey.Set(ljwk.AlgorithmKey, jwa.RS256) //nolint:errcheck
-	fakeKey.Set(ljwk.KeyUsageKey, "sig")      //nolint:errcheck
-
-	fakeJWTKey, ok := fakeKey.(ljwk.RSAPrivateKey)
-	require.True(t, ok)
-
-	fakeSet := ljwk.NewSet()
-
-	err = fakeSet.AddKey(fakeJWTKey)
-	require.NoError(t, err)
-
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		publicSet, setErr := ljwk.PublicSetOf(validSet)
-		require.NoError(t, setErr)
-		err = json.NewEncoder(w).Encode(publicSet)
-		require.NoError(t, err)
-	}))
+	s := createJWKSServer(t, validSet)
 	defer s.Close()
 
-	jwk.KeySetURL = s.URL
+	signed := createSignedToken(t, fakeKey, map[string]any{
+		"token_use": jwt.TokenUseAccess,
+		"username":  "a.b@example.com",
+	})
 
-	token := ljwt.New()
-	token.Set(`token_use`, `access`)         //nolint:errcheck
-	token.Set(`username`, `a.b@example.com`) //nolint:errcheck
-
-	signed, err := ljwt.Sign(token, ljwt.WithKey(jwa.RS256, fakeKey))
-	require.NoError(t, err)
-
-	_, err = jwt.Parse(string(signed))
+	_, err := jwt.Parse(string(signed))
 	require.Error(t, err)
 }
 
 func Test_ExpiredToken(t *testing.T) {
-	valid, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
+	validKey, validSet := createKey(t)
 
-	validKey, err := ljwk.FromRaw(valid)
-	require.NoError(t, err)
-
-	validKey.Set(ljwk.KeyIDKey, "c")           //nolint:errcheck
-	validKey.Set(ljwk.AlgorithmKey, jwa.RS256) //nolint:errcheck
-	validKey.Set(ljwk.KeyUsageKey, "sig")      //nolint:errcheck
-
-	validJWTKey, ok := validKey.(ljwk.RSAPrivateKey)
-	require.True(t, ok)
-
-	validSet := ljwk.NewSet()
-
-	err = validSet.AddKey(validJWTKey)
-	require.NoError(t, err)
-
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		publicSet, setErr := ljwk.PublicSetOf(validSet)
-		require.NoError(t, setErr)
-		err = json.NewEncoder(w).Encode(publicSet)
-		require.NoError(t, err)
-	}))
+	s := createJWKSServer(t, validSet)
 	defer s.Close()
 
-	jwk.KeySetURL = s.URL
+	signed := createSignedToken(t, validKey, map[string]any{
+		ljwt.ExpirationKey: time.Now().UTC().Add(-1 * time.Hour),
+		"token_use":        jwt.TokenUseAccess,
+		"username":         "a.b@example.com",
+	})
 
-	token := ljwt.New()
-	token.Set(ljwt.ExpirationKey, time.Now().UTC().Add(-1*time.Hour)) //nolint:errcheck
-	token.Set("token_use", jwt.TokenUseAccess)                        //nolint:errcheck
-	token.Set("username", "a.b@example.com")                          //nolint:errcheck
+	_, err := jwt.Parse(string(signed))
+	require.Error(t, err)
+}
 
-	signed, err := ljwt.Sign(token, ljwt.WithKey(jwa.RS256, validKey))
-	require.NoError(t, err)
+func Test_ValidInFuture(t *testing.T) {
+	validKey, validSet := createKey(t)
 
-	_, err = jwt.Parse(string(signed))
+	s := createJWKSServer(t, validSet)
+	defer s.Close()
+
+	signed := createSignedToken(t, validKey, map[string]any{
+		ljwt.NotBeforeKey: time.Now().UTC().Add(1 * time.Hour),
+		"token_use":       jwt.TokenUseAccess,
+		"username":        "a.b@example.com",
+	})
+
+	_, err := jwt.Parse(string(signed))
 	require.Error(t, err)
 }
