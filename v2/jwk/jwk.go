@@ -42,7 +42,13 @@ func (kss JWKeySets) LookupKeyID(keyID string) (JWKeySet, error) {
 		return JWKeySet{}, err
 	}
 
-	for _, ks := range kss {
+	// This logic is a bit weird. If a given key can't be found in the keyset
+	// it's refreshed and searched again. The "kss" object is returned by
+	// GetKeySets, which returns a global variable in the package. RefreshKeySets()
+	// just updates the global variable, which has no effect on the struct this
+	// function operates on. The previous version would loop over "kss" again
+	// here, which won't make a difference.
+	for _, ks := range keySets {
 		if ks.KeyID == keyID && ks.Use == "sig" {
 			return ks, nil
 		}
