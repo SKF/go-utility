@@ -135,7 +135,8 @@ func RefreshKeySets() error {
 		// keys from Cognito
 		keySets = keys
 	} else if keys, present := data["keys"]; present {
-		// keys from Cognito
+		// Keys compliant with RFC 7517: https://datatracker.ietf.org/doc/html/rfc7517#page-10
+		// "The JSON object MUST have a "keys" member, with its value being an array of JWKs."
 		keySets = keys
 	} else if keys, present := data["data"]; present {
 		// keys from SSO-API
