@@ -85,7 +85,7 @@ func Parse(jwtToken string) (Token, error) {
 	token, err := jwt.ParseWithClaims(jwtToken, &Claims{}, keyFunc)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
-			return Token{}, ErrNotValidNow{underLyingErr: err}
+			return Token{}, ErrNotValidNow{underlyingErr: err}
 		}
 
 		return Token{}, fmt.Errorf("parse with claims failed: %w", err)

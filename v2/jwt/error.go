@@ -3,15 +3,15 @@ package jwt
 import "errors"
 
 type ErrNotValidNow struct {
-	underLyingErr error
+	underlyingErr error
 }
 
 func (e ErrNotValidNow) Error() string {
-	return "token is not valid right now: " + e.underLyingErr.Error()
+	return "token is not valid right now: " + e.underlyingErr.Error()
 }
 
 func (e ErrNotValidNow) Unwrap() error {
-	return e.underLyingErr
+	return e.underlyingErr
 }
 
 func (e ErrNotValidNow) Is(target error) bool {
@@ -20,5 +20,5 @@ func (e ErrNotValidNow) Is(target error) bool {
 		return true
 	}
 
-	return errors.Is(e.underLyingErr, target)
+	return errors.Is(e.underlyingErr, target)
 }
