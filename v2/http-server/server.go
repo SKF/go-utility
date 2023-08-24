@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	datadog "github.com/DataDog/opencensus-go-exporter-datadog"
-	"github.com/pkg/errors"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -57,14 +56,14 @@ func SetupDatadogInstrumentation(service, awsRegion, awsAccountID, stage string)
 	return ddTracer
 }
 
-func UnmarshalRequest(body io.ReadCloser, v interface{}) (err error) {
+func UnmarshalRequest(body io.ReadCloser, v interface{}) error {
 	defer body.Close()
 
-	if err = json.NewDecoder(body).Decode(v); err != nil {
-		err = errors.Wrap(err, "failed to unmarshal request body")
+	if err := json.NewDecoder(body).Decode(v); err != nil {
+		return fmt.Errorf("failed to unmarshal request body: %w", err)
 	}
 
-	return
+	return nil
 }
 
 // MarshalAndWriteJSONResponse will JSON marshal the incoming data and return the serialized version

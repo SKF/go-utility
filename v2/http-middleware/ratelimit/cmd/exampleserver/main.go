@@ -31,6 +31,6 @@ func main() {
 	log.Errorf(err.Error())
 }
 
-func HomeHandler(writer http.ResponseWriter, request *http.Request) {
+func HomeHandler(writer http.ResponseWriter, _ *http.Request) {
 	writer.Write([]byte("foo\n")) //nolint:errcheck
 }

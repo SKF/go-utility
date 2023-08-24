@@ -2,12 +2,13 @@ package httpmiddleware
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/SKF/proto/v2/common"
 	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -91,12 +92,12 @@ func AuthenticateMiddlewareV3() mux.MiddlewareFunc {
 func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string) error {
 	base64Token := req.Header.Get(header)
 	if base64Token == "" {
-		return errors.Errorf("auth header [%s] was empty", header)
+		return fmt.Errorf("auth header [%s] was empty", header)
 	}
 
 	token, err := jwt.Parse(base64Token)
 	if err != nil {
-		return errors.Wrap(err, "authorization token not valid")
+		return fmt.Errorf("authorization token not valid: %w", err)
 	}
 
 	// we need author ID for impersonation to log properly in micro services.
@@ -104,7 +105,7 @@ func handleAccessOrIDToken(ctx context.Context, req *http.Request, header string
 	userID, authorID := resolveUserAndAuthor(claims)
 
 	if claims.TokenUse != jwt.TokenUseID && claims.TokenUse != jwt.TokenUseAccess {
-		return errors.Errorf("invalid token use %s", claims.TokenUse)
+		return fmt.Errorf("invalid token use %s", claims.TokenUse)
 	}
 
 	ctx = accesstokensubcontext.NewContext(ctx, claims.Subject)

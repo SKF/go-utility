@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/SKF/go-utility/v2/log"
 )
 
@@ -57,17 +55,19 @@ func (c *TCP) WithMaxRetries(maxRetries int) *TCP {
 }
 
 // Connect attempts to establish a tcp connection to the datadog api
-func (c *TCP) Connect() (err error) {
+func (c *TCP) Connect() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	if c.conn != nil {
-		return
+		return nil
 	}
+
+	var err error
 
 	url := fmt.Sprintf("%s:%s", c.host, c.port)
 	if c.conn, err = net.Dial("tcp", url); err != nil {
-		return errors.Wrapf(err, "failed to connect to datadog api on [%s]", url)
+		return fmt.Errorf("failed to connect to datadog api on [%s]: %w", url, err)
 	}
 
 	// configure ssl connection if needed
@@ -80,7 +80,7 @@ func (c *TCP) Connect() (err error) {
 		// prep the ssl connection and perform the initial handshake
 		sslConn := tls.Client(c.conn, sslConfig)
 		if err = sslConn.Handshake(); err != nil {
-			return errors.Wrap(err, "failed initial ssl handshake to datadog api")
+			return fmt.Errorf("failed initial ssl handshake to datadog api: %w", err)
 		}
 
 		// set the ssl connection as the active connection
@@ -100,7 +100,7 @@ func (c *TCP) Disconnect() (err error) {
 	}
 
 	if err = c.conn.Close(); err != nil {
-		return errors.Wrap(err, "failed to disconnect from the datadog api")
+		return fmt.Errorf("failed to disconnect from the datadog api: %w", err)
 	}
 
 	return
@@ -122,12 +122,12 @@ func (c *TCP) Reconnect() {
 // PostLogEntry tries to post the log entry to the Datadog API
 func (c *TCP) PostLogEntry(logEntry interface{}) (err error) {
 	if err = c.Connect(); err != nil {
-		return errors.Wrap(err, "failed to connect")
+		return fmt.Errorf("failed to connect: %w", err)
 	}
 
 	jsonBytes, err := json.Marshal(logEntry)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal logEntry to json")
+		return fmt.Errorf("failed to marshal logEntry to json: %w", err)
 	}
 
 	// datadog api requires us to post a single line string with the API Key as the prefix, and ending with a \n

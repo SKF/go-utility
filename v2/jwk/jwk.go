@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
-
-	"github.com/pkg/errors"
+	"sync"
 
 	"github.com/SKF/go-utility/v2/stages"
 )
@@ -28,27 +27,34 @@ func Configure(conf Config) {
 // Deprecated: Use Configure(Config{Stage: "..."}) instead.
 var KeySetURL string
 var keySets JWKeySets
+var getKeySetsLock = &sync.Mutex{}
 
 type JWKeySets []JWKeySet
 
-func (kss JWKeySets) LookupKeyID(keyID string) (ks JWKeySet, err error) {
+func (kss JWKeySets) LookupKeyID(keyID string) (JWKeySet, error) {
 	for _, ks := range kss {
 		if ks.KeyID == keyID && ks.Use == "sig" {
 			return ks, nil
 		}
 	}
 
-	if err = RefreshKeySets(); err != nil {
-		return
+	if err := RefreshKeySets(); err != nil {
+		return JWKeySet{}, err
 	}
 
-	for _, ks := range kss {
+	// This logic is a bit weird. If a given key can't be found in the keyset
+	// it's refreshed and searched again. The "kss" object is returned by
+	// GetKeySets, which returns a global variable in the package. RefreshKeySets()
+	// just updates the global variable, which has no effect on the struct this
+	// function operates on. The previous version would loop over "kss" again
+	// here, which won't make a difference.
+	for _, ks := range keySets {
 		if ks.KeyID == keyID && ks.Use == "sig" {
 			return ks, nil
 		}
 	}
 
-	return JWKeySet{}, errors.New("unable to find public key")
+	return JWKeySet{}, fmt.Errorf("unable to find public key")
 }
 
 type JWKeySet struct {
@@ -62,11 +68,10 @@ type JWKeySet struct {
 
 const smallestExpLengthInBytes = 4
 
-func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
+func (ks JWKeySet) GetPublicKey() (*rsa.PublicKey, error) {
 	decodedE, err := base64.RawURLEncoding.DecodeString(ks.Exp)
 	if err != nil {
-		err = errors.Wrap(err, "failed to decode key set `exp`")
-		return
+		return nil, fmt.Errorf("failed to decode key set `exp`: %w", err)
 	}
 
 	if len(decodedE) < smallestExpLengthInBytes {
@@ -82,8 +87,7 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 
 	decodedN, err := base64.RawURLEncoding.DecodeString(ks.Mod)
 	if err != nil {
-		err = errors.Wrap(err, "failed to decode key set `mod`")
-		return
+		return nil, fmt.Errorf("failed to decode key set `mod`: %w", err)
 	}
 
 	pubKey.N.SetBytes(decodedN)
@@ -91,25 +95,28 @@ func (ks JWKeySet) GetPublicKey() (_ *rsa.PublicKey, err error) {
 	return pubKey, nil
 }
 
-func GetKeySets() (_ JWKeySets, err error) {
+func GetKeySets() (JWKeySets, error) {
+	getKeySetsLock.Lock()
+	defer getKeySetsLock.Unlock()
+
 	if len(keySets) == 0 {
-		err = RefreshKeySets()
+		if err := RefreshKeySets(); err != nil {
+			return JWKeySets{}, err
+		}
 	}
 
-	return keySets, err
+	return keySets, nil
 }
 
-func RefreshKeySets() (err error) {
+func RefreshKeySets() error {
 	url, err := getKeySetsURL()
 	if err != nil {
-		err = errors.Wrap(err, "failed to get key sets URL")
-		return
+		return fmt.Errorf("failed to get key sets URL: %w", err)
 	}
 
 	resp, err := http.Get(url) // nolint: gosec
 	if err != nil {
-		err = errors.Wrap(err, "failed to fetch key sets")
-		return
+		return fmt.Errorf("failed to fetch key sets: %w", err)
 	}
 
 	defer resp.Body.Close()
@@ -121,18 +128,21 @@ func RefreshKeySets() (err error) {
 	}
 
 	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		err = errors.Wrap(err, "failed to unmarshal key sets")
-		return
+		return fmt.Errorf("failed to unmarshal key sets: %w", err)
 	}
 
 	if keys, present := data["Keys"]; present {
 		// keys from Cognito
 		keySets = keys
+	} else if keys, present := data["keys"]; present {
+		// Keys compliant with RFC 7517: https://datatracker.ietf.org/doc/html/rfc7517#page-10
+		// "The JSON object MUST have a "keys" member, with its value being an array of JWKs."
+		keySets = keys
 	} else if keys, present := data["data"]; present {
 		// keys from SSO-API
 		keySets = keys
 	} else {
-		return errors.New("failed to find key sets in response")
+		return fmt.Errorf("failed to find key sets in response")
 	}
 
 	return err
@@ -140,7 +150,7 @@ func RefreshKeySets() (err error) {
 
 func getKeySetsURL() (string, error) {
 	if config == nil && KeySetURL == "" {
-		return "", errors.New("jwk is not configured")
+		return "", fmt.Errorf("jwk is not configured")
 	}
 
 	if config == nil {
@@ -148,7 +158,7 @@ func getKeySetsURL() (string, error) {
 	}
 
 	if !allowedStages[config.Stage] {
-		return "", errors.Errorf("stage %s is not allowed", config.Stage)
+		return "", fmt.Errorf("stage %s is not allowed", config.Stage)
 	}
 
 	if config.Stage == stages.StageProd {

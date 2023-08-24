@@ -1,10 +1,10 @@
 package cache
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dgraph-io/ristretto"
-	"github.com/pkg/errors"
 
 	"github.com/SKF/go-utility/v2/log"
 )
@@ -36,7 +36,6 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 	}
 
 	maxCache := cacheSizeMaxMB * megaByte
-	log.Infof("Cache size in bytes: %d", maxCache)
 
 	memcache, err := ristretto.NewCache(&ristretto.Config{
 		NumCounters: defaultNumCounters,
@@ -45,13 +44,8 @@ func New(ttl time.Duration, cacheSizeMaxMB int64) (*Cache, error) {
 		Metrics:     true,
 	})
 	if err != nil {
-		err = errors.Wrap(err, "Error creating cache")
-		log.WithError(err).Error("Error creating cache")
-
-		return nil, err
+		return nil, fmt.Errorf("error creating cache: %w", err)
 	}
-
-	log.WithField("ttl", ttl).Info("Creating in memory cache")
 
 	obj := Cache{
 		cache:          memcache,
