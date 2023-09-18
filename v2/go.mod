@@ -24,7 +24,7 @@ require (
 )
 
 require (
-	github.com/SKF/go-enlight-middleware v0.8.4
+	github.com/SKF/go-enlight-middleware v0.8.5
 	github.com/aws/aws-sdk-go-v2 v1.21.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.39
 	github.com/aws/aws-sdk-go-v2/service/sns v1.21.5
