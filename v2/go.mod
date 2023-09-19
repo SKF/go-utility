@@ -17,7 +17,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.8.4
 	go.opencensus.io v0.24.0
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/grpc v1.58.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.55.0
