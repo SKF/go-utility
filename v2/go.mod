@@ -31,7 +31,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.24.5
 	github.com/aws/smithy-go v1.14.2
 	github.com/golang-jwt/jwt/v5 v5.0.0
-	github.com/lestrrat-go/jwx/v2 v2.0.12
+	github.com/lestrrat-go/jwx/v2 v2.0.13
 )
 
 require (
@@ -70,7 +70,7 @@ require (
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
-	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
