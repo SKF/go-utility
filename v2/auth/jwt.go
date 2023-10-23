@@ -21,18 +21,16 @@ func IsTokenValid(token string, tokenExpireDurationDiff time.Duration) bool {
 
 	ts := time.Now().Add(tokenExpireDurationDiff)
 
-	for _, claim := range []*jwt.NumericDate{
-		claims.ExpiresAt,
-		claims.IssuedAt,
-		claims.NotBefore,
-	} {
-		if claim == nil {
-			continue
-		}
+	if claims.ExpiresAt != nil && ts.Before(claims.ExpiresAt.Time) {
+		return false
+	}
 
-		if claim.Before(ts) {
-			return false
-		}
+	if claims.IssuedAt != nil && ts.After(claims.IssuedAt.Time) {
+		return false
+	}
+
+	if claims.NotBefore != nil && ts.After(claims.NotBefore.Time) {
+		return false
 	}
 
 	return true
