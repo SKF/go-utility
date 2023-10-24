@@ -29,8 +29,8 @@ github.com/Microsoft/go-winio v0.5.1/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpz
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/SKF/go-enlight-middleware v0.8.6 h1:19EwbvYze0sODaBXE0awaBLsKFBFfeGlMP6Myu5xVQk=
-github.com/SKF/go-enlight-middleware v0.8.6/go.mod h1:AubJyXUPYwTHHBERzb8YcwTwu39khfdHjGORqcJwL6c=
+github.com/SKF/go-enlight-middleware v0.8.7 h1:T5YXiqcqGb/PQiq5TF1Qez639ONK3vkYa09Phu2JpGU=
+github.com/SKF/go-enlight-middleware v0.8.7/go.mod h1:SfjU+ekfqcd341hJ+u9SqYoEGKbDMrF+wTGBWNi0SqA=
 github.com/SKF/proto/v2 v2.19.0-go h1:suOQyDn684WyijRPoyiJurEQUy1A0iGJja71uHqSJPM=
 github.com/SKF/proto/v2 v2.19.0-go/go.mod h1:PX9BUHguKyZlicj9B0ur3PVs4mskS53GPO2VzG+ACA8=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
