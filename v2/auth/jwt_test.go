@@ -12,7 +12,6 @@ import (
 func Test_IsTokenValid(t *testing.T) {
 	mySigningKey := []byte("test_key")
 	ts := time.Now()
-
 	tests := []struct {
 		expiresAt, issuedAt time.Time
 		name                string
@@ -63,7 +62,5 @@ func Test_IsTokenValid(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, test.expected, IsTokenValid(ss, test.expireDurationDiff))
 		})
-
 	}
-
 }
