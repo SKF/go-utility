@@ -19,17 +19,17 @@ func IsTokenValid(token string, tokenExpireDurationDiff time.Duration) bool {
 		return false
 	}
 
-	ts := time.Now().Add(tokenExpireDurationDiff)
+	ts := time.Now()
 
-	if claims.ExpiresAt != nil && ts.Before(claims.ExpiresAt.Time) {
+	if claims.ExpiresAt != nil && ts.After(claims.ExpiresAt.Time.Add(-tokenExpireDurationDiff)) {
 		return false
 	}
 
-	if claims.IssuedAt != nil && ts.After(claims.IssuedAt.Time) {
+	if claims.IssuedAt != nil && ts.Before(claims.IssuedAt.Time) {
 		return false
 	}
 
-	if claims.NotBefore != nil && ts.After(claims.NotBefore.Time) {
+	if claims.NotBefore != nil && ts.Before(claims.NotBefore.Time) {
 		return false
 	}
 
