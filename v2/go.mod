@@ -20,7 +20,7 @@ require (
 	go.uber.org/zap v1.26.0
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/grpc v1.59.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.55.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.57.0
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 
 require (
 	github.com/DataDog/appsec-internal-go v1.0.0 // indirect
-	github.com/DataDog/datadog-agent/pkg/obfuscate v0.47.0 // indirect
+	github.com/DataDog/datadog-agent/pkg/obfuscate v0.48.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/remoteconfig/state v0.49.0-devel // indirect
 	github.com/DataDog/datadog-go v4.8.2+incompatible // indirect
 	github.com/DataDog/datadog-go/v5 v5.3.0 // indirect
