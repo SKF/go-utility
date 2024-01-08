@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.49.14
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/gomodule/redigo v1.8.9
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.14.1
 	github.com/jackc/pgtype v1.14.0
