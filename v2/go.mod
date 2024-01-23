@@ -31,7 +31,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.29.7
 	github.com/aws/smithy-go v1.19.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
-	github.com/lestrrat-go/jwx/v2 v2.0.15
+	github.com/lestrrat-go/jwx/v2 v2.0.19
 )
 
 require (
