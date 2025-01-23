@@ -27,3 +27,4 @@ For more information:
 
 Migrations
 - [Migration from `1.*` to `2.*`](v2/README.md)
+- [Migration from `2.*` to `3.*`](v3/README.md)
