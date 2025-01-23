@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -103,7 +104,7 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 
 	output, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{SecretId: &secretKey})
 	if err != nil {
-		err = errors.Wrap(err, "failed to get secret value")
+		err = fmt.Errorf("failed to get secret value: %w", err)
 		return
 	}
 
@@ -113,12 +114,12 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 	}
 
 	if err = json.Unmarshal(output.SecretBinary, &secret); err != nil {
-		err = errors.Wrap(err, "failed to unmarshal secret value")
+		err = fmt.Errorf("failed to unmarshal secret value: %w", err)
 		return
 	}
 
 	if tokens, err = auth.SignIn(ctx, secret.Username, secret.Password); err != nil {
-		err = errors.Wrap(err, "failed to sign in")
+		err = fmt.Errorf("failed to sign in; %w", err)
 		return
 	}
 
