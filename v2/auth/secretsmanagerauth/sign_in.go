@@ -3,12 +3,12 @@ package secretsmanagerauth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/pkg/errors"
 
 	"github.com/SKF/go-utility/v2/auth"
 )
