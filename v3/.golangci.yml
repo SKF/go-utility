@@ -12,9 +12,6 @@ linters-settings:
   errcheck:
     # default is false: such cases aren't reported by default.
     check-blank: true
-  govet:
-    # report about shadowed variables
-    check-shadowing: true
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
@@ -24,17 +21,9 @@ linters-settings:
     min-complexity: 10
   gocognit:
     min-complexity: 20
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
   dupl:
     # tokens count to trigger issue, 150 by default
     threshold: 100
-
-issues:
-  # List of regexps of issue texts to exclude, empty list by default.
-  # To see excluded by default patterns execute `golangci-lint run --help`
-  exclude:
 
 linters:
   enable:
@@ -58,6 +47,6 @@ linters:
     - whitespace #- Tool for detection of leading and trailing whitespace
     - wsl #- Whitespace Linter - Forces you to use empty lines!
     - goprintffuncname #- Checks that printf-like functions are named with f at the end
-    - gomnd #- An analyzer to detect magic numbers.
+    - mnd #- An analyzer to detect magic numbers.
     - gomodguard #- Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
     - nestif #- Reports deeply nested if statements
