@@ -1,0 +1,63 @@
+# Reference of settings:
+# https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+
+# To remedy '<file>: File is not `goimports`-ed (goimports)' do:
+# goimports -w -local github.com/SKF <file>
+
+run:
+  timeout: 5m
+
+# all available settings of specific linters
+linters-settings:
+  errcheck:
+    # default is false: such cases aren't reported by default.
+    check-blank: true
+  govet:
+    # report about shadowed variables
+    check-shadowing: true
+  goimports:
+    # put imports beginning with prefix after 3rd-party packages;
+    # it's a comma-separated list of prefixes
+    local-prefixes: github.com/SKF/go-utility/v3
+  gocyclo:
+    # minimal code complexity to report, 30 by default (but we recommend 10-20)
+    min-complexity: 10
+  gocognit:
+    min-complexity: 20
+  maligned:
+    # print struct with more effective memory layout or not, false by default
+    suggest-new: true
+  dupl:
+    # tokens count to trigger issue, 150 by default
+    threshold: 100
+
+issues:
+  # List of regexps of issue texts to exclude, empty list by default.
+  # To see excluded by default patterns execute `golangci-lint run --help`
+  exclude:
+
+linters:
+  enable:
+    - bodyclose #- checks whether HTTP response body is closed successfully
+    - revive #- Golint differs from gofmt. Gofmt reformats Go source code, whereas golint prints out style mistakes
+    - rowserrcheck #- checks whether Err of rows is checked successfully
+    - stylecheck #- Stylecheck is a replacement for golint
+    - gosec #- Inspects source code for security problems
+    - unconvert #- Remove unnecessary type conversions
+    - goconst #- Finds repeated strings that could be replaced by a constant
+    - gocyclo #- Computes and checks the cyclomatic complexity of functions
+    - gocognit #- Computes and checks the cognitive complexity of functions
+    - gofmt #- Gofmt checks whether code was gofmt-ed. By default this tool runs with -s option to check for code simplification
+    - goimports #- Goimports does everything that gofmt does. Additionally it checks unused imports
+    - misspell #- Finds commonly misspelled English words in comments
+    - unparam #- Reports unused function parameters
+    - dogsled #- Checks assignments with too many blank identifiers (e.g. x, , , _, := f())
+    - nakedret #- Finds naked returns in functions greater than a specified function length
+    - prealloc #- Finds slice declarations that could potentially be preallocated
+    - godox #- Tool for detection of FIXME, TODO and other comment keywords
+    - whitespace #- Tool for detection of leading and trailing whitespace
+    - wsl #- Whitespace Linter - Forces you to use empty lines!
+    - goprintffuncname #- Checks that printf-like functions are named with f at the end
+    - gomnd #- An analyzer to detect magic numbers.
+    - gomodguard #- Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
+    - nestif #- Reports deeply nested if statements
