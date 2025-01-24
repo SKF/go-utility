@@ -1,3 +1,4 @@
+// nolint: loggercheck
 package log
 
 import (

@@ -37,7 +37,7 @@ func Test_Injection_PublishInput(t *testing.T) {
 
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
 			return aws.Endpoint{
 				PartitionID:   "aws",
 				URL:           s.URL,
@@ -84,7 +84,7 @@ func Test_Injection_PublishInput(t *testing.T) {
 }
 
 func Test_Injection_PublishBatchInput(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {}))
+	s := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 	defer s.Close()
 
 	host, err := url.Parse(s.URL)
@@ -100,7 +100,7 @@ func Test_Injection_PublishBatchInput(t *testing.T) {
 
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
 			return aws.Endpoint{
 				PartitionID:   "aws",
 				URL:           s.URL,

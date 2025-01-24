@@ -230,7 +230,7 @@ func (s *SecurityConfig) AccessToken(headers ...string) *SecurityConfig {
 type ResourceFunc func(*http.Request) (*common.Origin, error)
 
 // NilResourceFunc represents the Zero Value ResourceFunc.
-var NilResourceFunc = func(req *http.Request) (*common.Origin, error) {
+var NilResourceFunc = func(_ *http.Request) (*common.Origin, error) {
 	return nil, nil
 }
 
