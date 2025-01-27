@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/aws/aws-sdk-go-v2/service/sns/types"
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 	"github.com/aws/smithy-go/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +20,15 @@ import (
 	trace "github.com/SKF/go-utility/v2/trace/aws-sdk-go-v2"
 	"github.com/SKF/go-utility/v2/uuid"
 )
+
+type snsresolver struct {
+	s *httptest.Server
+}
+
+func (r *snsresolver) ResolveEndpoint(ctx context.Context, params sns.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.Endpoint = &r.s.URL
+	return sns.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
 
 func Test_Injection_PublishInput(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
@@ -37,13 +47,6 @@ func Test_Injection_PublishInput(t *testing.T) {
 
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           s.URL,
-				SigningRegion: "eu-west-1",
-			}, nil
-		})),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(
 			func(_ context.Context) (aws.Credentials, error) {
 				return aws.Credentials{
@@ -76,7 +79,7 @@ func Test_Injection_PublishInput(t *testing.T) {
 		Message: &message,
 	}
 
-	_, err = sns.NewFromConfig(cfg).Publish(ctx, input)
+	_, err = sns.NewFromConfig(cfg, sns.WithEndpointResolverV2(&snsresolver{s})).Publish(ctx, input)
 	require.NoError(t, err)
 
 	span.Finish()
@@ -100,13 +103,6 @@ func Test_Injection_PublishBatchInput(t *testing.T) {
 
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           s.URL,
-				SigningRegion: "eu-west-1",
-			}, nil
-		})),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(
 			func(_ context.Context) (aws.Credentials, error) {
 				return aws.Credentials{
@@ -153,7 +149,7 @@ func Test_Injection_PublishBatchInput(t *testing.T) {
 		},
 	}
 
-	_, err = sns.NewFromConfig(cfg).PublishBatch(ctx, input)
+	_, err = sns.NewFromConfig(cfg, sns.WithEndpointResolverV2(&snsresolver{s})).PublishBatch(ctx, input)
 	require.NoError(t, err)
 
 	err = tracer.Inject(span.Context(), (*trace.PublishBatchInputCarrier)(input))

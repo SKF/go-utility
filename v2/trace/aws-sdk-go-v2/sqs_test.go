@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 	"github.com/aws/smithy-go/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +20,15 @@ import (
 	trace "github.com/SKF/go-utility/v2/trace/aws-sdk-go-v2"
 	"github.com/SKF/go-utility/v2/uuid"
 )
+
+type resolver struct {
+	s *httptest.Server
+}
+
+func (r *resolver) ResolveEndpoint(ctx context.Context, params sqs.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.Endpoint = &r.s.URL
+	return sqs.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
 
 func Test_Injection_SendMessageInput(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
@@ -37,13 +47,6 @@ func Test_Injection_SendMessageInput(t *testing.T) {
 
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           s.URL,
-				SigningRegion: "eu-west-1",
-			}, nil
-		})),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(
 			func(_ context.Context) (aws.Credentials, error) {
 				return aws.Credentials{
@@ -80,7 +83,7 @@ func Test_Injection_SendMessageInput(t *testing.T) {
 		MessageBody: &message,
 	}
 
-	_, err = sqs.NewFromConfig(cfg).SendMessage(ctx, input)
+	_, err = sqs.NewFromConfig(cfg, sqs.WithEndpointResolverV2(&resolver{s})).SendMessage(ctx, input)
 	require.NoError(t, err)
 
 	span.Finish()
@@ -104,13 +107,6 @@ func Test_Injection_SendMessageBatch(t *testing.T) {
 
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           s.URL,
-				SigningRegion: "eu-west-1",
-			}, nil
-		})),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(
 			func(_ context.Context) (aws.Credentials, error) {
 				return aws.Credentials{
@@ -157,7 +153,7 @@ func Test_Injection_SendMessageBatch(t *testing.T) {
 		},
 	}
 
-	_, err = sqs.NewFromConfig(cfg).SendMessageBatch(ctx, input)
+	_, err = sqs.NewFromConfig(cfg, sqs.WithEndpointResolverV2(&resolver{s})).SendMessageBatch(ctx, input)
 	require.NoError(t, err)
 
 	span.Finish()
