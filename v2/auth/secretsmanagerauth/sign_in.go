@@ -119,7 +119,7 @@ func signIn(ctx context.Context) (tokens auth.Tokens, err error) {
 	}
 
 	if tokens, err = auth.SignIn(ctx, secret.Username, secret.Password); err != nil {
-		err = fmt.Errorf("failed to sign in; %w", err)
+		err = fmt.Errorf("failed to sign in: %w", err)
 		return
 	}
 
