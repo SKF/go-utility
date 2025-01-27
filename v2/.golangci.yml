@@ -12,9 +12,6 @@ linters-settings:
   errcheck:
     # default is false: such cases aren't reported by default.
     check-blank: true
-  govet:
-    # report about shadowed variables
-    check-shadowing: true
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
@@ -24,9 +21,6 @@ linters-settings:
     min-complexity: 10
   gocognit:
     min-complexity: 20
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
   depguard:
     rules:
       main:
@@ -39,11 +33,6 @@ linters-settings:
     # tokens count to trigger issue, 150 by default
     threshold: 100
 
-issues:
-  # List of regexps of issue texts to exclude, empty list by default.
-  # To see excluded by default patterns execute `golangci-lint run --help`
-  exclude:
-
 linters:
   disable-all: true
   enable:
@@ -53,6 +42,7 @@ linters:
     - bodyclose #: checks whether HTTP response body is closed successfully [fast: false, auto-fix: false]
     - containedctx #: containedctx is a linter that detects struct contained context.Context field [fast: true, auto-fix: false]
     - contextcheck #: check whether the function uses a non-inherited context [fast: false, auto-fix: false]
+    - copyloopvar #: checks for variables that are captured by range loops and used in the loop body [fast: false, auto-fix: false]
     # - cyclop # : checks function and package cyclomatic complexity [fast: false, auto-fix: false]
     # - deadcode # [deprecated]: Finds unused code [fast: false, auto-fix: false]
     - decorder #: check declaration order and count of types, constants, variables and functions [fast: true, auto-fix: false]
@@ -65,11 +55,9 @@ linters:
       # - errchkjson #: Checks types passed to the json encoding functions. Reports unsupported types and optionally reports occasions, where the check for the returned error can be omitted. [fast: false, auto-fix: false]
     # - errname #: Checks that sentinel errors are prefixed with the `Err` and error types are suffixed with the `Error`. [fast: false, auto-fix: false]
     # - errorlint #: errorlint is a linter for that can be used to find code that will cause problems with the error wrapping scheme introduced in Go 1.13. [fast: false, auto-fix: false]
-    - execinquery #: execinquery is a linter about query string checker in Query function which reads your Go src files and warning it finds [fast: false, auto-fix: false]
     # - exhaustive #: check exhaustiveness of enum switch statements and map literals [fast: false, auto-fix: false]
     # - exhaustivestruct # [deprecated]: Checks if all struct's fields are initialized [fast: false, auto-fix: false]
     # - exhaustruct #: Checks if all structure fields are initialized [fast: false, auto-fix: false]
-    - exportloopref #: checks for pointers to enclosing loop variables [fast: false, auto-fix: false]
     # - forbidigo #: Forbids identifiers [fast: true, auto-fix: false]
     # - forcetypeassert #: finds forced type assertions [fast: true, auto-fix: false]
     # - funlen #: Tool for detection of long functions [fast: true, auto-fix: false]
@@ -88,7 +76,6 @@ linters:
     - goheader #: Checks is file header matches to pattern [fast: true, auto-fix: false]
     - goimports #: In addition to fixing imports, goimports also formats your code in the same style as gofmt. [fast: true, auto-fix: true]
     # - golint # [deprecated]: Golint differs from gofmt. Gofmt reformats Go source code, whereas golint prints out style mistakes [fast: false, auto-fix: false]
-    - gomnd #: An analyzer to detect magic numbers. [fast: true, auto-fix: false]
     - gomoddirectives #: Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod. [fast: true, auto-fix: false]
     - gomodguard #: Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations. [fast: true, auto-fix: false]
     - goprintffuncname #: Checks that printf-like functions are named with `f` at the end [fast: true, auto-fix: false]
@@ -108,6 +95,7 @@ linters:
     - makezero #: Finds slice declarations with non-zero initial length [fast: false, auto-fix: false]
     # - maligned # [deprecated]: Tool to detect Go structs that would take less memory if their fields were sorted [fast: false, auto-fix: false]
     - misspell #: Finds commonly misspelled English words in comments [fast: true, auto-fix: true]
+    - mnd #: An analyzer to detect magic numbers. [fast: true, auto-fix: false]
     - nakedret #: Finds naked returns in functions greater than a specified function length [fast: true, auto-fix: false]
     - nestif #: Reports deeply nested if statements [fast: true, auto-fix: false]
     - nilerr #: Finds the code that returns nil even if it checks that the error is not nil. [fast: false, auto-fix: false]

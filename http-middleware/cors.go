@@ -36,7 +36,7 @@ func Options(methods, headers []string) http.HandlerFunc {
 	methodsJoined := strings.Join(methods, ", ")
 	headersJoined := strings.Join(headers, ", ")
 
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Access-Control-Allow-Methods", methodsJoined)
 		w.Header().Set("Access-Control-Allow-Headers", headersJoined)
 	}

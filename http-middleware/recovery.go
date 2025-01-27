@@ -8,6 +8,7 @@ import (
 	"github.com/SKF/go-utility/log"
 )
 
+// nolint: contextcheck
 func Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer func() {
