@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/DataDog/opencensus-go-exporter-datadog v0.0.0-20200406135749-5c268882acf0
 	github.com/SKF/proto/v2 v2.19.0-go
-	github.com/aws/aws-lambda-go v1.41.0
+	github.com/aws/aws-lambda-go v1.47.0
 	github.com/dgraph-io/ristretto v0.2.0
 	github.com/gomodule/redigo v1.8.9
 	github.com/google/uuid v1.6.0
