@@ -24,8 +24,8 @@ require (
 
 require (
 	github.com/SKF/go-enlight-middleware v0.8.7
-	github.com/aws/aws-sdk-go-v2 v1.34.0
-	github.com/aws/aws-sdk-go-v2/config v1.26.3
+	github.com/aws/aws-sdk-go-v2 v1.36.1
+	github.com/aws/aws-sdk-go-v2/config v1.29.6
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.14
 	github.com/aws/aws-sdk-go-v2/service/sns v1.26.7
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.29.7
@@ -51,16 +51,16 @@ require (
 	github.com/DataDog/opentelemetry-mapping-go/pkg/otlp/attributes v0.20.0 // indirect
 	github.com/DataDog/sketches-go v1.4.5 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.14 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.14.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.29 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.29 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.7.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.10 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.18.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.21.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.26.7 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.59 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.28 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.32 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.24.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
