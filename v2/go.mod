@@ -7,7 +7,7 @@ require (
 	github.com/SKF/go-enlight-middleware v0.9.1
 	github.com/SKF/proto/v2 v2.19.0-go
 	github.com/aws/aws-lambda-go v1.47.0
-	github.com/aws/aws-sdk-go-v2 v1.36.2
+	github.com/aws/aws-sdk-go-v2 v1.36.4
 	github.com/aws/aws-sdk-go-v2/config v1.29.7
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.19
 	github.com/aws/aws-sdk-go-v2/service/sns v1.33.20
